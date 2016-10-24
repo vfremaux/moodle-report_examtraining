@@ -1,0 +1,69 @@
+h1{
+	text-align:center;
+}
+
+table,
+table * td {
+   border-collapse:separate;
+   padding:0px;
+   spacing:0px;
+}
+
+table.generaltable{
+	border:1px solid #404040;
+	min-width:560px;
+	max-width:560px;
+	width:560px;
+	border-collapse: separate;
+    border-spacing: 3mm;
+}
+
+table.generaltable td {
+	padding:2mm;
+	border-collapse: separate;
+    border-spacing: 3mm;
+}
+
+table.generaltable th {
+	background-color:#414385;
+	color:white;
+	font-weight:bold;
+}
+
+table.generaltable th.atype {
+	background-color:#B1241D;
+	color:white;
+	font-weight:bold;
+}
+
+table.generaltable th.ctype {
+	background-color:#414385;
+	color:white;
+	font-weight:bold;
+}
+
+.qcorrect{
+	background-color:#AAF88F;
+	word-wrap:break-word;	 
+	width:80%;
+}
+
+.qfailed{
+	background-color:#F9998E;
+	word-wrap:break-word;	 
+	width:80%;
+}
+
+.questioninfo{
+	width:90%;
+	min-width:90%;
+	max-width:90%;
+}
+
+.param{
+	background-color:#A5CBD1;
+}
+
+.username{
+	font-size:24pt;
+}
