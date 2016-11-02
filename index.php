@@ -107,7 +107,7 @@ if ($output == 'html') {
 
     // Print tabs with options for user.
     if (has_capability('report/examtraining:viewall', $context)) {
-        $taburl = new moodle_url('/report/examtraining/index.php', array('id' = $course->id, 'view' => 'user'));
+        $taburl = new moodle_url('/report/examtraining/index.php', array('id' => $course->id, 'view' => 'user'));
         $rows[0][] = new tabobject('user', $taburl, get_string('user', 'report_examtraining'));
         $params = array('id' => $course->id, 'view' => 'course', 'groupid' => $groupid);
         $taburl = new moodle_url('/report/examtraining/index.php', $params);

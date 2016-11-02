@@ -192,6 +192,6 @@ class report_examtraining_raw_renderer extends plugin_renderer_base {
             $resultset[] = '[N.C.]';
         }
 
-        return mb_convert_encoding(implode(';', $resultset), 'ISO-8859-1', 'UTF-8')."\n");
+        return mb_convert_encoding(implode(';', $resultset), 'ISO-8859-1', 'UTF-8')."\n";
     }
 }

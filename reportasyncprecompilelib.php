@@ -47,34 +47,14 @@ function report_compile_users_preworker(&$context) {
 
         $context->rawfile = fopen($CFG->dataroot.'/'.$context->course->id."/".$context->filename, 'wb');
 
-        $resultset[] = get_string('entity', 'report_examtraining'); // Groupname.
-        $resultset[] = get_string('id', 'report_examtraining'); // Userid.
-        $resultset[] = get_string('firstenrolldate', 'report_examtraining'); // Enrol start date.
-        $resultset[] = get_string('firstaccess', 'report_examtraining'); // Enrol start date.
-        $resultset[] = get_string('startdate', 'report_examtraining'); // Compile start date.
-        $resultset[] = get_string('todate', 'report_examtraining'); // Compile end date.
-        $resultset[] = get_string('weekstartdate', 'report_examtraining'); // Last week start date.
-        $resultset[] = get_string('lastname', 'report_examtraining'); // User name.
-        $resultset[] = get_string('firstname', 'report_examtraining'); // User name.
-        $resultset[] = get_string('timeelapsed', 'report_examtraining');
-        $resultset[] = get_string('timeelapsedcurweek', 'report_examtraining');
-        $resultset[] = get_string('aansweredquestions', 'report_examtraining');
-        $resultset[] = get_string('aansweredquestionscurweek', 'report_examtraining');
-        $resultset[] = get_string('cansweredquestions', 'report_examtraining');
-        $resultset[] = get_string('cansweredquestionscurweek', 'report_examtraining');
-        $resultset[] = get_string('ratioa', 'report_examtraining');
-        $resultset[] = get_string('ratioacurweek', 'report_examtraining');
-        $resultset[] = get_string('ratioc', 'report_examtraining');
-        $resultset[] = get_string('ratioccurweek', 'report_examtraining');
-        $resultset[] = get_string('examsuccess', 'report_examtraining');
-        $resultset[] = get_string('examattempts', 'report_examtraining');
+        report_compile_init_columns($resultset);
 
         // Add report columns for modules.
-        for($i = 1; $i < 10; $i++) {
+        for ($i = 1; $i < 10; $i++) {
             $resultset[] = "Q$i";
         }
 
-        for($i = 1; $i <= 10; $i++) {
+        for ($i = 1; $i <= 10; $i++) {
             $resultset[] = "Q".($i * 10);
         }
 
@@ -117,4 +97,38 @@ function report_compile_users_worker($rec, &$context) {
  */
 function report_compile_users_postworker(&$context) {
     fclose($context->rawfile);
+}
+
+function report_compile_init_columns(&$resultset) {
+    $resultset[] = get_string('entity', 'report_examtraining'); // Group name.
+
+    // User identity.
+    $resultset[] = get_string('id', 'report_examtraining'); // Userid from user profile.
+    $resultset[] = get_string('username'); // Username from user profile.
+    $resultset[] = get_string('lastname', 'report_examtraining'); // User name.
+    $resultset[] = get_string('firstname', 'report_examtraining'); // User name.
+
+    // Key Dates.
+    $resultset[] = get_string('firstenrolldate', 'report_examtraining'); // Enrol start date.
+    $resultset[] = get_string('firstaccess', 'report_examtraining'); // First access to site in user profile.
+    $resultset[] = get_string('lastaccess', 'report_examtraining'); // Last access to site in user profile.
+    $resultset[] = get_string('startdate', 'report_examtraining'); // Compile start date.
+    $resultset[] = get_string('todate', 'report_examtraining'); // Compile end date.
+    $resultset[] = get_string('weekstartdate', 'report_examtraining'); // Last week start date.
+
+    // Time spent.
+    $resultset[] = get_string('timeelapsed', 'report_examtraining');
+    $resultset[] = get_string('timeelapsedcurweek', 'report_examtraining');
+
+    // Program outcomes.
+    $resultset[] = get_string('aansweredquestions', 'report_examtraining');
+    $resultset[] = get_string('aansweredquestionscurweek', 'report_examtraining');
+    $resultset[] = get_string('cansweredquestions', 'report_examtraining');
+    $resultset[] = get_string('cansweredquestionscurweek', 'report_examtraining');
+    $resultset[] = get_string('ratioa', 'report_examtraining');
+    $resultset[] = get_string('ratioacurweek', 'report_examtraining');
+    $resultset[] = get_string('ratioc', 'report_examtraining');
+    $resultset[] = get_string('ratioccurweek', 'report_examtraining');
+    $resultset[] = get_string('examsuccess', 'report_examtraining');
+    $resultset[] = get_string('examattempts', 'report_examtraining');
 }

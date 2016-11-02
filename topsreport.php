@@ -240,7 +240,7 @@ if (!empty($targetusers)) {
             $groups = examtraining_get_grouplist($id, $top->userid);
             $groupclause = ($groups) ? " ($groups) " : '';
             $userurl = new moodle_url('/user/view.php', array('id' => $top->userid));
-            $userline = "<a href="'.$userurl.'">".fullname($targetusers[$top->userid]).' '.$groupclause.'</a>';
+            $userline = '<a href="'.$userurl.'">'.fullname($targetusers[$top->userid]).' '.$groupclause.'</a>';
             $table->data[] = array($top->qcount, $userline);
         }
         echo html_writer::table($table);

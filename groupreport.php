@@ -30,49 +30,11 @@ defined('MOODLE_INTERNAL') || die;
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
-$id = required_param('id', PARAM_INT) ; // The course id.
-$startday = optional_param('startday', -1, PARAM_INT) ; // From (-1 is from course start).
-$startmonth = optional_param('startmonth', -1, PARAM_INT) ; // From (-1 is from course start).
-$startyear = optional_param('startyear', -1, PARAM_INT) ; // From (-1 is from course start).
-$endday = optional_param('endday', -1, PARAM_INT) ; // To (-1 is till now).
-$endmonth = optional_param('endmonth', -1, PARAM_INT) ; // To (-1 is till now).
-$endyear = optional_param('endyear', -1, PARAM_INT) ; // To (-1 is till now).
-$fromstart = optional_param('fromstart', 0, PARAM_INT) ; // Force reset to course startdate.
-$from = optional_param('from', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
-$to = optional_param('to', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
+$input = examtraining_reports_input($course);
 
-$offset = optional_param('offset', 0, PARAM_INT);
 $page = 20;
 
 // TODO : secure groupid access depending on proper capabilities.
-
-// Calculate start time.
-
-if ($from == -1) {
-    // Maybe we get it from parameters.
-    if ($startday == -1 || $fromstart) {
-        $from = $course->startdate;
-    } else {
-        if ($startmonth != -1 && $startyear != -1) {
-            $from = mktime(0, 0, 8, $startmonth, $startday, $startyear);
-        } else {
-            print_error('Bad start date');
-        }
-    }
-}
-
-if ($to == -1) {
-    // Maybe we get it from parameters.
-    if ($endday == -1) {
-        $to = time();
-    } else {
-        if ($endmonth != -1 && $endyear != -1) {
-            $to = mktime(0,0,8,$endmonth, $endday, $endyear);
-        } else {
-            print_error('Bad end date');
-        }
-    }
-}
 
 // Pre print the group selector.
 if ($output == 'html') {

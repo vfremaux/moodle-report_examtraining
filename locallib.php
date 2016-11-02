@@ -1371,3 +1371,47 @@ function examtraining_reports_print_catscores_xls(&$xlsdoc, $startrow, $scores, 
 function examtraining_reports_print_overralcatscores_xls($worksheet, $startrow, $scores, $xlsformats) {
 }
 
+function examtraining_reports_input($course) {
+    $input = new StdClass();
+
+    $input->startday = optional_param('startday', -1, PARAM_INT) ; // From (-1 is from course start).
+    $input->startmonth = optional_param('startmonth', -1, PARAM_INT) ; // From (-1 is from course start).
+    $input->startyear = optional_param('startyear', -1, PARAM_INT) ; // From (-1 is from course start).
+    $input->endday = optional_param('endday', -1, PARAM_INT) ; // To (-1 is till now).
+    $input->endmonth = optional_param('endmonth', -1, PARAM_INT) ; // To (-1 is till now).
+    $input->endyear = optional_param('endyear', -1, PARAM_INT) ; // To (-1 is till now).
+    $input->fromstart = optional_param('fromstart', 0, PARAM_INT) ; // Force reset to course startdate.
+    $input->from = optional_param('from', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
+    $input->to = optional_param('to', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
+    $input->offset = optional_param('offset', 0, PARAM_INT);
+
+    // Calculate effective start time.
+    
+    if ($input->from == -1) {
+        // Maybe we get it from parameters.
+        if ($input->startday == -1 || $input->fromstart) {
+            $input->from = $course->startdate;
+        } else {
+            if ($input->startmonth != -1 && $input->startyear != -1) {
+                $input->from = mktime(0, 0, 8, $input->startmonth, $input->startday, $input->startyear);
+            } else {
+                print_error('Bad start date');
+            }
+        }
+    }
+    
+    if ($input->to == -1) {
+        // Maybe we get it from parameters.
+        if ($input->endday == -1) {
+            $input->to = time();
+        } else {
+            if ($input->endmonth != -1 && $input->endyear != -1) {
+                $to = mktime(0, 0, 8, $input->endmonth, $input->endday, $input->endyear);
+            } else {
+                print_error('Bad end date');
+            }
+        }
+    }
+
+    return $input;
+}

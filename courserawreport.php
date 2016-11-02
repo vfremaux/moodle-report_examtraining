@@ -31,7 +31,9 @@ defined('MOODLE_INTERNAL') || die();
  */
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
+require_once($CFG->dirroot.'/report/examtraining/reportasyncprecompilelib.php');
 
+/*
 $id = required_param('id', PARAM_INT) ; // The course id.
 $startday = optional_param('startday', -1, PARAM_INT) ; // From (-1 is from course start).
 $startmonth = optional_param('startmonth', -1, PARAM_INT) ; // From (-1 is from course start).
@@ -42,39 +44,15 @@ $endyear = optional_param('endyear', -1, PARAM_INT) ; // To (-1 is till now).
 $fromstart = optional_param('fromstart', 0, PARAM_INT) ; // Force reset to course startdate.
 $from = optional_param('from', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
 $to = optional_param('to', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
-
 $offset = optional_param('offset', 0, PARAM_INT);
+*/
+
+$input = examtraining_reports_input($course);
+
 $page = 20;
 
 // TODO : secure groupid access depending on proper capabilities.
 
-// Calculate start time.
-
-if ($from == -1) {
-    // Maybe we get it from parameters.
-    if ($startday == -1 || $fromstart) {
-        $from = $course->startdate;
-    } else {
-        if ($startmonth != -1 && $startyear != -1) {
-            $from = mktime(0, 0, 8, $startmonth, $startday, $startyear);
-        } else {
-            print_error('Bad start date');
-        }
-    }
-}
-
-if ($to == -1) {
-    // Maybe we get it from parameters.
-    if ($endday == -1) {
-        $to = time();
-    } else {
-        if ($endmonth != -1 && $endyear != -1) {
-            $to = mktime(0,0,8,$endmonth, $endday, $endyear);
-        } else {
-            print_error('Bad end date');
-        }
-    }
-}
 
 /*
  * Pre print the group selector
@@ -116,38 +94,16 @@ if (!empty($targetusers)) {
     echo 'compiling for '.count($targetusers).' users<br/>';
 
     $timestamp = time();
-    $rawfile = fopen($CFG->dataroot.'/'.$COURSE->id."/barchen_amf_raw_{$timestamp}.csv", 'wb');
-    $resultset[] = get_string('entity', 'report_examtraining'); // Groupname.
-    $resultset[] = get_string('id', 'report_examtraining'); // Userid.
-    $resultset[] = get_string('username'); // Username.
-    $resultset[] = get_string('firstenrolldate', 'report_examtraining'); // Enrol start date.
-    $resultset[] = get_string('firstaccess', 'report_examtraining'); // Fist trace.
-    $resultset[] = get_string('lastaccess', 'report_examtraining'); // Last trace.
-    $resultset[] = get_string('startdate', 'report_examtraining'); // Compile start date.
-    $resultset[] = get_string('todate', 'report_examtraining'); // Compile end date.
-    $resultset[] = get_string('weekstartdate', 'report_examtraining'); // Last week start date.
-    $resultset[] = get_string('lastname', 'report_examtraining'); // Last name.
-    $resultset[] = get_string('firstname', 'report_examtraining'); // First name.
-    $resultset[] = get_string('email'); // Email.
-    $resultset[] = get_string('timeelapsed', 'report_examtraining');
-    $resultset[] = get_string('timeelapsedcurweek', 'report_examtraining');
-    $resultset[] = get_string('aansweredquestions', 'report_examtraining');
-    $resultset[] = get_string('aansweredquestionscurweek', 'report_examtraining');
-    $resultset[] = get_string('cansweredquestions', 'report_examtraining');
-    $resultset[] = get_string('cansweredquestionscurweek', 'report_examtraining');
-    $resultset[] = get_string('ratioa', 'report_examtraining');
-    $resultset[] = get_string('ratioacurweek', 'report_examtraining');
-    $resultset[] = get_string('ratioc', 'report_examtraining');
-    $resultset[] = get_string('ratioccurweek', 'report_examtraining');
-    $resultset[] = get_string('examsuccess', 'report_examtraining');
-    $resultset[] = get_string('examattempts', 'report_examtraining');
+    $rawfile = fopen($CFG->dataroot.'/'.$COURSE->id."/examtraining_raw_{$timestamp}.csv", 'wb');
+
+    report_compile_init_columns($resultset);
 
     // Add report columns for modules.
     for ($i = 1; $i < 10; $i++) {
         $resultset[] = "Q$i";
     }
     for ($i = 1; $i <= 10; $i++) {
-        $resultset[] = "Q".($i*10);
+        $resultset[] = "Q".($i * 10);
     }
 
     $resultset[] = get_string('dateofbirth', 'report_examtraining'); // DOB.
@@ -159,12 +115,12 @@ if (!empty($targetusers)) {
     $examtraining_context = examtraining_get_context();
 
     foreach ($targetusers as $uid => $auser) {
-        $logs = use_stats_extract_logs($from, $to, $uid, $COURSE->id);
+        $logs = use_stats_extract_logs($input->from, $input->to, $uid, $COURSE->id);
         echo 'Logs extracted. Mem state : '.memory_get_usage().'<br/>';
         $aggregate = use_stats_aggregate_logs($logs, 'module', $uid);
         echo 'Logs aggregated. Mem state : '.memory_get_usage().'<br/>';
 
-        $weeklogs = use_stats_extract_logs($to - DAYSECS * 7, time(), $uid, $COURSE->id);
+        $weeklogs = use_stats_extract_logs($input->to - DAYSECS * 7, time(), $uid, $COURSE->id);
         echo 'Week Logs extracted. Mem state : '.memory_get_usage().'<br/>';
         $weekaggregate = use_stats_aggregate_logs($weeklogs, 'module', $uid);
         echo 'Week Logs aggregated. Mem state : '.memory_get_usage().'<br/>';
@@ -189,7 +145,7 @@ if (!empty($targetusers)) {
             }
         }
 
-        $rawfile .= $rawrenderer->globalheader_raw($auser->id, $course->id, $globalresults, $from, $to);
+        $rawfile .= $rawrenderer->globalheader_raw($auser->id, $course->id, $globalresults, $input->from, $input->to);
     }
 
     $fs = get_file_storage();

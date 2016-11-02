@@ -53,7 +53,7 @@ $quizzeslist = implode("','", $examtraining_context->testquizzes);
 
 $matched = array();
 
-list($insql, $params) = $DB->get_in_or_equal($questionids, );
+list($insql, $params) = $DB->get_in_or_equal($questionids);
 $select = " questionid IN ('$questionidlist') AND userid = ? ";
 $params[] = $userid;
 $questionsused = $DB->get_records_select('userquiz_monitor_coverage', $select, $params, 'questionid', 'questionid, usecount, matchcount');

@@ -80,8 +80,8 @@ if ($to == -1) {
         $to = time();
     } else {
         if ($endmonth != -1 && $endyear != -1) {
-            $to = mktime(0,0,8,$endmonth, $endday, $endyear);
-        } else { 
+            $to = mktime(0, 0, 8, $endmonth, $endday, $endyear);
+        } else {
             print_error('Bad end date');
         }
     }
@@ -133,10 +133,10 @@ if (!empty($targetusers)) {
         $resultset[] = "Q$i";
     }
     for ($i = 1; $i <= 10; $i++) {
-        $resultset[] = "Q".($i*10);
+        $resultset[] = "Q".($i * 10);
     }
 
-    $rawfile = mb_convert_encoding(implode(';', $resultset)."\n", 'ISO-8859-1', 'UTF-8'));
+    $rawfile = mb_convert_encoding(implode(';', $resultset)."\n", 'ISO-8859-1', 'UTF-8');
 
     $report_context = examtraining_get_context($course->id);
 
