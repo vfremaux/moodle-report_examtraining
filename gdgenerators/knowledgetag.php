@@ -33,21 +33,21 @@ require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
 // Output special situations messages.
 
-global $examtraining_context;
+global $examtrainingcontext;
 
 $from = optional_param('from', 0, PARAM_INT);
 $to = optional_param('to', time(), PARAM_INT);
 $userid = required_param('userid', PARAM_INT);
 $courseid = required_param('course', PARAM_INT);
 
-$examtraining_context = amf_get_context($courseid);
+$examtrainingcontext = amf_get_context($courseid);
 
 $questionids = array();
-examtraining_reports_get_questions_rec($examtraining_context->rootcategory, $questionids);
+examtraining_reports_get_questions_rec($examtrainingcontext->rootcategory, $questionids);
 sort($questionids);
 
 // We get all states unique matched questions.
-$quizzeslist = implode("','", $examtraining_context->testquizzes);
+$quizzeslist = implode("','", $examtrainingcontext->testquizzes);
 
 // Get all matched questions by the user.
 
@@ -56,13 +56,10 @@ $matched = array();
 list($insql, $params) = $DB->get_in_or_equal($questionids);
 $select = " questionid IN ('$questionidlist') AND userid = ? ";
 $params[] = $userid;
-$questionsused = $DB->get_records_select('userquiz_monitor_coverage', $select, $params, 'questionid', 'questionid, usecount, matchcount');
+$fields = 'questionid, usecount, matchcount';
+$questionsused = $DB->get_records_select('userquiz_monitor_coverage', $select, $params, 'questionid', $fields);
 $usedids = array_keys($questionsused);
 $questioncount = count($questionids);
-
-if (!$questioncount) {
-    // Generate blue tag.
-}
 
 // Generate tag mask.
 $root = ceil(sqrt((float)count($questionids)));
@@ -94,7 +91,7 @@ $colors['black'] = imagecolorallocate($im, 0, 0, 0);
 $colors['red'] = imagecolorallocate($im, 200, 0, 0);
 
 for ($i = 0; $i < $root; $i++) {
-    for ($j = 0 ; $j < $root ; $j++) {
+    for ($j = 0; $j < $root; $j++) {
         $qix = @$questionids[$i * $root + $j];
         if (!in_array($qix, $usedids) || $questionsused[$qix]->usecount == 0) {
             imagefilledrectangle($im, $offset + $i * $basesize + 10, $offset + $j * $basesize + 10,

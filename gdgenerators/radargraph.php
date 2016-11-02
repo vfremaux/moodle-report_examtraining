@@ -32,7 +32,7 @@ require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 $radar = explode(',', required_param('radar', PARAM_RAW));
 $headers = explode(',', optional_param('headers', PARAM_RAW));
 
-// operates a quarter rotation
+// Operates a quarter rotation.
 array_push($radar, array_shift($radar));
 array_push($radar, array_shift($radar));
 array_push($radar, array_shift($radar));
@@ -73,7 +73,7 @@ for ($j = 5; $j < 200;) {
 }
 
 $points = array();
-for($i = 0; $i < 12; $i++) {
+for ($i = 0; $i < 12; $i++) {
     $points[] = $c->x + 2 * @$radar[$i] * cos($i * 2 * pi() / 12);
     $points[] = $c->y + 2 * @$radar[$i] * sin($i * 2 * pi() / 12);
     $boxes[] = $c->x + (2 * @$radar[$i] + 15) * cos($i * 2 * pi() / 12);
@@ -84,7 +84,7 @@ imagefilledpolygon($im, $points, 12, $colors['green']);
 imagepolygon($im, $points, 12, $colors['darkgreen']);
 
 // Draw percent boxes.
-for($i = 0; $i < 12; $i++) {
+for ($i = 0; $i < 12; $i++) {
     $b->x = $boxes[2 * $i];
     $b->y = $boxes[2 * $i + 1];
     imagefilledrectangle($im, $b->x, $b->y, $b->x + 40, $b->y + 18, $colors['green']);

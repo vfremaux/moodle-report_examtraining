@@ -24,11 +24,11 @@
  */
 
 /**
- * This script handles the report generation in batch task for a single group. 
+ * This script handles the report generation in batch task for a single group.
  * It may produce a group csv report.
- * groupid must be provided. 
+ * groupid must be provided.
  * This script should be sheduled in a redirect bouncing process for maintaining
- * memory level available for huge batches. 
+ * memory level available for huge batches.
  */
 require('../../../config.php');
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
@@ -36,9 +36,9 @@ require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
 $maxbatchduration = 4 * HOURSECS;
 
-$id = required_param('id', PARAM_INT) ; // The course id.
-$from = optional_param('from', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
-$to = optional_param('to', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
+$id = required_param('id', PARAM_INT); // The course id.
+$from = optional_param('from', -1, PARAM_INT); // Alternate way of saying from when for XML generation.
+$to = optional_param('to', -1, PARAM_INT); // Alternate way of saying from when for XML generation.
 
 ini_set('memory_limit', '256M');
 
@@ -70,12 +70,6 @@ $i = 0;
 
 foreach ($groups as $group) {
 
-    // for unit test only
-    /*
-     * if ($i > $testmax) {
-     *      continue;
-     * }
-     */
     $i++;
 
     $targetusers = groups_get_members($group->id);
@@ -129,8 +123,8 @@ foreach ($groups as $group) {
         $curlerrno = curl_errno($ch);
         if ($curlerrno != 0) {
             debugging("Request for $uri failed with curl error $curlerrno");
-        } 
-    
+        }
+
         // Check HTTP error code.
         $info = curl_getinfo($ch);
         if (!empty($info['http_code']) && ($info['http_code'] != 200)) {

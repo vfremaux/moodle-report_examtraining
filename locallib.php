@@ -1191,14 +1191,24 @@ function examtraining_compute_global_results($userid, $from, $to) {
         $questions = $DB->get_records('question', array(), 'id,defaultgrade,category');
     }
 
-    $examselect = " userid = ? AND timefinish > ? AND timefinish < ? AND quiz IN ('$examquizzeslist') ";
+    $examselect = "
+        userid = ? AND
+        timefinish > ? AND
+        timefinish < ? AND
+        quiz IN ('$examquizzeslist')
+    ";
     if ($exams = $DB->get_records_select('quiz_attempts', $examselect, array($userid, $from, $to))) {
         $results->exams = count($exams);
     } else {
         $results->exams = 0;
     }
 
-    $select = " userid = ? AND timefinish > ? AND timefinish < ? AND userquiz IN ('$quizzeslist') ";
+    $select = "
+        userid = ? AND
+        timefinish > ? AND
+        timefinish < ? AND
+        userquiz IN ('$quizzeslist')
+    ";
     $distinctquestions = array();
     if ($attempts = $DB->get_records_select('quiz_attempts', $select, array($userid, $from, $to))) {
         $results->attempts = count($attempts);
@@ -1386,7 +1396,7 @@ function examtraining_reports_input($course) {
     $input->offset = optional_param('offset', 0, PARAM_INT);
 
     // Calculate effective start time.
-    
+
     if ($input->from == -1) {
         // Maybe we get it from parameters.
         if ($input->startday == -1 || $input->fromstart) {
@@ -1399,14 +1409,14 @@ function examtraining_reports_input($course) {
             }
         }
     }
-    
+
     if ($input->to == -1) {
         // Maybe we get it from parameters.
         if ($input->endday == -1) {
             $input->to = time();
         } else {
             if ($input->endmonth != -1 && $input->endyear != -1) {
-                $to = mktime(0, 0, 8, $input->endmonth, $input->endday, $input->endyear);
+                $input->to = mktime(0, 0, 8, $input->endmonth, $input->endday, $input->endyear);
             } else {
                 print_error('Bad end date');
             }

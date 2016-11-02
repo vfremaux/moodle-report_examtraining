@@ -24,7 +24,7 @@
  */
 
 /*
- * This script handles the report generation in batch task for a single group. 
+ * This script handles the report generation in batch task for a single group.
  * It may produce a group csv report.
  * groupid must be provided.
  * This script should be sheduled in a redirect bouncing process for maintaining
@@ -36,15 +36,13 @@ require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
 $id = required_param('id', PARAM_INT) ; // The course id.
-$startday = optional_param('startday', -1, PARAM_INT) ; // From (-1 is from course start).
-$startmonth = optional_param('startmonth', -1, PARAM_INT) ; // From (-1 is from course start).
-$startyear = optional_param('startyear', -1, PARAM_INT) ; // From (-1 is from course start).
-$endday = optional_param('endday', -1, PARAM_INT) ; // To (-1 is till now).
-$endmonth = optional_param('endmonth', -1, PARAM_INT) ; // To (-1 is till now).
-$endyear = optional_param('endyear', -1, PARAM_INT) ; // To (-1 is till now).
-$fromstart = optional_param('fromstart', 0, PARAM_INT) ; // Force reset to course startdate.
-$from = optional_param('from', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
-$to = optional_param('to', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
+
+if (!$course = $DB->get_record('course', array('id' => $id))) {
+    die ('Invalid course ID');
+}
+$context = context_course::instance($course->id);
+
+$input = examtraining_reports_input($course);
 $groupid = required_param('groupid', PARAM_INT) ; // Group id.
 $timesession = required_param('timesession', PARAM_INT) ; // Time of the generation batch.
 $readabletimesession = date('Ymd_H_i_s', $timesession);
@@ -52,40 +50,7 @@ $sessionday = date('Ymd', $timesession);
 
 ini_set('memory_limit', '2048M');
 
-if (!$course = $DB->get_record('course', array('id' => $id))) {
-    die ('Invalid course ID');
-}
-$context = context_course::instance($course->id);
-
 // TODO : secure groupid access depending on proper capabilities.
-
-// Calculate start time.
-
-if ($from == -1) {
-    // Maybe we get it from parameters.
-    if ($startday == -1 || $fromstart) {
-        $from = $course->startdate;
-    } else {
-        if ($startmonth != -1 && $startyear != -1) {
-            $from = mktime(0, 0, 8, $startmonth, $startday, $startyear);
-        } else {
-            print_error('Bad start date');
-        }
-    }
-}
-
-if ($to == -1) {
-    // Maybe we get it from parameters.
-    if ($endday == -1) {
-        $to = time();
-    } else {
-        if ($endmonth != -1 && $endyear != -1) {
-            $to = mktime(0, 0, 8, $endmonth, $endday, $endyear);
-        } else {
-            print_error('Bad end date');
-        }
-    }
-}
 
 // Compute target group.
 
@@ -105,28 +70,8 @@ foreach ($targetusers as $uid => $user) {
 if (!empty($targetusers)) {
 
     $timestamp = time();
-    $resultset[] = get_string('entity', 'report_barchenamf3'); // Groupname.
-    $resultset[] = get_string('id', 'report_barchenamf3'); // Userid.
-    $resultset[] = get_string('firstenrolldate', 'report_barchenamf3'); // Enrol start date.
-    $resultset[] = get_string('firstaccess', 'report_barchenamf3'); // Fist trace.
-    $resultset[] = get_string('lastaccess', 'report_barchenamf3'); // Last trace.
-    $resultset[] = get_string('startdate', 'report_barchenamf3'); // Compile start date.
-    $resultset[] = get_string('todate', 'report_barchenamf3'); // Compile end date.
-    $resultset[] = get_string('weekstartdate', 'report_barchenamf3'); // Last week start date.
-    $resultset[] = get_string('lastname', 'report_barchenamf3'); // User name.
-    $resultset[] = get_string('firstname', 'report_barchenamf3'); // User name.
-    $resultset[] = get_string('timeelapsed', 'report_barchenamf3');
-    $resultset[] = get_string('timeelapsedcurweek', 'report_barchenamf3');
-    $resultset[] = get_string('aansweredquestions', 'report_barchenamf3');
-    $resultset[] = get_string('aansweredquestionscurweek', 'report_barchenamf3');
-    $resultset[] = get_string('cansweredquestions', 'report_barchenamf3');
-    $resultset[] = get_string('cansweredquestionscurweek', 'report_barchenamf3');
-    $resultset[] = get_string('ratioa', 'report_barchenamf3');
-    $resultset[] = get_string('ratioacurweek', 'report_barchenamf3');
-    $resultset[] = get_string('ratioc', 'report_barchenamf3');
-    $resultset[] = get_string('ratioccurweek', 'report_barchenamf3');
-    $resultset[] = get_string('examsuccess', 'report_barchenamf3');
-    $resultset[] = get_string('examattempts', 'report_barchenamf3');
+
+    report_compile_init_columns(&$resultset);
 
     // Add report columns for modules.
     for ($i = 1; $i < 10; $i++) {
@@ -145,11 +90,11 @@ if (!empty($targetusers)) {
 
     foreach ($targetusers as $userid => $auser) {
 
-        $logs = use_stats_extract_logs($from, $to, $auser->id, $COURSE->id);
-        $aggregate = use_stats_aggregate_logs($logs, 'module', $from, $to);
+        $logs = use_stats_extract_logs($input->from, $input->to, $auser->id, $COURSE->id);
+        $aggregate = use_stats_aggregate_logs($logs, 'module', $input->from, $input->to);
 
-        $weeklogs = use_stats_extract_logs($to - DAYSECS * 7, time(), $auser->id, $COURSE->id);
-        $weekaggregate = use_stats_aggregate_logs($weeklogs, 'module', $from, $to);
+        $weeklogs = use_stats_extract_logs($input->to - DAYSECS * 7, time(), $auser->id, $COURSE->id);
+        $weekaggregate = use_stats_aggregate_logs($weeklogs, 'module', $input->from, $input->to);
 
         $logusers = $auser->id;
         $globalresults->elapsed = 0;
@@ -170,7 +115,7 @@ if (!empty($targetusers)) {
             }
         }
 
-        examtraining_reports_print_globalheader_raw($auser->id, $course->id, $globalresults, $rawfile, $from, $to);
+        examtraining_reports_print_globalheader_raw($auser->id, $course->id, $globalresults, $rawfile, $input->from, $input->to);
     }
 
     $fs = get_file_storage();

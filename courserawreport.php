@@ -33,20 +33,6 @@ require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/reportasyncprecompilelib.php');
 
-/*
-$id = required_param('id', PARAM_INT) ; // The course id.
-$startday = optional_param('startday', -1, PARAM_INT) ; // From (-1 is from course start).
-$startmonth = optional_param('startmonth', -1, PARAM_INT) ; // From (-1 is from course start).
-$startyear = optional_param('startyear', -1, PARAM_INT) ; // From (-1 is from course start).
-$endday = optional_param('endday', -1, PARAM_INT) ; // To (-1 is till now).
-$endmonth = optional_param('endmonth', -1, PARAM_INT) ; // To (-1 is till now).
-$endyear = optional_param('endyear', -1, PARAM_INT) ; // To (-1 is till now).
-$fromstart = optional_param('fromstart', 0, PARAM_INT) ; // Force reset to course startdate.
-$from = optional_param('from', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
-$to = optional_param('to', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
-$offset = optional_param('offset', 0, PARAM_INT);
-*/
-
 $input = examtraining_reports_input($course);
 
 $page = 20;
