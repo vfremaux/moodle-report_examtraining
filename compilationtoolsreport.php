@@ -25,14 +25,14 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-/**
+/*
  * direct log construction implementation
  */
 
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
-$id = required_param('id', PARAM_INT) ; // The course id.
+$id = required_param('id', PARAM_INT); // The course id.
 
 // Quick controller for enabing/disabling background tasks.
 $bgenabled = optional_param('backgroundenabled', 0, PARAM_BOOL);
@@ -42,6 +42,12 @@ if ($bgenabled) {
 }
 
 $bgchecked = (empty($CFG->backgroundrunsenabled)) ? '' : 'checked="checked"';
+
+$compilerstatsurl = new moodle_url('/blocks/userquiz_monitor/statscompiler/clear_userstats.php');
+$precompileuserstatsurl = new moodle_url('/mod/userquiz/statscompiler/precompile_userstats.php');
+$precompileunityurl = new moodle_url('/blocks/userquiz_monitor/statscompiler/precompile_unity.php');
+$precompileurl = new moodle_url('/mod/userquiz/statscompiler/precompile.php');
+$coveragecompilerurl = new moodle_url('/mod/userquiz/statscompiler/precompile_coverages.php');
 
 // Print tools.
 
@@ -68,7 +74,7 @@ $bgchecked = (empty($CFG->backgroundrunsenabled)) ? '' : 'checked="checked"';
 <tr valign="top">
     <td><b>States to attempts and categories compilation</b></td>
     <td>
-        <form name="simplecompile" action="<?php echo $CFG->wwwroot.'/mod/userquiz/statscompiler/precompile.php' ?>">
+        <form name="simplecompile" action="<?php echo $precompileurl ?>">
             <input type="hidden" name="id" value="<?php p($id) ?>" />
             <table width="100%">
                     <tr valign="top">
@@ -148,7 +154,7 @@ $bgchecked = (empty($CFG->backgroundrunsenabled)) ? '' : 'checked="checked"';
                     </td>
             </table>
         </form>
-        <form name="simplecompileunit" action="<?php echo $CFG->wwwroot.'/mod/userquiz/statscompiler/precompile_unity.php' ?>">
+        <form name="simplecompileunit" action="<?php echo $repcompileunityurl ?>">
             <input type="hidden" name="id" value="<?php p($id) ?>" />
             <input type="text" name="ids" value="" />
             <input type="submit" value="Compile some states" />
@@ -162,7 +168,7 @@ $bgchecked = (empty($CFG->backgroundrunsenabled)) ? '' : 'checked="checked"';
 <tr valign="top">
     <td><b>User stats globalisators and coverage information</b></td>
     <td>
-        <form name="simplecompilecover" action="<?php echo $CFG->wwwroot.'/mod/userquiz/statscompiler/precompile_userstats.php' ?>">
+        <form name="simplecompilecover" action="<?php echo $precompileuserstatsurl ?>">
             <input type="hidden" name="id" value="<?php p($id) ?>" />
             <table width="100%">
                     <tr valign="top">
@@ -230,7 +236,7 @@ $bgchecked = (empty($CFG->backgroundrunsenabled)) ? '' : 'checked="checked"';
                     </td>
             </table>
         </form>
-        <form name="simplecompilecoverclear" action="<?php echo $CFG->wwwroot.'/mod/userquiz/statscompiler/clear_userstats.php' ?>">
+        <form name="simplecompilecoverclear" action="<?php echo $compilerstatsurl ?>">
             <input type="hidden" name="id" value="<?php p($id) ?>" />
             <p><input type="submit" value="Clear user stats data" /></p>
         </form>
@@ -239,7 +245,7 @@ $bgchecked = (empty($CFG->backgroundrunsenabled)) ? '' : 'checked="checked"';
 <tr valign="top">
     <td><b>User coverage globalisators</b></td>
     <td>
-        <form name="simplecompileusercover" action="<?php echo $CFG->wwwroot.'/mod/userquiz/statscompiler/precompile_coverages.php' ?>">
+        <form name="simplecompileusercover" action="<?php echo $coveragecompilerurl ?>">
             <input type="hidden" name="id" value="<?php p($id) ?>" />
             <table width="100%">
                 <tr>

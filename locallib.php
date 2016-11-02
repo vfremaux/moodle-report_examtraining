@@ -1324,7 +1324,7 @@ function raw_format_duration($secs) {
 }
 
 function examtraining_reports_print_questiondetail_xls(&$xlsdoc, $startrow, $effg, $xlsformats) {
-    global $QCAT;
+    global $qcategories;
 
     $xlsdoc->write_string($startrow, 0, get_string('questionsort', 'report_examtraining', $effg->sortorder),$xlsformats['t']);
     $xlsdoc->merge_cells($startrow , 0, $startrow, 6);
@@ -1359,7 +1359,7 @@ function examtraining_reports_print_questiondetail_xls(&$xlsdoc, $startrow, $eff
     $startrow++;
     $xlsdoc->write_string($startrow, 0, get_string('category', 'report_examtraining'),$xlsformats['t']);
     $xlsdoc->merge_cells($startrow, 0, $startrow, 6);
-    $xlsdoc->write_string($startrow, 7, $QCAT[$effg->category]->name, $xlsformats['t']);
+    $xlsdoc->write_string($startrow, 7, $qcategories[$effg->category]->name, $xlsformats['t']);
     $xlsdoc->merge_cells($startrow, 7, $startrow, 12);
 
     $startrow++;

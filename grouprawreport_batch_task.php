@@ -71,7 +71,7 @@ if (!empty($targetusers)) {
 
     $timestamp = time();
 
-    report_compile_init_columns(&$resultset);
+    report_compile_init_columns($resultset);
 
     // Add report columns for modules.
     for ($i = 1; $i < 10; $i++) {
