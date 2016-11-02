@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains functions used by the examtraining report
+ * This file contains functions used by the examtraining report.
  *
  * @package     report_examtraining
  * @category    report
