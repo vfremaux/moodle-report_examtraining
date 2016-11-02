@@ -39,7 +39,7 @@ $id = required_param('id', PARAM_INT); // The course id.
 $context = context_course::instance($id);
 $PAGE->set_context($context);
 
-$output = optional_param('output', 'html', PARAM_ALPHA) ; // Values: html, xls or wkpdf.
+$output = optional_param('output', 'html', PARAM_ALPHA); // Values: html, xls or wkpdf.
 $view = optional_param('view', 'courseraw', PARAM_TEXT);
 $groupid = optional_param('groupid', 0, PARAM_INT);
 
@@ -97,7 +97,7 @@ if (file_exists($CFG->dirroot."/report/examtraining/{$page}report.php")) {
 // If screen output, output HTML moodle header.
 if ($output == 'html') {
     $PAGE->navbar->add(format_string($course->fullname), new moodle_url('/course/view.php', array('id' => $course->id)));
-    $PAGE->navbar->add(get_string('barchenamfreport','report_examtraining'));
+    $PAGE->navbar->add(get_string('barchenamfreport', 'report_examtraining'));
     $PAGE->set_title(get_string('reports', 'report_examtraining'));
     $PAGE->set_heading(get_string('reports', 'report_examtraining'));
 
@@ -162,9 +162,9 @@ if ($output == 'html') {
     $tablewidth = "560";
 }
 
-@ini_set('max_execution_time','600');
+@ini_set('max_execution_time', '600');
 
-include($reportview);
+require($reportview);
 
 if ($output == 'html') {
     echo $OUTPUT->footer();

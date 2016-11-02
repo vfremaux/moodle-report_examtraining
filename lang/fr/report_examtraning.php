@@ -27,7 +27,6 @@ $string['allgroups'] = 'Tous les groupes';
 $string['answered'] = 'Répondues';
 $string['ascending'] = 'Bottom ';
 $string['ashtml'] = 'Format HTML';
-// $string['assiduity'] = 'Assiduité entre le <span style=\"font-weight:normal\">$a->from</span> et le <span style=\"font-weight:normal\">$a->to</span>';
 $string['assiduity'] = 'Assiduité';
 $string['assiduityblank'] = 'Assiduité';
 $string['asxls'] = 'Télécharger au format Excel';

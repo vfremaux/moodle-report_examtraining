@@ -42,7 +42,9 @@ function report_examtraining_extend_navigation_course($navigation, $course, $con
 
     if (has_capability('report/examtraining:view', $context)) {
         $url = new moodle_url('/report/examtraining/index.php', array('id' => $course->id));
-        $navigation->add(get_string('pluginname', 'report_examtraining'), $url, navigation_node::TYPE_SETTING, null, null, new pix_icon('i/report', ''));
+        $label = get_string('pluginname', 'report_examtraining');
+        $pixicon = new pix_icon('i/report', '');
+        $navigation->add($label, $url, navigation_node::TYPE_SETTING, null, null, $pixicon);
     }
 }
 
@@ -104,7 +106,7 @@ function report_examtraining_pluginfile($course, $cm, $context, $filearea, $args
     $forcedownload = true;
 
     session_get_instance()->write_close();
-    send_stored_file($file, 60*60, 0, $forcedownload);
+    send_stored_file($file, 60 * 60, 0, $forcedownload);
 }
 
 /**

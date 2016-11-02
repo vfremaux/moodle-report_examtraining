@@ -23,13 +23,15 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
+
 require_once($CFG->dirroot.'/blocks/userquiz_monitor/block_userquiz_monitor_lib.php');
 require_once($CFG->libdir.'/questionlib.php');
 require_once($CFG->dirroot.'/report/examtraining/statscompilelib.php');
 require_once($CFG->dirroot.'/report/examtraining/excelformats.php');
 
 /**
- * Returns proper info to query log 
+ * Returns proper info to query log
  */
 function examtraining_get_log_reader_info() {
 
@@ -38,7 +40,7 @@ function examtraining_get_log_reader_info() {
     $reader = reset($readers);
 
     if (empty($reader)) {
-        echo "No reader";
+        echo 'No reader';
         return null; // No log reader found.
     }
 
@@ -48,7 +50,7 @@ function examtraining_get_log_reader_info() {
         $readerinfo->table = 'logstore_standard_log';
         $readerinfo->timeparam = 'timecreated';
         $readerinfo->loggedin = 'loggedin';
-    } else if($reader instanceof \logstore_legacy\log\store) {
+    } else if ($reader instanceof \logstore_legacy\log\store) {
         $readerinfo = new StdClass;
         $readerinfo->courseparam = 'course';
         $readerinfo->table = 'log';
@@ -139,15 +141,15 @@ function examtraining_reports_print_exams_summary_html($userid, $from, $to) {
 function examtraining_reports_print_exams_xls(&$xlsdoc, $startrow, $xlsformats, $userid) {
     global $CFG;
 
-    $exam_context = examtraining_get_context();
+    $examcontext = examtraining_get_context();
 
     $datestr = get_string('date', 'report_examtraining');
     $tryindexstr = get_string('tryindex', 'report_examtraining');
     $ratiostr = get_string('ratio', 'report_examtraining');
-    $Aratiostr = get_string('ratioA', 'report_examtraining');
-    $Cratiostr = get_string('ratioC', 'report_examtraining');
-    $Acountstr = get_string('countA', 'report_examtraining');
-    $Ccountstr = get_string('countC', 'report_examtraining');
+    $aratiostr = get_string('ratioA', 'report_examtraining');
+    $cratiostr = get_string('ratioC', 'report_examtraining');
+    $acountstr = get_string('countA', 'report_examtraining');
+    $ccountstr = get_string('countC', 'report_examtraining');
 
     $xlsdoc->write_string($startrow, 0, get_string('examtries', 'report_examtraining'), $xlsformats['t']);
     $xlsdoc->merge_cells($startrow, 0, $startrow, 6);
@@ -156,10 +158,10 @@ function examtraining_reports_print_exams_xls(&$xlsdoc, $startrow, $xlsformats, 
     $xlsdoc->write_string($startrow, 0, $tryindexstr, $xlsformats['tt']);
     $xlsdoc->write_string($startrow, 1, $datestr, $xlsformats['tt']);
     $xlsdoc->write_string($startrow, 2, $ratiostr, $xlsformats['tt']);
-    $xlsdoc->write_string($startrow, 3, $Aratiostr, $xlsformats['tt']);
-    $xlsdoc->write_string($startrow, 4, $Cratiostr, $xlsformats['tt']);
-    $xlsdoc->write_string($startrow, 5, $Acountstr, $xlsformats['tt']);
-    $xlsdoc->write_string($startrow, 6, $Ccountstr, $xlsformats['tt']);
+    $xlsdoc->write_string($startrow, 3, $aratiostr, $xlsformats['tt']);
+    $xlsdoc->write_string($startrow, 4, $cratiostr, $xlsformats['tt']);
+    $xlsdoc->write_string($startrow, 5, $acountstr, $xlsformats['tt']);
+    $xlsdoc->write_string($startrow, 6, $ccountstr, $xlsformats['tt']);
     $startrow++;
 
     ksort($results->attempts);
@@ -202,33 +204,39 @@ function examtraining_reports_print_exams_xls(&$xlsdoc, $startrow, $xlsformats, 
  * @param array $data 12 categories mastering array
  */
 function examtraining_reports_print_radar_html($userid, $from, $to) {
-    global $CFG, $DB;
+    global $CFG, $DB, $OUTPUT;
 
-    $exam_context = examtraining_get_context();
+    $examcontext = examtraining_get_context();
 
-    // get mastering indicators in subcategories
+    // Get mastering indicators in subcategories.
     $subcats = new Stdclass;
-    $subcatdata = count_questions_in_categories_rec($exam_context->rootcategory, $subcats);
-    $quizzes = implode(',', $exam_context->testquizzes);
+    $subcatdata = count_questions_in_categories_rec($examcontext->rootcategory, $subcats);
+    $quizzes = implode(',', $examcontext->testquizzes);
     $matched = userquiz_get_user_subcats($userid, $quizzes, $from, $to);
 
     // For each root cat, calculate the hitratio.
-    $maincats = $DB->get_records('question_categories', 'parent', $exam_context->rootcategory, 'sortorder', 'id, name');
+    $maincats = $DB->get_records('question_categories', 'parent', $examcontext->rootcategory, 'sortorder', 'id, name');
     $radardata = array();
     $radarheaders = array();
     if ($matched) {
         foreach ($maincats as $id => $cat) {
-            $radardata[] = (!empty($matched[$cat->id]->qcount)) ? 0 + (@$matched[$cat->id]->amatched + @$matched[$cat->id]->cmatched) / $matched[$cat->id]->qcount * 100 : 0 ;
+            if (!empty($matched[$cat->id]->qcount)) {
+                $overalratio = (@$matched[$cat->id]->amatched + @$matched[$cat->id]->cmatched) / $matched[$cat->id]->qcount * 100;
+            } else {
+                $overalratio = 0;
+            }
+            $radardata[] = $overalratio;
             $radarheaders[] = substr($cat->name, 0, 14);
         }
     }
 
-    print_heading(get_string('mastering', 'report_examtraining'));
+    echo $OUTPUT->heading(get_string('mastering', 'report_examtraining'));
     echo '<center>';
 
     $radararg = implode(',', $radardata);
     $headersarg = implode(',', $radarheaders);
-    $generatorurl = new moodle_url('/course/report/examtraining/gdgenerators/radargraph.php', array('radar' => $radararg, 'headers' => $headersarg));
+    $params = array('radar' => $radararg, 'headers' => $headersarg);
+    $generatorurl = new moodle_url('/report/examtraining/gdgenerators/radargraph.php', $params);
     echo '<img src="'.$generatorurl.'" width="500" height="500" />';
     echo '</center>';
 }
@@ -244,7 +252,8 @@ function examtraining_reports_print_knowledge_covering_html($userid, $courseid, 
 
     echo $OUTPUT->heading(get_string('knowledgecovering', 'report_examtraining'));
     echo '<center>';
-    $generatorurl = new moodle_url('/course/report/examtraining/gdgenerators/knowledgetag.php', array('userid' => $userid, 'course' => $courseid, 'from' => $from, 'to' => $to));
+    $params = array('userid' => $userid, 'course' => $courseid, 'from' => $from, 'to' => $to);
+    $generatorurl = new moodle_url('/report/examtraining/gdgenerators/knowledgetag.php', $params);
     echo '<img src="'.$generatorurl.'" width="300" height="300" />';
     echo $OUTPUT->box(get_string('knowledgecoveringlegend', 'report_examtraining'));
     echo '</center>';
@@ -253,7 +262,8 @@ function examtraining_reports_print_knowledge_covering_html($userid, $courseid, 
 /**
  * a raster for html printing of a report structure header
  * with all the relevant data about a user.
- *
+ * @param int $userid
+ * @param int $courseid
  */
 function examtraining_reports_print_header_html($userid, $courseid, $data, $isshort = false) {
     global $CFG, $DB;
@@ -288,7 +298,7 @@ function examtraining_reports_print_header_html($userid, $courseid, $data, $issh
     echo '</td><td align="right" width="20%">';
     if ($isshort) {
         $params = array('view' => 'user', 'id' => $courseid, 'userid' => $userid);
-        $url = new moodle_url('/course/report/examtraining/index.php', $params);
+        $url = new moodle_url('/report/examtraining/index.php', $params);
         echo '<a href="'.$url.'">'.get_string('seedetails', 'report_examtraining').'</a>';
     }
     echo '</td></tr>';
@@ -302,38 +312,51 @@ function examtraining_reports_print_times_html($userid, &$data) {
 
     echo $OUTPUT->heading(get_string('times', 'report_examtraining'));
 
-    $firstaccess = 0 + $DB->get_field_select($loginfo->table, 'MIN('.$loginfo->timeparam.')', " action = ".$loginfo->loggedin." AND userid = ? ", array($userid));
-    $lastaccess = 0 + $DB->get_field_select($loginfo->table, 'MAX('.$loginfo->timeparam.')', "  action = '".$loginfo->loggedin."' AND userid = ? ", array($userid));
-    $cnx->count = $DB->count_records_select($loginfo->table, "  action = ".$loginfo->loggedin." AND userid = ? ", array($userid));
+    $select = " action = ? AND userid = ? ";
+    $params = array($loginfo->loggedin, $userid);
+    $firstaccess = 0 + $DB->get_field_select($loginfo->table, 'MIN('.$loginfo->timeparam.')', $select, $params);
+    $lastaccess = 0 + $DB->get_field_select($loginfo->table, 'MAX('.$loginfo->timeparam.')', $select, $params);
+    $cnx->count = $DB->count_records_select($loginfo->table, $select, $params);
     $tendaysbefore = time() - DAYSECS * 10;
-    $cnx->lastcount = $DB->count_records_select($loginfo->table, "  action = ".$loginfo->loggedin." AND userid = ? AND ".$loginfo->timeparam." > ? ", array($userid, $tendaysbefore));
+    $select = "  action = ? AND userid = ? AND ".$loginfo->timeparam." > ? ";
+    $cnx->lastcount = $DB->count_records_select($loginfo->table, $select, array($loginfo->loggedin, $userid, $tendaysbefore));
 
     // First row.
     echo '<table width="100%" style="border:1px solid #A0A0A0;padding:2px" cellspacing="2">';
-    echo '<tr><td align="left"><b>';
+    echo '<tr>';
+    echo '<td align="left"><b>';
     print_string('firstaccess', 'report_examtraining');
-    echo ' : </b></td><td align="left">';
+    echo ' : </b></td>';
+    echo '<td align="left">';
     echo userdate($firstaccess);
-    echo '</td><td align="left"><b>';
+    echo '</td>';
+    echo '<td align="left"><b>';
     print_string('lastaccess', 'report_examtraining');
-    echo ' : </b></td><td align="left">';
+    echo ' : </b></td>';
+    echo '<td align="left">';
     echo userdate($lastaccess);
-    echo '</td></tr>';
+    echo '</td>';
+    echo '</tr>';
 
     // Second row.
-    echo '<tr><td align="left"><b>';
+    echo '<tr>';
+    echo '<td align="left"><b>';
     print_string('connections', 'report_examtraining');
     echo ' : </b></td><td colspan="3" align="left">';
     echo get_string('connectionscount', 'report_examtraining', $cnx);
-    echo '</td></tr>';
+    echo '</td>';
+    echo '</tr>';
 
     // Third row.
     // Start printing the overall times.
-    echo '<tr><td align="left"><b>';
+    echo '<tr>';
+    echo '<td align="left"><b>';
     print_string('equlearningtime', 'report_examtraining');
     echo '</b></td><td colspan="3" align="left">';
     echo examtraining_reports_format_time(0 + @$data->elapsed, 'html');
-    echo '</td></tr>';
+    echo '</td>';
+    echo '</tr>';
+
     echo '</table>';
 }
 
@@ -571,12 +594,12 @@ function examtraining_reports_init_worksheet($userid, &$xlsformats, &$workbook, 
     $xlsdoc->hide_gridlines();
 
     if (is_null($columndef)) {
-        $xlsdoc->set_column(0,0,48);
-        $xlsdoc->set_column(1,6,11);
+        $xlsdoc->set_column(0, 0, 48);
+        $xlsdoc->set_column(1, 6, 11);
     } else {
         foreach ($columndef as $def) {
-            list($start,$end,$width) = $def;
-            $xlsdoc->set_column($start,$end,$width); 
+            list($start, $end, $width) = $def;
+            $xlsdoc->set_column($start, $end, $width); 
         }
     }
 
@@ -613,7 +636,8 @@ function examtraining_reports_get_questions_rec($catid, &$questionids) {
     global $DB;
     static $level = 0;
 
-    if ($questions = $DB->get_records_select('question', " category = ? AND parent = 0 ", array($catid), 'id', 'id,name,category')) {
+    $select = " category = ? AND parent = 0 ";
+    if ($questions = $DB->get_records_select('question', $select, array($catid), 'id', 'id,name,category')) {
         foreach ($questions as $q) {
             if (!in_array($q->id, $questionids)) {
                 $questionids[] = $q->id;
@@ -689,7 +713,7 @@ function examtraining_print_date_selector($day, $month, $year, $currenttime = 0,
 function examtraining_print_questionstats($orderby) {
     global $COURSE, $USER, $DB;
 
-    $exam_context = examtraining_get_context();
+    $examcontext = examtraining_get_context();
 
     $sql = "
         SELECT
@@ -709,7 +733,7 @@ function examtraining_print_questionstats($orderby) {
             q.name
     ";
 
-    $questionlines = $DB->get_records_sql($sql, array($exam_context->instanceid));
+    $questionlines = $DB->get_records_sql($sql, array($examcontext->instanceid));
 
     $i = 1;
     foreach ($questionlines as $elm) {
@@ -758,7 +782,7 @@ function examtraining_print_questionstats($orderby) {
         LIMIT 0, 50
     ";
 
-    if ($errorquestions = $DB->get_records_sql($sql, array($exam_context->instanceid))) {
+    if ($errorquestions = $DB->get_records_sql($sql, array($examcontext->instanceid))) {
 
         $errorratestr = get_string('errorrate', 'report_examtraining');
         $qnamestr = get_string('qname', 'report_examtraining');
@@ -800,8 +824,8 @@ function examtraining_reports_print_modules_html($userid, $from, $to) {
 function examtraining_get_module_count($userid, $from, $to) {
     global $DB;
 
-    $exam_context = examtraining_get_context();
-    $testquizzes = implode("','", $exam_context->trainingquizzes);
+    $examcontext = examtraining_get_context();
+    $testquizzes = implode("','", $examcontext->trainingquizzes);
 
     $fromclause = ($from) ? " AND qa.timefinish > $from " : '';
     $toclause = ($to) ? " AND qa.timefinish < $to " : '';
@@ -845,7 +869,7 @@ function examtraining_reports_print_assiduity_html($userid, $from, $to) {
     $modulestr = get_string('assiduity', 'report_examtraining');
     $attemptsstr = get_string('attempts', 'userquiz');
 
-    $exam_context = examtraining_get_context();
+    $examcontext = examtraining_get_context();
 
     $fromclause = ($from) ? " AND qa.timefinish > $from " : '';
     $toclause = ($to) ? " AND qa.timefinish < $to " : '';
@@ -898,7 +922,7 @@ function examtraining_reports_print_assiduity2_html($userid, $from, $to) {
     $modulestr = get_string('assiduity', 'report_examtraining');
     $attemptsstr = get_string('attempts', 'userquiz');
 
-    $exam_context = examtraining_get_context();
+    $examcontext = examtraining_get_context();
 
     $fromclause = ($from) ? " AND qa.timefinish > $from " : '';
     $toclause = ($to) ? " AND qa.timefinish < $to " : '';
@@ -967,13 +991,13 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
 
     // Init structure.
 
-    $exam_context = examtraining_get_context();
+    $examcontext = examtraining_get_context();
 
     // We get all states.
     if ($part == 'training') {
-        $quizzeslist = implode("','", $exam_context->trainingquizzes);
+        $quizzeslist = implode("','", $examcontext->trainingquizzes);
     } else {
-        $quizzeslist = str_replace(',', "','", $exam_context->examquiz);
+        $quizzeslist = str_replace(',', "','", $examcontext->examquiz);
     }
 
     // Category cache.
@@ -987,7 +1011,7 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
     // prefetch categories structure
 
     $cats = new StdClass;
-    $totalquestions = count_questions_in_categories_rec($exam_context->rootcategory, $cats);
+    $totalquestions = count_questions_in_categories_rec($examcontext->rootcategory, $cats);
 
     // compute results
 
@@ -1054,7 +1078,7 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
                             $results->categories[$currentcat->id]->{$cp}++;
                             $results->categories[$currentcat->id]->{$cpt}++;
                             $currentcat = &$qcategories[$currentcat->parent];
-                        } while ($currentcat && ($previouscatid != $exam_context->rootcategory));
+                        } while ($currentcat && ($previouscatid != $examcontext->rootcategory));
                     }
                 }
                 $statesrs->close();
@@ -1095,9 +1119,9 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
             } else {
                 $results->categories[$catid]->ratio = 0;
             }
-            if ($catid != $exam_context->rootcategory) {
+            if ($catid != $examcontext->rootcategory) {
                 $cat = get_record('question_categories', 'id', $catid);
-                if ($cat->parent == $exam_context->rootcategory) {
+                if ($cat->parent == $examcontext->rootcategory) {
                     if (@$cats->subs[$catid]->count > 0) {
                         $results->categories[$catid]->mastering = (0 + @$results->categories[$catid]->count_matched) / $cats->subs[$catid]->count * 40;
                         $results->masteringdata[$catid] = min(100, $results->categories[$catid]->mastering);
@@ -1146,24 +1170,24 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
         }
     }
 
-    if (isset($results->categories[$exam_context->rootcategory])) {
-        $results->items = @$results->categories[$exam_context->rootcategory]->count_proposed_C + @$results->categories[$exam_context->rootcategory]->count_proposed_A;
-        $results->done = @$results->categories[$exam_context->rootcategory]->count_matched_C + @$results->categories[$exam_context->rootcategory]->count_matched_A;
+    if (isset($results->categories[$examcontext->rootcategory])) {
+        $results->items = @$results->categories[$examcontext->rootcategory]->count_proposed_C + @$results->categories[$examcontext->rootcategory]->count_proposed_A;
+        $results->done = @$results->categories[$examcontext->rootcategory]->count_matched_C + @$results->categories[$examcontext->rootcategory]->count_matched_A;
 
         if ($cats->count > 0) {
-            $results->categories[$exam_context->rootcategory]->mastering = (0 + @$results->categories[$exam_context->rootcategory]->count_matched) / $cats->count * 40;
+            $results->categories[$examcontext->rootcategory]->mastering = (0 + @$results->categories[$examcontext->rootcategory]->count_matched) / $cats->count * 40;
         } else {
-            $results->categories[$exam_context->rootcategory]->mastering = 0;
+            $results->categories[$examcontext->rootcategory]->mastering = 0;
         }
         if ($cats->count_a > 0) {
-            $results->categories[$exam_context->rootcategory]->mastering_A = (0 + @$results->categories[$exam_context->rootcategory]->count_matched_A) / $cats->count_a * 40;
+            $results->categories[$examcontext->rootcategory]->mastering_A = (0 + @$results->categories[$examcontext->rootcategory]->count_matched_A) / $cats->count_a * 40;
         } else {
-            $results->categories[$exam_context->rootcategory]->mastering_A = 0;
+            $results->categories[$examcontext->rootcategory]->mastering_A = 0;
         }
         if ($cats->count_c > 0) {
-            $results->categories[$exam_context->rootcategory]->mastering_C = (0 + @$results->categories[$exam_context->rootcategory]->count_matched_C) / $cats->count_c * 40;
+            $results->categories[$examcontext->rootcategory]->mastering_C = (0 + @$results->categories[$examcontext->rootcategory]->count_matched_C) / $cats->count_c * 40;
         } else {
-            $results->categories[$exam_context->rootcategory]->mastering_C = 0;
+            $results->categories[$examcontext->rootcategory]->mastering_C = 0;
         }
     }
     return $results;
@@ -1180,11 +1204,11 @@ function examtraining_compute_global_results($userid, $from, $to) {
 
     // Init structure.
 
-    $exam_context = examtraining_get_context();
+    $examcontext = examtraining_get_context();
 
     // We get all states.
-    $quizzeslist = implode("','", $exam_context->testquizzes);
-    $examquizzeslist = str_replace(',', "','", $exam_context->examquizzes);
+    $quizzeslist = implode("','", $examcontext->testquizzes);
+    $examquizzeslist = str_replace(',', "','", $examcontext->examquizzes);
 
     $results = new StdClass;
     if (!isset($questions)) {
@@ -1269,7 +1293,7 @@ function examtraining_compute_global_results($userid, $from, $to) {
     $results->done = @$results->count_matched;
 
     $questionids = array();
-    examtraining_reports_get_questions_rec($exam_context->rootcategory, $questionids);
+    examtraining_reports_get_questions_rec($examcontext->rootcategory, $questionids);
     $questioncount = count($questionids);
     if ($questioncount) {
         $results->knowledge_covering_ratio = round(count($distinctquestions) / $questioncount * 100);

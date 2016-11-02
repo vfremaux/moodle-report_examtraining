@@ -46,14 +46,14 @@ $batchcontext->from = optional_param('from', -1, PARAM_INT);
 $batchcontext->to = optional_param('to', -1, PARAM_INT);
 
 // Just for code reuse. We don'nt use any form.
-$startday = optional_param('startday', -1, PARAM_INT) ; // From (-1 is from course start).
-$startmonth = optional_param('startmonth', -1, PARAM_INT) ; // From (-1 is from course start).
-$startyear = optional_param('startyear', -1, PARAM_INT) ; // From (-1 is from course start).
-$endday = optional_param('endday', -1, PARAM_INT) ; // To (-1 is till now).
-$endmonth = optional_param('endmonth', -1, PARAM_INT) ; // To (-1 is till now).
-$endyear = optional_param('endyear', -1, PARAM_INT) ; // To (-1 is till now).
+$startday = optional_param('startday', -1, PARAM_INT); // From (-1 is from course start).
+$startmonth = optional_param('startmonth', -1, PARAM_INT); // From (-1 is from course start).
+$startyear = optional_param('startyear', -1, PARAM_INT); // From (-1 is from course start).
+$endday = optional_param('endday', -1, PARAM_INT); // To (-1 is till now).
+$endmonth = optional_param('endmonth', -1, PARAM_INT); // To (-1 is till now).
+$endyear = optional_param('endyear', -1, PARAM_INT); // To (-1 is till now).
 
-$filename = optional_param('filename', '', PARAM_TEXT) ; // 
+$filename = optional_param('filename', '', PARAM_TEXT);
 
 if ($batchcontext->from == -1) {
     // Maybe we get it from parameters.
@@ -87,15 +87,18 @@ $context = context_course::instance($courseid);
 $limit = optional_param('limit', 20, PARAM_INT);
 if ($limit) {
     $start = (0 + @$CFG->runs) * $limit;
-    $batchcontext->sourcerecs = get_users_by_capability($context, 'moodle/course:view', 'u.id, '.get_all_user_name_fields(true, 'u').', email, institution', 'lastname', $start, $limit);
+    $fields = 'u.id, '.get_all_user_name_fields(true, 'u').', email, institution';
+    $batchcontext->sourcerecs = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname', $start, $limit);
     $reccount = count($batchcontext->sourcerecs);
 } else {
-    $batchcontext->sourcerecs = get_users_by_capability($context, 'moodle/course:view', 'u.id, '.get_all_user_name_fields(true, 'u').', email, institution', 'lastname');
+    $fields = 'u.id, '.get_all_user_name_fields(true, 'u').', email, institution';
+    $batchcontext->sourcerecs = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname');
 }
 
 // We make the filename once, and then reopen each time.
 $timestamp = time();
-$batchcontext->filename = (empty($filename)) ? "examtraining_fullraw_{$timestamp}.csv" : $filename ;
+$batchcontext->filename = (empty($filename)) ? "examtraining_fullraw_{$timestamp}.csv" : $filename;
 
-batch('report_compile_users_preworker', 'report_compile_users_worker', 'report_compile_users_postworker', 'user', ' 1 ', $batchcontext);
+batch('report_compile_users_preworker', 'report_compile_users_worker', 'report_compile_users_postworker', 'user',
+      ' 1 ', $batchcontext);
 
