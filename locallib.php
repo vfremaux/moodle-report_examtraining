@@ -1,9 +1,32 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-require_once $CFG->dirroot.'/blocks/userquiz_monitor/block_userquiz_monitor_lib.php';
-require_once $CFG->libdir.'/questionlib.php';
-require_once $CFG->dirroot.'/report/examtraining/statscompilelib.php';
-require_once 'excelformats.php';
+/**
+ * This file contains functions used by the examtraining report
+ *
+ * @package     report_examtraining
+ * @category    report
+ * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+require_once($CFG->dirroot.'/blocks/userquiz_monitor/block_userquiz_monitor_lib.php');
+require_once($CFG->libdir.'/questionlib.php');
+require_once($CFG->dirroot.'/report/examtraining/statscompilelib.php');
+require_once($CFG->dirroot.'/report/examtraining/excelformats.php');
 
 /**
  * Returns proper info to query log 
@@ -25,7 +48,7 @@ function examtraining_get_log_reader_info() {
         $readerinfo->table = 'logstore_standard_log';
         $readerinfo->timeparam = 'timecreated';
         $readerinfo->loggedin = 'loggedin';
-    } elseif($reader instanceof \logstore_legacy\log\store) {
+    } else if($reader instanceof \logstore_legacy\log\store) {
         $readerinfo = new StdClass;
         $readerinfo->courseparam = 'course';
         $readerinfo->table = 'log';
@@ -46,17 +69,22 @@ function count_questions_in_categories_rec($rootcatid, &$cats) {
 
     if (!isset($countcache[$level])) {
 
-        // count real questions
-        $cats->count = $DB->count_records_select('question', " category = ? AND parent = 0 AND hidden = 0 ", array($rootcatid));
-        $cats->count_a = $DB->count_records_select('question', "category = ? AND parent = 0 AND defaultmark = 1 AND hidden = 0 ", array($rootcatid));
-        $cats->count_c = $DB->count_records_select('question', "category = ? AND parent = 0 AND defaultmark = 1000 AND hidden = 0 ", array($rootcatid));
-        
+        // Count real questions.
+        $select = " category = ? AND parent = 0 AND hidden = 0 ";
+        $cats->count = $DB->count_records_select('question', $select, array($rootcatid));
+        $select = "category = ? AND parent = 0 AND defaultmark = 1 AND hidden = 0 ";
+        $cats->count_a = $DB->count_records_select('question', $select, array($rootcatid));
+        $select = "category = ? AND parent = 0 AND defaultmark = 1000 AND hidden = 0 ";
+        $cats->count_c = $DB->count_records_select('question', $select, array($rootcatid));
+
         $childs = $DB->get_records('question_categories', array('parent' => $rootcatid), 'id,id');
-        
-        if ($childs){
+
+        if ($childs) {
             $cats->subs = array();
-            foreach($childs as $subcat){
-                if ($subcat->id == $rootcatid) continue;
+            foreach ($childs as $subcat) {
+                if ($subcat->id == $rootcatid) {
+                    continue;
+                }
                 $subs = new StdClass;
                 $level++;
                 count_questions_in_categories_rec($subcat->id, $subs);
@@ -79,17 +107,16 @@ function count_questions_in_categories_rec($rootcatid, &$cats) {
     }
 }
 
-/*********************** RASTERS FOR OUTPUT ************************************/
+// RASTERS FOR OUTPUT ***************************************************************.
 
 /**
  * a raster for printing training results in an XLS sheet.
- *
  */
-function examtraining_reports_print_trainings_xls(&$xlsdoc, $startrow, $xls_formats, $userid, $courseid, &$results) {
+function examtraining_reports_print_trainings_xls(&$xlsdoc, $startrow, $xlsformats, $userid, $courseid, &$results) {
     global $CFG;
 
     include_once($CFG->dirroot.'/report/examtraining/xlsrenderer.php');
-    $renderer = new report_examtraining_xls_renderer($xlsdoc, $startrow, $xls_formats, $userid, $courseid, $results);
+    $renderer = new report_examtraining_xls_renderer($xlsdoc, $startrow, $xlsformats, $userid, $courseid, $results);
     return $renderer->trainings();
 }
 
@@ -100,7 +127,7 @@ function examtraining_reports_print_trainings_xls(&$xlsdoc, $startrow, $xls_form
  * @param object $structure a course structure object.
  */
 function examtraining_reports_print_exams_summary_html($userid, $from, $to) {
-    global $CFG, $PAGE;
+    global $PAGE;
 
     $renderer = $PAGE->get_renderer('report_examtraining');
     echo $renderer->exams_summary($userid, $from, $to);
@@ -108,9 +135,8 @@ function examtraining_reports_print_exams_summary_html($userid, $from, $to) {
 
 /**
  * a raster for printing exam results in XSL.
- *
  */
-function examtraining_reports_print_exams_xls(&$amf_, $startrow, $xls_formats, $userid) {
+function examtraining_reports_print_exams_xls(&$xlsdoc, $startrow, $xlsformats, $userid) {
     global $CFG;
 
     $exam_context = examtraining_get_context();
@@ -123,17 +149,17 @@ function examtraining_reports_print_exams_xls(&$amf_, $startrow, $xls_formats, $
     $Acountstr = get_string('countA', 'report_examtraining');
     $Ccountstr = get_string('countC', 'report_examtraining');
 
-    $amf_->write_string($startrow,0, get_string('examtries', 'report_examtraining'), $xls_formats['t']);
-    $amf_->merge_cells($startrow,0,$startrow,6);
+    $xlsdoc->write_string($startrow, 0, get_string('examtries', 'report_examtraining'), $xlsformats['t']);
+    $xlsdoc->merge_cells($startrow, 0, $startrow, 6);
     $startrow++;
 
-    $amf_->write_string($startrow,0,$tryindexstr,$xls_formats['tt']);
-    $amf_->write_string($startrow,1,$datestr,$xls_formats['tt']);
-    $amf_->write_string($startrow,2,$ratiostr,$xls_formats['tt']);
-    $amf_->write_string($startrow,3,$Aratiostr,$xls_formats['tt']);
-    $amf_->write_string($startrow,4,$Cratiostr,$xls_formats['tt']);
-    $amf_->write_string($startrow,5,$Acountstr,$xls_formats['tt']);
-    $amf_->write_string($startrow,6,$Ccountstr,$xls_formats['tt']);
+    $xlsdoc->write_string($startrow, 0, $tryindexstr, $xlsformats['tt']);
+    $xlsdoc->write_string($startrow, 1, $datestr, $xlsformats['tt']);
+    $xlsdoc->write_string($startrow, 2, $ratiostr, $xlsformats['tt']);
+    $xlsdoc->write_string($startrow, 3, $Aratiostr, $xlsformats['tt']);
+    $xlsdoc->write_string($startrow, 4, $Cratiostr, $xlsformats['tt']);
+    $xlsdoc->write_string($startrow, 5, $Acountstr, $xlsformats['tt']);
+    $xlsdoc->write_string($startrow, 6, $Ccountstr, $xlsformats['tt']);
     $startrow++;
 
     ksort($results->attempts);
@@ -142,29 +168,29 @@ function examtraining_reports_print_exams_xls(&$amf_, $startrow, $xls_formats, $
     if (!empty($results->attempts)) {
         foreach ($results->attempts as $attemptid => $attemptres) {
 
-            // fix ratios for exam because exam must always propose 100 questions
+            // Fix ratios for exam because exam must always propose 100 questions.
             $attemptres->ratio = $attemptres->ratio * $attemptres->count_proposed / 100;
 
-            $amf_->write_string($startrow,0,$i,$xls_formats['p']);
-            $amf_->write_string($startrow,1,examtraining_reports_format_time($attemptres->timefinish, 'xls'),$xls_formats['zt']);
-            $amf_->write_string($startrow,2,($attemptres->ratio + 0).' %',$xls_formats['p']);
-            $amf_->write_string($startrow,3,(@$attemptres->ratio_A + 0).' %',$xls_formats['p']);
-            $amf_->write_string($startrow,4,(@$attemptres->ratio_C + 0).' %',$xls_formats['p']);
-            $amf_->write_string($startrow,5,@$attemptres->count_answered_A + 0,$xls_formats['p']);
-            $amf_->write_string($startrow,6,@$attemptres->count_answered_A + 0,$xls_formats['p']);
+            $xlsdoc->write_string($startrow, 0, $i, $xlsformats['p']);
+            $xlsdoc->write_string($startrow, 1, examtraining_reports_format_time($attemptres->timefinish, 'xls'), $xlsformats['zt']);
+            $xlsdoc->write_string($startrow, 2, ($attemptres->ratio + 0).' %', $xlsformats['p']);
+            $xlsdoc->write_string($startrow, 3, (@$attemptres->ratio_A + 0).' %', $xlsformats['p']);
+            $xlsdoc->write_string($startrow, 4, (@$attemptres->ratio_C + 0).' %', $xlsformats['p']);
+            $xlsdoc->write_string($startrow, 5, @$attemptres->count_answered_A + 0, $xlsformats['p']);
+            $xlsdoc->write_string($startrow, 6, @$attemptres->count_answered_A + 0, $xlsformats['p']);
             $startrow++;
 
             $i++;
         }
     } else {
-        $amf_->write_string($startrow,0, get_string('examtries', 'report_examtraining'),$xls_formats['t']);    
-        $amf_->merge_cells($startrow,0,$startrow,6);
+        $xlsdoc->write_string($startrow, 0, get_string('examtries', 'report_examtraining'),$xlsformats['t']);
+        $xlsdoc->merge_cells($startrow, 0, $startrow, 6);
         $startrow++;
-        $amf_->write_string($startrow,0, get_string('noexamtries', 'report_examtraining'),$xls_formats['tt']);    
+        $xlsdoc->write_string($startrow, 0, get_string('noexamtries', 'report_examtraining'),$xlsformats['tt']);
         $startrow++;
     }
 
-    // jump a line
+    // Jump a line.
     $startrow++;
 
     return $startrow;
@@ -185,13 +211,13 @@ function examtraining_reports_print_radar_html($userid, $from, $to) {
     $subcatdata = count_questions_in_categories_rec($exam_context->rootcategory, $subcats);
     $quizzes = implode(',', $exam_context->testquizzes);
     $matched = userquiz_get_user_subcats($userid, $quizzes, $from, $to);
-    
-    // for each root cat, calculate the hitratio
+
+    // For each root cat, calculate the hitratio.
     $maincats = $DB->get_records('question_categories', 'parent', $exam_context->rootcategory, 'sortorder', 'id, name');
     $radardata = array();
     $radarheaders = array();
     if ($matched) {
-        foreach($maincats as $id => $cat) {
+        foreach ($maincats as $id => $cat) {
             $radardata[] = (!empty($matched[$cat->id]->qcount)) ? 0 + (@$matched[$cat->id]->amatched + @$matched[$cat->id]->cmatched) / $matched[$cat->id]->qcount * 100 : 0 ;
             $radarheaders[] = substr($cat->name, 0, 14);
         }
@@ -240,12 +266,12 @@ function examtraining_reports_print_header_html($userid, $courseid, $data, $issh
     echo fullname($user);
     echo '</td><td align="center" width="20%">';
 
-    // get group
+    // Get group.
     $usergroups = groups_get_all_groups($courseid, $userid, 0, 'g.id, g.name');
-    // print group status
+    // Print group status.
 
     if (!empty($usergroups)) {
-        foreach($usergroups as $group) {
+        foreach ($usergroups as $group) {
             $str = $group->name;
             if ($group->id == get_current_group($courseid)) {
                 $str = "<b>$str</b>";
@@ -282,7 +308,7 @@ function examtraining_reports_print_times_html($userid, &$data) {
     $tendaysbefore = time() - DAYSECS * 10;
     $cnx->lastcount = $DB->count_records_select($loginfo->table, "  action = ".$loginfo->loggedin." AND userid = ? AND ".$loginfo->timeparam." > ? ", array($userid, $tendaysbefore));
 
-    // First row
+    // First row.
     echo '<table width="100%" style="border:1px solid #A0A0A0;padding:2px" cellspacing="2">';
     echo '<tr><td align="left"><b>';
     print_string('firstaccess', 'report_examtraining');
@@ -294,90 +320,89 @@ function examtraining_reports_print_times_html($userid, &$data) {
     echo userdate($lastaccess);
     echo '</td></tr>';
 
-    // Second row
+    // Second row.
     echo '<tr><td align="left"><b>';
     print_string('connections', 'report_examtraining');
     echo ' : </b></td><td colspan="3" align="left">';
     echo get_string('connectionscount', 'report_examtraining', $cnx);
     echo '</td></tr>';
 
-    // Third row
-    // Start printing the overall times
+    // Third row.
+    // Start printing the overall times.
     echo '<tr><td align="left"><b>';
     print_string('equlearningtime', 'report_examtraining');
     echo '</b></td><td colspan="3" align="left">';
     echo examtraining_reports_format_time(0 + @$data->elapsed, 'html');
-    // echo ' ( '.(0 + @$data->events).' hit(s) )';
     echo '</td></tr>';
     echo '</table>';
 }
 
 /**
-*
-*
-*/
-function examtraining_reports_print_globalheader_xls(&$amf_, &$xls_formats, &$row){
-    
+ *
+ *
+ */
+function examtraining_reports_print_globalheader_xls(&$xlsdoc, &$xlsformats, &$row) {
+
      $col = 0;
 
-    $resultset[] = get_string('entity', 'report_examtraining'); // groupname
-    $amf_->write_string($row, $col, $data, $xls_formats['pl']);    
+    $resultset[] = get_string('entity', 'report_examtraining'); // Groupname.
+    $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
     $col++;
 
-    $resultset[] = get_string('id', 'report_examtraining'); // userid
-    $amf_->write_string($row, $col, $data, $xls_formats['pl']);    
+    $resultset[] = get_string('id', 'report_examtraining'); // Userid.
+    $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
     $col++;
 
-    $resultset[] = get_string('startdate', 'report_examtraining'); // username 
-    $amf_->write_string($row, $col, $data, $xls_formats['pl']);    
+    $resultset[] = get_string('startdate', 'report_examtraining'); // Start date.
+    $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
     $col++;
 
-    $resultset[] = get_string('lastname', 'report_examtraining'); // user name 
-    $amf_->write_string($row, $col, $data, $xls_formats['pl']);    
+    $resultset[] = get_string('lastname', 'report_examtraining'); // Last name.
+    $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
     $col++;
 
-    $resultset[] = get_string('firstname', 'report_examtraining'); // user name 
-    $amf_->write_string($row, $col, $data, $xls_formats['pl']);    
+    $resultset[] = get_string('firstname', 'report_examtraining'); // First name.
+    $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
     $col++;
 
     $resultset[] = get_string('timeelapsed', 'report_examtraining');
-    $amf_->write_string($row, $col, $data, $xls_formats['pl']);    
+    $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
     $col++;
 
     $resultset[] = get_string('timeelapsedcurweek', 'report_examtraining');
-    $amf_->write_string($row, $col, $data, $xls_formats['pl']);    
+    $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
     $col++;
 
     $resultset[] = get_string('answeredquestions', 'report_examtraining');
-    $amf_->write_string($row, $col, $data, $xls_formats['pl']);    
+    $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
     $col++;
 
     $resultset[] = get_string('answeredquestionscurweek', 'report_examtraining');
-    $amf_->write_string($row, $col, $data, $xls_formats['pl']);    
+    $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
     $col++;
 
     $resultset[] = get_string('ratioa', 'report_examtraining');
-    $amf_->write_string($row, $col, $data, $xls_formats['pl']);    
+    $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
     $col++;
 
     $resultset[] = get_string('ratioacurweek', 'report_examtraining');
-    $amf_->write_string($row, $col, $data, $xls_formats['pl']);    
+    $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
     $col++;
 
     $resultset[] = get_string('ratioc', 'report_examtraining');
-    $amf_->write_string($row, $col, $data, $xls_formats['pl']);    
+    $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
     $col++;
 
     $resultset[] = get_string('ratioccurweek', 'report_examtraining');
-    $amf_->write_string($row, $col, $data, $xls_formats['pl']);    
+    $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
     $col++;
 
     $resultset[] = get_string('examsuccess', 'report_examtraining');
-    $amf_->write_string($row, $col, $data, $xls_formats['pl']);    
+    $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
     $col++;
 
     $data = get_string('examattempts', 'report_examtraining');
-    $amf_->write_string($row, $col, $data, $xls_formats['pl']);    
+    $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
     $col++;
 
 }
@@ -389,9 +414,9 @@ function examtraining_reports_print_globalheader_xls(&$amf_, &$xls_formats, &$ro
 function examtraining_reports_format_time($timevalue, $mode = 'html') {
     if ($timevalue) {
         if ($mode == 'html') {
-            return ceil($timevalue / HOURSECS) . ' ' . get_string('hours', 'report_examtraining');
+            return ceil($timevalue / HOURSECS).' '.get_string('hours', 'report_examtraining');
         } else {
-            // for excel time format we need have a fractional day value
+            // For excel time format we need have a fractional day value.
             return  $timevalue / DAYSECS;
         }
     } else {
@@ -400,11 +425,10 @@ function examtraining_reports_format_time($timevalue, $mode = 'html') {
 }
 
 /**
-* a raster for xls printing of a report structure header
-* with all the relevant data about a user.
-*
-*/
-function examtraining_reports_print_header_xls(&$amf_, $userid, $courseid, $data, $xls_formats) {
+ * a raster for xls printing of a report structure header
+ * with all the relevant data about a user.
+ */
+function examtraining_reports_print_header_xls(&$xlsdoc, $userid, $courseid, $data, $xlsformats) {
     global $CFG, $DB;
 
     $loginfo = examtraining_get_log_reader_info();
@@ -414,52 +438,52 @@ function examtraining_reports_print_header_xls(&$amf_, $userid, $courseid, $data
 
     $row = 0;
 
-    $amf_->write_string($row, 0, get_string('progressionreport', 'report_examtraining'), $xls_formats['t']);
-    $amf_->merge_cells($row, 0, $row, 12);
+    $xlsdoc->write_string($row, 0, get_string('progressionreport', 'report_examtraining'), $xlsformats['t']);
+    $xlsdoc->merge_cells($row, 0, $row, 12);
     $row++;
 
-    $amf_->write_string($row, 0, get_string('user').' :', $xls_formats['ctr']);
-    $amf_->write_string($row, 1, fullname($user), $xls_formats['pl']);
-    $amf_->merge_cells($row, 1, $row, 12);
+    $xlsdoc->write_string($row, 0, get_string('user').' :', $xlsformats['ctr']);
+    $xlsdoc->write_string($row, 1, fullname($user), $xlsformats['pl']);
+    $xlsdoc->merge_cells($row, 1, $row, 12);
     $row++;
 
-    $amf_->write_string($row, 0, get_string('email').' :', $xls_formats['ctr']);
-    $amf_->write_string($row, 1, $user->email, $xls_formats['pl']);
-    $amf_->merge_cells($row, 1, $row, 12);
+    $xlsdoc->write_string($row, 0, get_string('email').' :', $xlsformats['ctr']);
+    $xlsdoc->write_string($row, 1, $user->email, $xlsformats['pl']);
+    $xlsdoc->merge_cells($row, 1, $row, 12);
     $row++;
 
-    $amf_->write_string($row, 0, get_string('city').' :', $xls_formats['ctr']);
-    $amf_->write_string($row, 1, $user->city, $xls_formats['pl']);
-    $amf_->merge_cells($row, 1, $row, 12);
+    $xlsdoc->write_string($row, 0, get_string('city').' :', $xlsformats['ctr']);
+    $xlsdoc->write_string($row, 1, $user->city, $xlsformats['pl']);
+    $xlsdoc->merge_cells($row, 1, $row, 12);
     $row++;
 
-    $amf_->write_string($row, 0, get_string('institution').' :', $xls_formats['ctr']);
-    $amf_->write_string($row, 1, $user->institution, $xls_formats['pl']);
-    $amf_->merge_cells($row, 1, $row, 12);
+    $xlsdoc->write_string($row, 0, get_string('institution').' :', $xlsformats['ctr']);
+    $xlsdoc->write_string($row, 1, $user->institution, $xlsformats['pl']);
+    $xlsdoc->merge_cells($row, 1, $row, 12);
     $row++;
 
-    $amf_->write_string($row, 0, get_string('course', 'report_examtraining').' :', $xls_formats['ctr']);
-    $amf_->write_string($row, 1, $course->fullname, $xls_formats['pl']);
-    $amf_->merge_cells($row, 1, $row, 12);
+    $xlsdoc->write_string($row, 0, get_string('course', 'report_examtraining').' :', $xlsformats['ctr']);
+    $xlsdoc->write_string($row, 1, $course->fullname, $xlsformats['pl']);
+    $xlsdoc->merge_cells($row, 1, $row, 12);
     $row++;
 
-    $amf_->write_string($row, 0, get_string('from').' :', $xls_formats['ctr']);
-    $amf_->write_string($row, 1, userdate($data->from), $xls_formats['pl']);
-    $amf_->merge_cells($row, 1, $row, 12);
+    $xlsdoc->write_string($row, 0, get_string('from').' :', $xlsformats['ctr']);
+    $xlsdoc->write_string($row, 1, userdate($data->from), $xlsformats['pl']);
+    $xlsdoc->merge_cells($row, 1, $row, 12);
     $row++;
 
-    $amf_->write_string($row, 0, get_string('to').' :', $xls_formats['ctr']);
-    $amf_->write_string($row, 1, userdate($data->to), $xls_formats['pl']);
-    $amf_->merge_cells($row, 1, $row, 12);
+    $xlsdoc->write_string($row, 0, get_string('to').' :', $xlsformats['ctr']);
+    $xlsdoc->write_string($row, 1, userdate($data->to), $xlsformats['pl']);
+    $xlsdoc->merge_cells($row, 1, $row, 12);
     $row++;
 
     $usergroups = groups_get_all_groups($courseid, $userid, 0, 'g.id, g.name');
 
-    // print group status
-    $amf_->write_string($row, 0, get_string('groups').' :', $xls_formats['ctr']);
+    // Print group status.
+    $xlsdoc->write_string($row, 0, get_string('groups').' :', $xlsformats['ctr']);
     $str = '';
     if (!empty($usergroups)) {
-        foreach($usergroups as $group) {
+        foreach ($usergroups as $group) {
             $str = $group->name;
             if ($group->id == groups_get_course_group($courseid)) {
                 $str = "[$str]";
@@ -468,29 +492,29 @@ function examtraining_reports_print_header_xls(&$amf_, $userid, $courseid, $data
         }
         $str = implode(', ', $groupnames);
     }
-    $amf_->write_string($row, 1, $str, $xls_formats['pl']);
-    $amf_->merge_cells($row, 1, $row, 12);
+    $xlsdoc->write_string($row, 1, $str, $xlsformats['pl']);
+    $xlsdoc->merge_cells($row, 1, $row, 12);
     $row++;
 
     $context = context_course::instance($courseid);
-    $amf_->write_string($row, 0, get_string('roles').' :', $xls_formats['ctr']);
-    $amf_->write_string($row, 1, strip_tags(get_user_roles_in_context($userid, $context)), $xls_formats['pl']);
-    $amf_->merge_cells($row, 1, $row, 12);
+    $xlsdoc->write_string($row, 0, get_string('roles').' :', $xlsformats['ctr']);
+    $xlsdoc->write_string($row, 1, strip_tags(get_user_roles_in_context($userid, $context)), $xlsformats['pl']);
+    $xlsdoc->merge_cells($row, 1, $row, 12);
     $row++;
 
-    $amf_->write_string($row, 0, get_string('ratioA', 'report_examtraining'), $xls_formats['ctr']);
-    $amf_->write_string($row, 1, 0 + @$data->ahitratio.' %', $xls_formats['pl']);
-    $amf_->merge_cells($row, 1, $row, 12);
+    $xlsdoc->write_string($row, 0, get_string('ratioA', 'report_examtraining'), $xlsformats['ctr']);
+    $xlsdoc->write_string($row, 1, 0 + @$data->ahitratio.' %', $xlsformats['pl']);
+    $xlsdoc->merge_cells($row, 1, $row, 12);
     $row++;
 
-    $amf_->write_string($row, 0, get_string('ratioC', 'report_examtraining'), $xls_formats['ctr']);
-    $amf_->write_string($row, 1, 0 + @$data->chitratio.' %', $xls_formats['pl']);
-    $amf_->merge_cells($row, 1, $row, 12);
+    $xlsdoc->write_string($row, 0, get_string('ratioC', 'report_examtraining'), $xlsformats['ctr']);
+    $xlsdoc->write_string($row, 1, 0 + @$data->chitratio.' %', $xlsformats['pl']);
+    $xlsdoc->merge_cells($row, 1, $row, 12);
     $row++;
 
-    $amf_->write_string($row, 0, get_string('elapsed', 'report_examtraining').' :', $xls_formats['ctr']);
-    $amf_->write_number($row, 1, examtraining_reports_format_time(0 + @$data->elapsed, 'xls'), $xls_formats['ztl']);
-    $amf_->merge_cells($row, 1, $row, 12);
+    $xlsdoc->write_string($row, 0, get_string('elapsed', 'report_examtraining').' :', $xlsformats['ctr']);
+    $xlsdoc->write_number($row, 1, examtraining_reports_format_time(0 + @$data->elapsed, 'xls'), $xlsformats['ztl']);
+    $xlsdoc->merge_cells($row, 1, $row, 12);
     $row++;
 
     $sql = "
@@ -502,10 +526,10 @@ function examtraining_reports_print_header_xls(&$amf_, $userid, $courseid, $data
             userid = ?
     ";
     $firstcon = $DB->get_record_sql($sql, array($userid));
-    $amf_->write_string($row, 0, get_string('firstconnection', 'report_examtraining').' :', $xls_formats['ctr']);
+    $xlsdoc->write_string($row, 0, get_string('firstconnection', 'report_examtraining').' :', $xlsformats['ctr']);
     $mintime = ($firstcon->mintime) ? userdate($firstcon->mintime) : get_string('never');
-    $amf_->write_string($row, 1, $mintime, $xls_formats['pl']);
-    $amf_->merge_cells($row, 1, $row, 12);
+    $xlsdoc->write_string($row, 1, $mintime, $xlsformats['pl']);
+    $xlsdoc->merge_cells($row, 1, $row, 12);
     $row++;
 
     $sql = "
@@ -517,13 +541,13 @@ function examtraining_reports_print_header_xls(&$amf_, $userid, $courseid, $data
             userid = ?
     ";
     $lastcon = $DB->get_record_sql($sql, array($userid));
-    $amf_->write_string($row, 0, get_string('lastconnection', 'report_examtraining').' :', $xls_formats['ctr']);    
+    $xlsdoc->write_string($row, 0, get_string('lastconnection', 'report_examtraining').' :', $xlsformats['ctr']);    
     $maxtime = ($lastcon->maxtime) ? userdate($lastcon->maxtime) : get_string('never') ;
-    $amf_->write_string($row, 1, $maxtime, $xls_formats['pl']);
-    $amf_->merge_cells($row, 1, $row, 12);    
+    $xlsdoc->write_string($row, 1, $maxtime, $xlsformats['pl']);
+    $xlsdoc->merge_cells($row, 1, $row, 12);    
     $row++;
 
-    // jump a line
+    // Jump a line.
     $row++;
 
     return $row;
@@ -531,32 +555,32 @@ function examtraining_reports_print_header_xls(&$amf_, $userid, $courseid, $data
 
 
 /**
-* initializes a new amf_ with static formats
-* @param int $userid
-* @param int $startrow
-* @param array $xls_formats
-* @param object $workbook
-* @return the initialized amf_.
-*/
-function examtraining_reports_init_worksheet($userid, &$xls_formats, &$workbook, $columndef = null){
+ * initializes a new amf_ with static formats
+ * @param int $userid
+ * @param int $startrow
+ * @param array $xlsformats
+ * @param object $workbook
+ * @return the initialized xlsdoc.
+ */
+function examtraining_reports_init_worksheet($userid, &$xlsformats, &$workbook, $columndef = null) {
     global $DB;
 
     $user = $DB->get_record('user', array('id' => $userid));
     $sheettitle = mb_convert_encoding(fullname($user), 'ISO-8859-1', 'UTF-8');
-    $amf_ =& $workbook->add_worksheet($sheettitle);
-    $amf_->hide_gridlines();
+    $xlsdoc =& $workbook->add_worksheet($sheettitle);
+    $xlsdoc->hide_gridlines();
 
     if (is_null($columndef)) {
-        $amf_->set_column(0,0,48); 
-        $amf_->set_column(1,6,11); 
+        $xlsdoc->set_column(0,0,48);
+        $xlsdoc->set_column(1,6,11);
     } else {
-        foreach($columndef as $def){
+        foreach ($columndef as $def) {
             list($start,$end,$width) = $def;
-            $amf_->set_column($start,$end,$width); 
+            $xlsdoc->set_column($start,$end,$width); 
         }
     }
-    
-    return $amf_;
+
+    return $xlsdoc;
 }
 
 /**
@@ -566,21 +590,23 @@ function examtraining_reports_init_worksheet($userid, &$xls_formats, &$workbook,
 function examtraining_get_context($courseid = 0, $passthru = false) {
     global $COURSE, $DB;
 
-    if (!$courseid) $courseid = $COURSE->id;
+    if (!$courseid) {
+        $courseid = $COURSE->id;
+    }
 
     $coursecontext = context_course::instance($COURSE->id);
-    if (!$instance = $DB->get_record('block_instances', array('blockname' => 'userquiz_monitor', 'parentcontextid' => $coursecontext->id))) {
+    $params = array('blockname' => 'userquiz_monitor', 'parentcontextid' => $coursecontext->id);
+    if (!$instance = $DB->get_record('block_instances', $params)) {
         if (!$passthru) print_error('no userquiz monitor here', 'block_userquiz_monitor');
         return false;
     }
 
-    $theBlock = block_instance('userquiz_monitor', $instance);
-    $theBlock->config->instanceid = $instance->id;
-    return $theBlock->config;
+    $theblock = block_instance('userquiz_monitor', $instance);
+    $theblock->config->instanceid = $instance->id;
+    return $theblock->config;
 }
 
-
-/** 
+/**
  * recursively get all question ids
  */
 function examtraining_reports_get_questions_rec($catid, &$questionids) {
@@ -602,10 +628,11 @@ function examtraining_reports_get_questions_rec($catid, &$questionids) {
     }
 }
 
-/**
+/*
  * Overloads weblib.php function to get it more usable
  *
  */
+
 /**
  * Prints form items with the names $day, $month and $year
  *
@@ -615,7 +642,7 @@ function examtraining_reports_get_questions_rec($catid, &$questionids) {
  * @param int $currenttime A default timestamp in GMT
  * @param boolean $return
  */
-function examtraining_print_date_selector($day, $month, $year, $currenttime=0, $return=false, $from=1970, $to=2020) {
+function examtraining_print_date_selector($day, $month, $year, $currenttime = 0, $return = false, $from = 1970, $to = 2020) {
 
     if (!$currenttime) {
         $currenttime = time();
@@ -626,17 +653,21 @@ function examtraining_print_date_selector($day, $month, $year, $currenttime=0, $
         $days[$i] = $i;
     }
     for ($i = 1; $i <= 12; $i++) {
-        $months[$i] = userdate(gmmktime(12,0,0,$i,15,2000), "%B");
+        $months[$i] = userdate(gmmktime(12, 0, 0, $i, 15, 2000), "%B");
     }
     for ($i = $from; $i <= $to; $i++) {
         $years[$i] = $i;
     }
 
-    // Build or print result
+    // Build or print result.
+
     $result='';
-    // Note: There should probably be a fieldset around these fields as they are
-    // clearly grouped. However this causes problems with display. See Mozilla
-    // bug 474415
+
+    /*
+     * Note: There should probably be a fieldset around these fields as they are
+     * clearly grouped. However this causes problems with display. See Mozilla
+     * bug 474415
+     */
     $result.='<label class="accesshide" for="menu'.$day.'">'.get_string('day','form').'</label>';
     $result.= html_writer::select($days,   $day,   $currentdate['mday']);
     $result.='<label class="accesshide" for="menu'.$month.'">'.get_string('month','form').'</label>';
@@ -650,16 +681,16 @@ function examtraining_print_date_selector($day, $month, $year, $currenttime=0, $
         echo $result;
     }
 }
- 
+
 /**
-*
-*
-*/
-function examtraining_print_questionstats($orderby){
-    global $CFG, $COURSE, $USER, $DB;
+ *
+ *
+ */
+function examtraining_print_questionstats($orderby) {
+    global $COURSE, $USER, $DB;
 
     $exam_context = examtraining_get_context();
-    
+
     $sql = "
         SELECT
             qc.questionid,
@@ -674,7 +705,7 @@ function examtraining_print_questionstats($orderby){
             blockid = ?
         GROUP BY
             questionid
-        ORDER BY 
+        ORDER BY
             q.name
     ";
 
@@ -693,9 +724,10 @@ function examtraining_print_questionstats($orderby){
     jqplot_print_questionuse_graph($data, get_string('questionusage', 'report_examtraining'), 'quse');
 
     $data = array();
-    for ($i = 0 ; $i <= 20 ; $i++) {
+    for ($i = 0; $i <= 20; $i++) {
         $data[''.($i*5)] = 0;
     }
+
     foreach ($questionlines as $elm) {
         $errorratio = round(($elm->usecount - $elm->matchcount) / $elm->usecount * 100);
         $data[''.(round($errorratio / 20 * 4) * 5)] = @$data[''.(round($errorratio / 20 * 4)) * 5] + 1;
@@ -756,7 +788,6 @@ function examtraining_print_questionstats($orderby){
 * @param object $structure a course structure object.
 */
 function examtraining_reports_print_modules_html($userid, $from, $to) {
-    global $CFG;
 
     $modulestr = get_string('seriesize', 'report_examtraining');
     $attemptsstr = get_string('series', 'report_examtraining');
@@ -767,7 +798,7 @@ function examtraining_reports_print_modules_html($userid, $from, $to) {
 }
 
 function examtraining_get_module_count($userid, $from, $to) {
-    global $CFG, $DB;
+    global $DB;
 
     $exam_context = examtraining_get_context();
     $testquizzes = implode("','", $exam_context->trainingquizzes);
@@ -809,17 +840,17 @@ function examtraining_get_module_count($userid, $from, $to) {
  * TODO : Mark for obolescence.
  */
 function examtraining_reports_print_assiduity_html($userid, $from, $to) {
-    global $CFG, $DB;
+    global $DB;
 
     $modulestr = get_string('assiduity', 'report_examtraining');
     $attemptsstr = get_string('attempts', 'userquiz');
 
     $exam_context = examtraining_get_context();
 
-    $fromclause = ($from) ? " AND qa.timefinish > $from " : '' ;
-    $toclause = ($to) ? " AND qa.timefinish < $to " : '' ;
+    $fromclause = ($from) ? " AND qa.timefinish > $from " : '';
+    $toclause = ($to) ? " AND qa.timefinish < $to " : '';
 
-    // compute attempts "per day"
+    // Compute attempts "per day".
 
     $sql = "
         SELECT
@@ -862,7 +893,7 @@ function examtraining_reports_print_assiduity_html($userid, $from, $to) {
  * @param object $structure a course structure object.
  */
 function examtraining_reports_print_assiduity2_html($userid, $from, $to) {
-    global $CFG, $DB;
+    global $DB;
 
     $modulestr = get_string('assiduity', 'report_examtraining');
     $attemptsstr = get_string('attempts', 'userquiz');
@@ -872,8 +903,8 @@ function examtraining_reports_print_assiduity2_html($userid, $from, $to) {
     $fromclause = ($from) ? " AND qa.timefinish > $from " : '';
     $toclause = ($to) ? " AND qa.timefinish < $to " : '';
 
-    // compute attempts "per day"
-    
+    // Compute attempts "per day".
+
     $sql = "
         SELECT
             UNIX_TIMESTAMP(DATE(FROM_UNIXTIME(timefinish))) as daystamp,
@@ -897,7 +928,7 @@ function examtraining_reports_print_assiduity2_html($userid, $from, $to) {
         $firstdate = $dateticks[0];
         $lastdate = $dateticks[count($dateticks) - 1];
 
-        // rebuild an unholed array for bargraphs
+        // Rebuild an unholed array for bargraphs.
         $stamp = $firstdate;
         $i = 0;
         $attemptstable = array();
@@ -913,7 +944,6 @@ function examtraining_reports_print_assiduity2_html($userid, $from, $to) {
 
 /**
  * returns the lost of the groups of the user.
- *
  */
 function examtraining_get_grouplist($courseid, $userid) {
     global $DB;
@@ -922,7 +952,7 @@ function examtraining_get_grouplist($courseid, $userid) {
 
     $usergroupings = groups_get_user_groups($courseid, $userid);
     foreach ($usergroupings as $grouping) {
-        foreach ($grouping as $groupid){
+        foreach ($grouping as $groupid) {
             $groupnames[] = $DB->get_field('groups', 'name', array('id' => $groupid));
         }
     }
@@ -930,28 +960,28 @@ function examtraining_get_grouplist($courseid, $userid) {
     return implode(', ', $groupnames);
 }
 
-function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0){
+function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0) {
     global $USER, $CFG, $DB;
-    global $CATEGORIES;
-    global $QUESTIONS;
-    
-    // init structure
-    
+    global $qcategories;
+    global $questions;
+
+    // Init structure.
+
     $exam_context = examtraining_get_context();
 
-    // we get all states
+    // We get all states.
     if ($part == 'training') {
         $quizzeslist = implode("','", $exam_context->trainingquizzes);
     } else {
         $quizzeslist = str_replace(',', "','", $exam_context->examquiz);
     }
 
-    // Category cache
-    if (empty($QUESTIONS)) {
-        $QUESTIONS = $DB->get_records('question', array(), 'id', 'id,defaultgrade,category');
+    // Category cache.
+    if (empty($questions)) {
+        $questions = $DB->get_records('question', array(), 'id', 'id,defaultgrade,category');
     }
-    if (empty($CATEGORIES)){
-        $CATEGORIES = get_records('question_categories', array(), 'id', 'id,parent');
+    if (empty($qcategories)){
+        $qcategories = get_records('question_categories', array(), 'id', 'id,parent');
     }
 
     // prefetch categories structure
@@ -976,13 +1006,13 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
     }
 
     if ($attempts) {
-        foreach($attempts as $attempt) {
+        foreach ($attempts as $attempt) {
             if ($statesrs = get_all_user_records($attempt->uniqueid, $userid, null, true)){
                 if ($statesrs->valid()) {
                     foreach ($statesrs as $state) {
 
-                        // compute answers in states against question answers determining question type
-                        if (!$question = &$QUESTIONS[$state->question]) {
+                        // Compute answers in states against question answers determining question type.
+                        if (!$question = &$questions[$state->question]) {
                             continue;
                         }
                         $cattype = ($question->defaultmark == 1) ? 'A' : 'C';
@@ -995,7 +1025,7 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
                         $cmt = "count_matched";
 
                         // aggregate upper category till rootcategory
-                        $currentcat = &$CATEGORIES[$question->category];
+                        $currentcat = &$qcategories[$question->category];
 
                         if ($state->grade > 0) {
                             @$results->attempts[$attempt->id]->{$cm}++;
@@ -1008,7 +1038,7 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
                         @$results->attempts[$attempt->id]->{$cp}++;
                         @$results->attempts[$attempt->id]->{$cpt}++;
                         $results->attempts[$attempt->id]->timefinish = $attempt->timefinish;
-                        $results->modules[$attempt->userquiz][$attempt->id] = 1; // to count frequency of use of questionset
+                        $results->modules[$attempt->userquiz][$attempt->id] = 1; // To count frequency of use of questionset.
     
                         do {
                             $previouscatid = $currentcat->id;
@@ -1017,14 +1047,14 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
                                 $results->categories[$currentcat->id]->{$cm}++;
                                 $results->categories[$currentcat->id]->{$cmt}++;
                             }
-                            if (strstr($state->answer, ':') !== false){
+                            if (strstr($state->answer, ':') !== false) {
                                 $results->categories[$currentcat->id]->{$ca}++;
                                 $results->categories[$currentcat->id]->{$cat}++;
                             }
                             $results->categories[$currentcat->id]->{$cp}++;
                             $results->categories[$currentcat->id]->{$cpt}++;
-                            $currentcat = &$CATEGORIES[$currentcat->parent];
-                        } while($currentcat && ($previouscatid != $exam_context->rootcategory));
+                            $currentcat = &$qcategories[$currentcat->parent];
+                        } while ($currentcat && ($previouscatid != $exam_context->rootcategory));
                     }
                 }
                 $statesrs->close();
@@ -1032,9 +1062,9 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
         }
     }
 
-    // post compute ratios
+    // Post compute ratios.
     if (!empty($results->categories)) {
-        foreach(array_keys($results->categories) as $catid) {
+        foreach (array_keys($results->categories) as $catid) {
             if (@$results->categories[$catid]->count_answered_A) {
                 $results->categories[$catid]->hitratio_A = round(@$results->categories[$catid]->count_matched_A / $results->categories[$catid]->count_answered_A * 100);
             } else {
@@ -1146,19 +1176,19 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
 function examtraining_compute_global_results($userid, $from, $to) {
     global $USER;
     global $CFG;
-    global $QUESTIONS;
+    global $questions;
 
-    // init structure
+    // Init structure.
 
     $exam_context = examtraining_get_context();
 
-    // we get all states
+    // We get all states.
     $quizzeslist = implode("','", $exam_context->testquizzes);
     $examquizzeslist = str_replace(',', "','", $exam_context->examquizzes);
-    
+
     $results = new StdClass;
-    if (!isset($QUESTIONS)) {
-        $QUESTIONS = $DB->get_records('question', array(), 'id,defaultgrade,category');
+    if (!isset($questions)) {
+        $questions = $DB->get_records('question', array(), 'id,defaultgrade,category');
     }
 
     $examselect = " userid = ? AND timefinish > ? AND timefinish < ? AND quiz IN ('$examquizzeslist') ";
@@ -1170,17 +1200,19 @@ function examtraining_compute_global_results($userid, $from, $to) {
 
     $select = " userid = ? AND timefinish > ? AND timefinish < ? AND userquiz IN ('$quizzeslist') ";
     $distinctquestions = array();
-    if ($attempts = $DB->get_records_select('quiz_attempts', $select, array($userid, $from, $to))){
+    if ($attempts = $DB->get_records_select('quiz_attempts', $select, array($userid, $from, $to))) {
         $results->attempts = count($attempts);
         foreach ($attempts as $attempt) {
             if ($statesrs = get_all_user_records($attempt->id, $userid, null, true)) {
                 if ($statesrs->valid()) {
                     foreach ($staters as $state) {
-                        // compute answers in states against question answers determining question type
-                        $question = &$QUESTIONS[$state->question];
+                        // Compute answers in states against question answers determining question type.
+                        $question = &$questions[$state->question];
 
-                        if (!$question) continue;
-                        $cattype = ($question->defaultmark == 1) ? 'A' : 'C' ;
+                        if (!$question) {
+                            continue;
+                        }
+                        $cattype = ($question->defaultmark == 1) ? 'A' : 'C';
                         $ht = "hastype_$cattype";
                         $ca = "count_answered_$cattype";
                         $cp = "count_proposed_$cattype";
@@ -1189,7 +1221,7 @@ function examtraining_compute_global_results($userid, $from, $to) {
                         $cpt = "count_proposed";
                         $cmt = "count_matched";
 
-                        // aggregate on globalizers
+                        // Aggregate on globalizers.
                         if ($state->grade > 0) {
                             @$results->{$cm}++;
                             @$results->{$cmt}++;
@@ -1207,7 +1239,7 @@ function examtraining_compute_global_results($userid, $from, $to) {
         }
     }
 
-    // post compute ratios
+    // Post compute ratios.
     if (!empty($results->count_proposed)) {
         $results->ratio = round( (0 + @$results->count_matched) / $results->count_proposed * 100);
     } else {
@@ -1236,7 +1268,7 @@ function examtraining_compute_global_results($userid, $from, $to) {
     return $results;
 }
 
-function raw_format_duration($secs){
+function raw_format_duration($secs) {
     $min = floor($secs / 60);
     $hours = floor($min / 60);
     $days = floor($hours / 24);
@@ -1257,85 +1289,85 @@ function raw_format_duration($secs){
     return $secs.' '.get_string('secs');
 }
 
-function examtraining_reports_print_questiondetail_xls(&$amf_, $startrow, $effg, $xls_formats) {
+function examtraining_reports_print_questiondetail_xls(&$xlsdoc, $startrow, $effg, $xlsformats) {
     global $QCAT;
 
-    $amf_->write_string($startrow,0, get_string('questionsort', 'report_examtraining', $effg->sortorder),$xls_formats['t']);
-    $amf_->merge_cells($startrow , 0, $startrow, 6);
-    $amf_->merge_cells($startrow + 1, 0, $startrow + 1, 6);
-    $amf_->write_string($startrow,7, $effg->name,$xls_formats['tw']);
-    $amf_->merge_cells($startrow, 7, $startrow, 12);
+    $xlsdoc->write_string($startrow, 0, get_string('questionsort', 'report_examtraining', $effg->sortorder),$xlsformats['t']);
+    $xlsdoc->merge_cells($startrow , 0, $startrow, 6);
+    $xlsdoc->merge_cells($startrow + 1, 0, $startrow + 1, 6);
+    $xlsdoc->write_string($startrow, 7, $effg->name,$xlsformats['tw']);
+    $xlsdoc->merge_cells($startrow, 7, $startrow, 12);
 
     $startrow++;
-    $amf_->write_string($startrow,7, $effg->questiontext,$xls_formats['tw']);
-    $amf_->merge_cells($startrow, 7, $startrow, 12);
+    $xlsdoc->write_string($startrow, 7, $effg->questiontext,$xlsformats['tw']);
+    $xlsdoc->merge_cells($startrow, 7, $startrow, 12);
 
     $startrow++;
-    $amf_->write_string($startrow,0, get_string('answers', 'report_examtraining'),$xls_formats['t']);
+    $xlsdoc->write_string($startrow, 0, get_string('answers', 'report_examtraining'),$xlsformats['t']);
     $ansnum = 0;
     foreach ($effg->answers as $a) {
-        $format = ($a->fraction) ? $xls_formats['t+'] : $xls_formats['t-'];
-        $amf_->write_string($startrow,7, $a->answer, $format);
-        $amf_->merge_cells($startrow, 7, $startrow, 12);
+        $format = ($a->fraction) ? $xlsformats['t+'] : $xlsformats['t-'];
+        $xlsdoc->write_string($startrow, 7, $a->answer, $format);
+        $xlsdoc->merge_cells($startrow, 7, $startrow, 12);
         $startrow++;
         $ansnum++;
     }
-    $amf_->merge_cells($startrow - $ansnum, 0, $startrow  - $ansnum, 6);   // answer title line
-    $amf_->merge_cells($startrow - $ansnum + 1, 0, $startrow - 1, 6);  // other answers
+    $xlsdoc->merge_cells($startrow - $ansnum, 0, $startrow  - $ansnum, 6);   // Answer title line.
+    $xlsdoc->merge_cells($startrow - $ansnum + 1, 0, $startrow - 1, 6);  // Other answers.
 
     $givenanswerclass = ($effg->score) ? 'qcorrect' : 'qfailed';
-    $givenanswerformat = ($effg->defaultgrade == 1000) ? $xls_formats['t+'] : $xls_formats['t-'];
-    $amf_->write_string($startrow,0, get_string('givenanswer', 'report_examtraining'),$xls_formats['t']);
-    $amf_->merge_cells($startrow, 0, $startrow, 6);
-    $amf_->write_string($startrow,7, $effg->answeredtext, $givenanswerformat);
-    $amf_->merge_cells($startrow, 7, $startrow, 12);
+    $givenanswerformat = ($effg->defaultgrade == 1000) ? $xlsformats['t+'] : $xlsformats['t-'];
+    $xlsdoc->write_string($startrow, 0, get_string('givenanswer', 'report_examtraining'),$xlsformats['t']);
+    $xlsdoc->merge_cells($startrow, 0, $startrow, 6);
+    $xlsdoc->write_string($startrow, 7, $effg->answeredtext, $givenanswerformat);
+    $xlsdoc->merge_cells($startrow, 7, $startrow, 12);
 
     $startrow++;
-    $amf_->write_string($startrow,0, get_string('category', 'report_examtraining'),$xls_formats['t']);
-    $amf_->merge_cells($startrow, 0, $startrow, 6);
-    $amf_->write_string($startrow,7, $QCAT[$effg->category]->name, $xls_formats['t']);
-    $amf_->merge_cells($startrow, 7, $startrow, 12);
+    $xlsdoc->write_string($startrow, 0, get_string('category', 'report_examtraining'),$xlsformats['t']);
+    $xlsdoc->merge_cells($startrow, 0, $startrow, 6);
+    $xlsdoc->write_string($startrow, 7, $QCAT[$effg->category]->name, $xlsformats['t']);
+    $xlsdoc->merge_cells($startrow, 7, $startrow, 12);
 
     $startrow++;
-    $amf_->write_string($startrow,0, get_string('type', 'report_examtraining'), $xls_formats['t']);
-    $amf_->merge_cells($startrow, 0, $startrow, 6);
-    $amf_->write_string($startrow,7, $effg->type, $xls_formats['t']);
-    $amf_->merge_cells($startrow, 7, $startrow, 12);
+    $xlsdoc->write_string($startrow, 0, get_string('type', 'report_examtraining'), $xlsformats['t']);
+    $xlsdoc->merge_cells($startrow, 0, $startrow, 6);
+    $xlsdoc->write_string($startrow, 7, $effg->type, $xlsformats['t']);
+    $xlsdoc->merge_cells($startrow, 7, $startrow, 12);
 
     $startrow++;
-    $amf_->write_string($startrow,0, get_string('score', 'report_examtraining'), $xls_formats['t']);
-    $amf_->merge_cells($startrow, 0, $startrow, 6);
-    $amf_->write_string($startrow,7, $effg->score, $xls_formats['t']);
-    $amf_->merge_cells($startrow, 7, $startrow, 12);
+    $xlsdoc->write_string($startrow, 0, get_string('score', 'report_examtraining'), $xlsformats['t']);
+    $xlsdoc->merge_cells($startrow, 0, $startrow, 6);
+    $xlsdoc->write_string($startrow, 7, $effg->score, $xlsformats['t']);
+    $xlsdoc->merge_cells($startrow, 7, $startrow, 12);
 
     return $startrow;
 }
 
-function examtraining_reports_print_catscores_xls(&$amf_, $startrow, $scores, $xls_formats) {
+function examtraining_reports_print_catscores_xls(&$xlsdoc, $startrow, $scores, $xlsformats) {
 
-    $amf_->write_string($startrow,0, get_string('category', 'report_examtraining'), $xls_formats['t']);
-    $amf_->write_string($startrow,1, $scores->name, $xls_formats['t']);
+    $xlsdoc->write_string($startrow, 0, get_string('category', 'report_examtraining'), $xlsformats['t']);
+    $xlsdoc->write_string($startrow, 1, $scores->name, $xlsformats['t']);
 
     if (!empty($scores->atype)) {
-        $amf_->write_string($startrow,2, 'Type A', $xls_formats['t']);
-        $amf_->write_string($startrow,3, sprintf('%0.2f', $scores->aratio), $xls_formats['t']);
+        $xlsdoc->write_string($startrow, 2, 'Type A', $xlsformats['t']);
+        $xlsdoc->write_string($startrow, 3, sprintf('%0.2f', $scores->aratio), $xlsformats['t']);
         if ($scores->atype) {
-            $amf_->write_string($startrow,3, @$scores->ascore.'/'.@$scores->atype, $xls_formats['t']);
+            $xlsdoc->write_string($startrow, 3, @$scores->ascore.'/'.@$scores->atype, $xlsformats['t']);
         } else {
-            $amf_->write_string($startrow,3, 0, $xls_formats['t']);
+            $xlsdoc->write_string($startrow, 3, 0, $xlsformats['t']);
         }
     }
     if (!empty($scores->ctype)) {
-        $amf_->write_string($startrow,2, 'Type C', $xls_formats['t']);
-        $amf_->write_string($startrow,3, sprintf('%0.2f', $scores->cratio), $xls_formats['t']);
+        $xlsdoc->write_string($startrow, 2, 'Type C', $xlsformats['t']);
+        $xlsdoc->write_string($startrow, 3, sprintf('%0.2f', $scores->cratio), $xlsformats['t']);
         if ($scores->ctype) {
-            $amf_->write_string($startrow,3, @$scores->ascore.'/'.@$scores->atype, $xls_formats['t']);
+            $xlsdoc->write_string($startrow, 3, @$scores->ascore.'/'.@$scores->atype, $xlsformats['t']);
         } else {
-            $amf_->write_string($startrow,3, 0, $xls_formats['t']);
+            $xlsdoc->write_string($startrow, 3, 0, $xlsformats['t']);
         }
     }
 }
 
-function examtraining_reports_print_overralcatscores_xls($worksheet, $startrow, $scores, $xls_formats) {
+function examtraining_reports_print_overralcatscores_xls($worksheet, $startrow, $scores, $xlsformats) {
 }
 

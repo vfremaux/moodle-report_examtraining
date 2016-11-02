@@ -1,4 +1,25 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * @package     report_examtraining
+ * @category    report
+ * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 require_once($CFG->dirroot.'/local/lib/batchlib.php');
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
@@ -19,22 +40,22 @@ function report_compile_users_preworker(&$context) {
     if (file_exists($CFG->dataroot.'/'.$context->course->id.'/'.$context->filename)) {
         $context->rawfile = fopen($CFG->dataroot.'/'.$context->course->id."/".$context->filename, 'ab');
 
-        // when running just add rows.
+        // When running just add rows.
     } else {
 
-        // at first file openning
+        // At first file openning.
 
         $context->rawfile = fopen($CFG->dataroot.'/'.$context->course->id."/".$context->filename, 'wb');
 
-        $resultset[] = get_string('entity', 'report_examtraining'); // groupname
-        $resultset[] = get_string('id', 'report_examtraining'); // userid
-        $resultset[] = get_string('firstenrolldate', 'report_examtraining'); // enrol start date
-        $resultset[] = get_string('firstaccess', 'report_examtraining'); // enrol start date
-        $resultset[] = get_string('startdate', 'report_examtraining'); // compile start date
-        $resultset[] = get_string('todate', 'report_examtraining'); // compile end date
-        $resultset[] = get_string('weekstartdate', 'report_examtraining'); // last week start date 
-        $resultset[] = get_string('lastname', 'report_examtraining'); // user name 
-        $resultset[] = get_string('firstname', 'report_examtraining'); // user name 
+        $resultset[] = get_string('entity', 'report_examtraining'); // Groupname.
+        $resultset[] = get_string('id', 'report_examtraining'); // Userid.
+        $resultset[] = get_string('firstenrolldate', 'report_examtraining'); // Enrol start date.
+        $resultset[] = get_string('firstaccess', 'report_examtraining'); // Enrol start date.
+        $resultset[] = get_string('startdate', 'report_examtraining'); // Compile start date.
+        $resultset[] = get_string('todate', 'report_examtraining'); // Compile end date.
+        $resultset[] = get_string('weekstartdate', 'report_examtraining'); // Last week start date.
+        $resultset[] = get_string('lastname', 'report_examtraining'); // User name.
+        $resultset[] = get_string('firstname', 'report_examtraining'); // User name.
         $resultset[] = get_string('timeelapsed', 'report_examtraining');
         $resultset[] = get_string('timeelapsedcurweek', 'report_examtraining');
         $resultset[] = get_string('aansweredquestions', 'report_examtraining');
@@ -48,13 +69,13 @@ function report_compile_users_preworker(&$context) {
         $resultset[] = get_string('examsuccess', 'report_examtraining');
         $resultset[] = get_string('examattempts', 'report_examtraining');
 
-        // add report columns for modules
-        for($i = 1; $i < 10 ; $i++) {
+        // Add report columns for modules.
+        for($i = 1; $i < 10; $i++) {
             $resultset[] = "Q$i";
         }
 
-        for($i = 1; $i <= 10 ; $i++) {
-            $resultset[] = "Q".($i*10);
+        for($i = 1; $i <= 10; $i++) {
+            $resultset[] = "Q".($i * 10);
         }
 
         fputs($context->rawfile, mb_convert_encoding(implode(';', $resultset)."\n", 'ISO-8859-1', 'UTF-8'));
@@ -87,8 +108,8 @@ function report_compile_users_worker($rec, &$context) {
         }
     }
 
-    // echo "printing row ";
-    examtraining_reports_print_globalheader_raw($rec->id, $context->course->id, $context->globalresults, $context->rawfile, $context->from, $context->to);
+    examtraining_reports_print_globalheader_raw($rec->id, $context->course->id, $context->globalresults, $context->rawfile,
+                                                $context->from, $context->to);
 }
 
 /**

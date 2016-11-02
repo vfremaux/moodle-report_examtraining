@@ -17,10 +17,10 @@
 /**
  * This file contains functions used by the examtraining report
  *
- * @package    report
- * @subpackage examtraining
- * @copyright  2012 Valery Fremaux (valery.fremaux@gmail.com)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package     report_examtraining
+ * @category    report
+ * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
@@ -33,9 +33,9 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
-$id = required_param('id', PARAM_INT) ; // the course id
+$id = required_param('id', PARAM_INT) ; // The course id.
 
-// quick controller for enabing/disabling background tasks
+// Quick controller for enabing/disabling background tasks.
 $bgenabled = optional_param('backgroundenabled', 0, PARAM_BOOL);
 if ($bgenabled) {
     set_config('backgroundrunsenabled', $bgenabled, 'report_examtraining');
@@ -44,7 +44,7 @@ if ($bgenabled) {
 
 $bgchecked = (empty($CFG->backgroundrunsenabled)) ? '' : 'checked="checked"';
 
-// print tools
+// Print tools.
 
 ?>
 <table width="90%">

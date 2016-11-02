@@ -17,36 +17,36 @@
 /**
  * This file contains functions used by the examtraining report
  *
- * @package    report
- * @subpackage examtraining
- * @copyright  2012 Valery Fremaux (valery.fremaux@gmail.com)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package     report_examtraining
+ * @category    report
+ * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/**
-* This script handles the report generation in batch task for a single group. 
-* It may produce a group csv report.
-* groupid must be provided. 
-* This script should be sheduled in a redirect bouncing process for maintaining
-* memory level available for huge batches. 
-*/
+/*
+ * This script handles the report generation in batch task for a single group. 
+ * It may produce a group csv report.
+ * groupid must be provided.
+ * This script should be sheduled in a redirect bouncing process for maintaining
+ * memory level available for huge batches.
+ */
 
 require('../../../config.php');
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
-$id = required_param('id', PARAM_INT) ; // the course id
-$startday = optional_param('startday', -1, PARAM_INT) ; // from (-1 is from course start)
-$startmonth = optional_param('startmonth', -1, PARAM_INT) ; // from (-1 is from course start)
-$startyear = optional_param('startyear', -1, PARAM_INT) ; // from (-1 is from course start)
-$endday = optional_param('endday', -1, PARAM_INT) ; // to (-1 is till now)
-$endmonth = optional_param('endmonth', -1, PARAM_INT) ; // to (-1 is till now)
-$endyear = optional_param('endyear', -1, PARAM_INT) ; // to (-1 is till now)
-$fromstart = optional_param('fromstart', 0, PARAM_INT) ; // force reset to course startdate
-$from = optional_param('from', -1, PARAM_INT) ; // alternate way of saying from when for XML generation
-$to = optional_param('to', -1, PARAM_INT) ; // alternate way of saying from when for XML generation
-$groupid = required_param('groupid', PARAM_INT) ; // group id
-$timesession = required_param('timesession', PARAM_INT) ; // time of the generation batch
+$id = required_param('id', PARAM_INT) ; // The course id.
+$startday = optional_param('startday', -1, PARAM_INT) ; // From (-1 is from course start).
+$startmonth = optional_param('startmonth', -1, PARAM_INT) ; // From (-1 is from course start).
+$startyear = optional_param('startyear', -1, PARAM_INT) ; // From (-1 is from course start).
+$endday = optional_param('endday', -1, PARAM_INT) ; // To (-1 is till now).
+$endmonth = optional_param('endmonth', -1, PARAM_INT) ; // To (-1 is till now).
+$endyear = optional_param('endyear', -1, PARAM_INT) ; // To (-1 is till now).
+$fromstart = optional_param('fromstart', 0, PARAM_INT) ; // Force reset to course startdate.
+$from = optional_param('from', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
+$to = optional_param('to', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
+$groupid = required_param('groupid', PARAM_INT) ; // Group id.
+$timesession = required_param('timesession', PARAM_INT) ; // Time of the generation batch.
 $readabletimesession = date('Ymd_H_i_s', $timesession);
 $sessionday = date('Ymd', $timesession);
 
@@ -57,22 +57,25 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
 }
 $context = context_course::instance($course->id);
 
-// TODO : secure groupid access depending on proper capabilities
+// TODO : secure groupid access depending on proper capabilities.
 
-// calculate start time
+// Calculate start time.
 
-if ($from == -1) { // maybe we get it from parameters
+if ($from == -1) {
+    // Maybe we get it from parameters.
     if ($startday == -1 || $fromstart) {
         $from = $course->startdate;
     } else {
-        if ($startmonth != -1 && $startyear != -1)
+        if ($startmonth != -1 && $startyear != -1) {
             $from = mktime(0, 0, 8, $startmonth, $startday, $startyear);
-        else 
+        } else {
             print_error('Bad start date');
+        }
     }
 }
 
-if ($to == -1){ // maybe we get it from parameters
+if ($to == -1) {
+    // Maybe we get it from parameters.
     if ($endday == -1) {
         $to = time();
     } else {
@@ -84,34 +87,34 @@ if ($to == -1){ // maybe we get it from parameters
     }
 }
 
-// compute target group
+// Compute target group.
 
 $group = $DB->get_record('groups', array('id' => $groupid));
 
 $targetusers = groups_get_members($groupid);
 
-// filters teachers out
+// Filters teachers out.
 foreach ($targetusers as $uid => $user) {
     if (has_capability('report/examtraining:isteacher', $context, $user->id)) {
         unset($targetusers[$uid]);
     }
 }
 
-// print result
+// Print result.
 
 if (!empty($targetusers)) {
 
     $timestamp = time();
-    $resultset[] = get_string('entity', 'report_barchenamf3'); // groupname
-    $resultset[] = get_string('id', 'report_barchenamf3'); // userid
-    $resultset[] = get_string('firstenrolldate', 'report_barchenamf3'); // enrol start date
-    $resultset[] = get_string('firstaccess', 'report_barchenamf3'); // fist trace
-    $resultset[] = get_string('lastaccess', 'report_barchenamf3'); // last trace
-    $resultset[] = get_string('startdate', 'report_barchenamf3'); // compile start date
-    $resultset[] = get_string('todate', 'report_barchenamf3'); // compile end date
-    $resultset[] = get_string('weekstartdate', 'report_barchenamf3'); // last week start date 
-    $resultset[] = get_string('lastname', 'report_barchenamf3'); // user name 
-    $resultset[] = get_string('firstname', 'report_barchenamf3'); // user name 
+    $resultset[] = get_string('entity', 'report_barchenamf3'); // Groupname.
+    $resultset[] = get_string('id', 'report_barchenamf3'); // Userid.
+    $resultset[] = get_string('firstenrolldate', 'report_barchenamf3'); // Enrol start date.
+    $resultset[] = get_string('firstaccess', 'report_barchenamf3'); // Fist trace.
+    $resultset[] = get_string('lastaccess', 'report_barchenamf3'); // Last trace.
+    $resultset[] = get_string('startdate', 'report_barchenamf3'); // Compile start date.
+    $resultset[] = get_string('todate', 'report_barchenamf3'); // Compile end date.
+    $resultset[] = get_string('weekstartdate', 'report_barchenamf3'); // Last week start date.
+    $resultset[] = get_string('lastname', 'report_barchenamf3'); // User name.
+    $resultset[] = get_string('firstname', 'report_barchenamf3'); // User name.
     $resultset[] = get_string('timeelapsed', 'report_barchenamf3');
     $resultset[] = get_string('timeelapsedcurweek', 'report_barchenamf3');
     $resultset[] = get_string('aansweredquestions', 'report_barchenamf3');
@@ -125,11 +128,11 @@ if (!empty($targetusers)) {
     $resultset[] = get_string('examsuccess', 'report_barchenamf3');
     $resultset[] = get_string('examattempts', 'report_barchenamf3');
 
-    // add report columns for modules
-    for ($i = 1; $i < 10 ; $i++) {
+    // Add report columns for modules.
+    for ($i = 1; $i < 10; $i++) {
         $resultset[] = "Q$i";
     }
-    for ($i = 1; $i <= 10 ; $i++) {
+    for ($i = 1; $i <= 10; $i++) {
         $resultset[] = "Q".($i*10);
     }
 
@@ -153,8 +156,6 @@ if (!empty($targetusers)) {
         if (isset($aggregate[$userid])) {
             foreach ($aggregate[$userid] as $classname => $classarray) {
                 foreach ($classarray as $modid => $modulestat) {
-                    // echo "$classname elapsed : $modulestat->elapsed <br/>";
-                    // echo "$classname events : $modulestat->events <br/>";
                     $globalresults->elapsed += $modulestat->elapsed;
                 }
             }
@@ -182,5 +183,4 @@ if (!empty($targetusers)) {
     $filerec->filename = 'examtraining_sessions_'.$group->name.'_'.$readabletimesession.'.csv';
 
     $fs->create_file_from_string($filrec, $rawfile);
-
 }

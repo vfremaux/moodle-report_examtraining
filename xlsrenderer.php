@@ -1,4 +1,27 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * This file contains functions used by the examtraining report
+ *
+ * @package    report
+ * @subpackage examtraining
+ * @copyright  2012 Valery Fremaux (valery.fremaux@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -19,7 +42,7 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
         $Acountstr = get_string('countA', 'report_examtraining');
         $Ccountstr = get_string('countC', 'report_examtraining');
 
-        // global result
+        // Global result.
         $outputdoc->write_string($startrow,0, get_string('overalhitstraining', 'report_examtraining'),$xls_formats['t']);
         $outputdoc->merge_cells($startrow,0,$startrow,4);
         $startrow++;
@@ -38,16 +61,10 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
         $outputdoc->write_string($startrow,1,(@$results->canswered + 0),$xls_formats['p']);
         $startrow++;
 
-        // jump line
+        // Jump line.
         $startrow++;
 
-        /*
-        $outputdoc->write_string($startrow,0, get_string('overalhitstraining', 'report_examtraining'),$xls_formats['t']);
-        $outputdoc->merge_cells($startrow,0, $startrow,4);
-        $startrow++;
-        */
-
-        // get main categories
+        // Get main categories.
         if (!empty($results->categories)) {
             $cats = get_records('question_categories', 'parent', $exam_context->rootcategory, 'sortorder,id');
 
@@ -68,7 +85,7 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
             $outputdoc->write_string($startrow, 4, $ratiostr, $xls_formats['tt']);
             $startrow++;
 
-            // per category result
+            // Per category result.
             foreach ($cats as $cat) {
                 $outputdoc->write_string($startrow, 0, format_string($cat->name), $xls_formats['ctl']);
                 $outputdoc->write_string($startrow, 1, @$results->categories[$cat->id]->count_proposed + 0, $xls_formats['p']);
@@ -85,7 +102,7 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
             $startrow++;
         }
 
-        // jump a line
+        // Jump a line.
         $startrow++;
 
         return $startrow;
@@ -128,7 +145,6 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
         $xlsdoc->write_string($row, $col, $data, $xls_formats['pl']);
         $col++;
 
-        // $resultset[] = $user->id; // userid
         $xlsdoc->write_string($row, $col, $user->id, $xls_formats['pl']);
         $col++;
 
@@ -144,7 +160,7 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
                 {$loginfo->courseparam} = ?
         ";
 
-        $data = date('d/m/Y', $DB->get_field_sql($sql, array($userid, $courseid))); // userid
+        $data = date('d/m/Y', $DB->get_field_sql($sql, array($userid, $courseid))); // Userid.
         $xlsdoc->write_string($row, $col, $data, $xls_formats['pl']);
         $col++;
 
@@ -156,48 +172,40 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
         $xlsdoc->write_string($row, $col, $data, $xls_formats['pl']);
         $col++;
 
-        $data = raw_format_duration(@$data->elapsed); // elapsed time
+        $data = raw_format_duration(@$data->elapsed); // Elapsed time.
         $xlsdoc->write_string($row, $col, $data, $xls_formats['pl']);
         $col++;
 
-        $data = raw_format_duration(@$data->weekelapsed); // elapsed time this week
+        $data = raw_format_duration(@$data->weekelapsed); // Elapsed time this week.
         $xlsdoc->write_string($row, $col, $data, $xls_formats['pl']);
         $col++;
-
-        // $context = get_context_instance(CONTEXT_COURSE, $courseid);
-        // $roles = get_user_roles_in_context($userid, $context);
-        // $resultset[] = $roles;
 
         $trainingstats = userquiz_get_user_globals($userid, $exam_context->trainingquizzes, $from, $to);
         $weektrainingstats = userquiz_get_user_globals($userid, $exam_context->trainingquizzes, time() - DAYSECS * 7, time());
 
-        $data = 0 + @$trainingstats[$userid]->answered; // answered questions on training
+        $data = 0 + @$trainingstats[$userid]->answered; // Answered questions on training.
         $xlsdoc->write_string($row, $col, $data, $xls_formats['pl']);
         $col++;
 
-        $data = 0 + @$weektrainingstats[$userid]->answered; // answered questions on training this week
+        $data = 0 + @$weektrainingstats[$userid]->answered; // Answered questions on training this week.
         $xlsdoc->write_string($row, $col, $data, $xls_formats['pl']);
         $col++;
 
-        $data = ((0 + @$trainingstats[$userid]->chitratio)).' %'; // ratio C
+        $data = ((0 + @$trainingstats[$userid]->chitratio)).' %'; // Ratio C.
         $xlsdoc->write_string($row, $col, $data, $xls_formats['pl']);
         $col++;
 
-        $data = ((0 + @$weektrainingstats[$userid]->chitratio)).' %'; // ratio C
+        $data = ((0 + @$weektrainingstats[$userid]->chitratio)).' %'; // Ratio C.
         $xlsdoc->write_string($row, $col, $data, $xls_formats['pl']);
         $col++;
 
-        $data = ((0 + @$trainingstats[$userid]->ahitratio)).' %'; // ratio A
+        $data = ((0 + @$trainingstats[$userid]->ahitratio)).' %'; // Ratio A.
         $xlsdoc->write_string($row, $col, $data, $xls_formats['pl']);
         $col++;
 
-        $data = ((0 + @$weektrainingstats[$userid]->ahitratio)).' %'; // ratio A
+        $data = ((0 + @$weektrainingstats[$userid]->ahitratio)).' %'; // Ratio A.
         $xlsdoc->write_string($row, $col, $data, $xls_formats['pl']);
         $col++;
-
-        // $select = " userid = $userid AND blockid = {$exam_context->instanceid} AND attemptid = 0 ";
-        // $resultset[] = 0 + get_field_select('userquiz_monitor_user_stats', 'coverageseen', $select).' %'; // knowledge covering
-        // $resultset[] = 0 + get_field_select('userquiz_monitor_user_stats', 'coveragematched', $select).' %'; // knowledge covering
 
         $examstats = userquiz_get_user_globals($userid, $exam_context->examquiz, $from, $to);
 
@@ -210,15 +218,15 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
             }
         }
 
-        $data = 0 + $matchedexams; // succeeded exam attempts
+        $data = 0 + $matchedexams; // Succeeded exam attempts.
         $xlsdoc->write_string($row, $col, $data, $xls_formats['pl']);
         $col++;
 
-        $data = 0 + @$examstats[$userid]->attempts; // exam attempts
+        $data = 0 + @$examstats[$userid]->attempts; // Exam attempts.
         $xlsdoc->write_string($row, $col, $data, $xls_formats['pl']);
         $col++;
 
-        $row++; // passed by reference
+        $row++; // Passed by reference.
     }
 
 }

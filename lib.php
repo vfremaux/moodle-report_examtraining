@@ -35,7 +35,7 @@ defined('MOODLE_INTERNAL') || die;
 function report_examtraining_extend_navigation_course($navigation, $course, $context) {
     global $DB;
 
-    // do NOT give access to this report unless you are using a course as examtraining system
+    // Do NOT give access to this report unless you are using a course as examtraining system.
     if (!$DB->get_records('block_instances', array('blockname' => 'userquiz_monitor', 'parentcontextid' => $context->id))) {
         return;
     }
@@ -73,7 +73,7 @@ function report_examtraining_can_access_user_report($user, $course) {
 
     if (has_capability('report/examtraining:view', $coursecontext)) {
         return true;
-    } elseif ($user->id == $USER->id) {
+    } else if ($user->id == $USER->id) {
         if ($course->showreports && (is_viewing($coursecontext, $USER) or is_enrolled($coursecontext, $USER))) {
             return true;
         }
@@ -84,7 +84,6 @@ function report_examtraining_can_access_user_report($user, $course) {
 
 /**
  * Called by the storage subsystem to give back a raw report
- *
  */
 function report_examtraining_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
     require_course_login($course);
