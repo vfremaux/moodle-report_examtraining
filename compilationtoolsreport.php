@@ -27,7 +27,6 @@ defined('MOODLE_INTERNAL') || die();
 
 /**
  * direct log construction implementation
- *
  */
 
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
