@@ -139,7 +139,6 @@ function examtraining_reports_print_exams_summary_html($userid, $from, $to) {
  * a raster for printing exam results in XSL.
  */
 function examtraining_reports_print_exams_xls(&$xlsdoc, $startrow, $xlsformats, $userid) {
-    global $CFG;
 
     $examcontext = examtraining_get_context();
 
@@ -204,7 +203,7 @@ function examtraining_reports_print_exams_xls(&$xlsdoc, $startrow, $xlsformats, 
  * @param array $data 12 categories mastering array
  */
 function examtraining_reports_print_radar_html($userid, $from, $to) {
-    global $CFG, $DB, $OUTPUT;
+    global $DB, $OUTPUT;
 
     $examcontext = examtraining_get_context();
 
@@ -248,7 +247,7 @@ function examtraining_reports_print_radar_html($userid, $from, $to) {
  * @param object $structure a course structure object.
  */
 function examtraining_reports_print_knowledge_covering_html($userid, $courseid, $from, $to) {
-    global $CFG, $DB, $OUTPUT;
+    global $OUTPUT;
 
     echo $OUTPUT->heading(get_string('knowledgecovering', 'report_examtraining'));
     echo '<center>';
@@ -266,7 +265,7 @@ function examtraining_reports_print_knowledge_covering_html($userid, $courseid, 
  * @param int $courseid
  */
 function examtraining_reports_print_header_html($userid, $courseid, $data, $isshort = false) {
-    global $CFG, $DB;
+    global $DB;
 
     $user = $DB->get_record('user', 'id', $userid);
     $course = $DB->get_record('course', 'id', $courseid);
@@ -435,6 +434,7 @@ function examtraining_reports_print_globalheader_xls(&$xlsdoc, &$xlsformats, &$r
  *
  */
 function examtraining_reports_format_time($timevalue, $mode = 'html') {
+
     if ($timevalue) {
         if ($mode == 'html') {
             return ceil($timevalue / HOURSECS).' '.get_string('hours', 'report_examtraining');
@@ -452,7 +452,7 @@ function examtraining_reports_format_time($timevalue, $mode = 'html') {
  * with all the relevant data about a user.
  */
 function examtraining_reports_print_header_xls(&$xlsdoc, $userid, $courseid, $data, $xlsformats) {
-    global $CFG, $DB;
+    global $DB;
 
     $loginfo = examtraining_get_log_reader_info();
 
@@ -647,7 +647,9 @@ function examtraining_reports_get_questions_rec($catid, &$questionids) {
 
     if ($subcats = $DB->get_records('question_categories', array('parent' => $catid), 'sortorder,id', 'id, name')) {
         foreach ($subcats as $c) {
+            $level++;
             examtraining_reports_get_questions_rec($c->id, $questionids);
+            $level--;
         }
     }
 }
@@ -830,7 +832,7 @@ function examtraining_get_module_count($userid, $from, $to) {
     $fromclause = ($from) ? " AND qa.timefinish > $from " : '';
     $toclause = ($to) ? " AND qa.timefinish < $to " : '';
 
-    // compute attempts "per module size"
+    // Compute attempts "per module size".
 
     $sql = "
         SELECT
@@ -1008,7 +1010,7 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
         $qcategories = get_records('question_categories', array(), 'id', 'id,parent');
     }
 
-    // prefetch categories structure
+    // Prefetch categories structure.
 
     $cats = new StdClass;
     $totalquestions = count_questions_in_categories_rec($examcontext->rootcategory, $cats);
