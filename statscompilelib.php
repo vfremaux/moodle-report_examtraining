@@ -1,4 +1,25 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * @package     report_examtraining
+ * @category    report
+ * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 require_once($CFG->dirroot.'/blocks/userquiz_monitor/block_userquiz_monitor_lib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
@@ -118,7 +139,7 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
                 }
             }
 
-            // only mark compilation time if complete complation is done
+            // Only mark compilation time if complete complation is done.
             if (!$nocats) {
                 $attempt->datecompiled = time();
                 $DB->update_record('quiz_attempts', $attempt);
@@ -127,32 +148,33 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
             if ($rootcategory && !isset($rootcats[$rootcategory])) {
                 // Get rootcats.
                 if (!$cats = $DB->get_records('question_categories', array('parent' => $rootcategory), 'sortorder, id', 'id,name')) {
-                    // this may be a bad case.... lost cat or something similar
+                    // This may be a bad case.... lost cat or something similar.
                     continue;
                 }
                 $rootcats[$rootcategory] = $cats;
             }
 
-            // block id (userquiz_monitor) is deduced from attempt's course heuristic
+            // Block id (userquiz_monitor) is deduced from attempt's course heuristic.
             $attemptcourse = $DB->get_field('quiz', 'course', array('id' => $attempt->quiz));
             $blockinstance = $DB->get_record('block_instances', array('pageid' => $attemptcourse, 'blockname' => 'userquiz_monitor'));
-            $theBlock = block_instance('userquiz_monitor', $blockinstance);
+            $theblock = block_instance('userquiz_monitor', $blockinstance);
 
             $attempt->serieaanswered = 0;
             $attempt->seriecanswered = 0;
             $attempt->serieamatched = 0;
             $attempt->seriecmatched = 0;
 
-            $work($attempt, $rootcats[$rootcategory], $theBlock, !$auto, $nocats);
-            // if (debugging()) echo "<br/>";
+            $work($attempt, $rootcats[$rootcategory], $theblock, !$auto, $nocats);
             $j++;
         }
 
         $out = " compiled $j attempts ";
-        if ($output){
+        if ($output) {
             echo $out.'<br/>';
         } else {
-            debug_trace($out);
+            if (function_exists('debug_trace')) {
+                debug_trace($out);
+            }
         }
 
         if (!empty($CFG->backgroundrunsenabled) && $limit && $auto) {
@@ -178,7 +200,6 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
 
 /**
  * precompile all uncompiled results in userquiz attemps records
- *
  */
 function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_precompile_results_worker') {
     global $CFG, $DB;
@@ -203,10 +224,10 @@ function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_preco
 
     $output = optional_param('output', 0, PARAM_INT);
 
-    // process required attempts
+    // Process required attempts.
     if (!empty($attempts)) {
 
-        // set default value
+        // Set default value.
         $rootcats = array();
         $rootcats[0] = array();
 
@@ -220,7 +241,7 @@ function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_preco
             $attempt->seriecmatched = 0;
             $attempt->qcount = 0;
 
-            // get rootcat heuristic for attempt. We try getting this cat from the first cat in the list
+            // Get rootcat heuristic for attempt. We try getting this cat from the first cat in the list.
             $rootcategory = 0;
             if ($attempt->categories) {
                 $catarr = explode(',',$attempt->categories);
@@ -240,24 +261,25 @@ function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_preco
             if ($rootcategory && !isset($rootcats[$rootcategory])) {
                 // get rootcats
                 if (!$cats = $DB->get_records('question_categories', array('parent' => $rootcategory), 'sortorder, id', 'id,name')) {
-                    // this may be a bad case.... lost cat or something similar
+                    // This may be a bad case.... lost cat or something similar.
                     continue;
                 }
                 $rootcats[$rootcategory] = $cats;
             }
 
-            // block id (userquiz_monitor) is deduced from attempt's course heuristic
-            $theBlock = userquiz_bloc_from_attempt($attempt);
+            // Block id (userquiz_monitor) is deduced from attempt's course heuristic.
+            $theblock = userquiz_bloc_from_attempt($attempt);
 
-            $work($attempt, $rootcats[$rootcategory], $theBlock, true);
-            // if (debugging()) echo "<br/>";
+            $work($attempt, $rootcats[$rootcategory], $theblock, true);
             $j++;
         }
         $out = "complied $j records";
         if ($output) {
             echo $out.'<br/>';
         } else {
-            debug_trace($out);
+            if (function_exists('debug_trace')) {
+                debug_trace($out);
+            }
         }
         return true;
     }
@@ -290,10 +312,12 @@ function userquiz_cron_results() {
     if ($output) {
         mtrace($out.'<br/>');
     } else {
-        debug_trace($out);
+        if (function_exists('debug_trace')) {
+            debug_trace($out);
+        }
     }
 
-    // force some output;
+    // Force some output.
 
     $sql = "
         SELECT
@@ -308,10 +332,10 @@ function userquiz_cron_results() {
     ";
     $attempts = $DB->get_records_sql($sql, null, '', '*');
 
-    // only process finished attempts
+    // Only process finished attempts.
     if (!empty($attempts)) {
 
-        // set default value
+        // Set default value.
         $rootcats = array();
         $rootcats[0] = array();
 
@@ -323,9 +347,11 @@ function userquiz_cron_results() {
             if ($output) {
                 echo $out.'<br/>';
             } else {
-                debug_trace($out);
+                if (function_exists('debug_trace')) {
+                    debug_trace($out);
+                }
             }
-            // get rootcat heuristic for attempt. We try getting this cat from the first cat in the list
+            // Get rootcat heuristic for attempt. We try getting this cat from the first cat in the list.
             $rootcategory = 0;
             if ($attempt->categories) {
                 $catarr = explode(',', $attempt->categories);
@@ -343,38 +369,40 @@ function userquiz_cron_results() {
             $DB->update_field('userquiz_attempts', 'datecompiled', time(), array('uniqueid' => $attempt->uniqueid));
 
             if ($rootcategory && !isset($rootcats[$rootcategory])) {
-                // get rootcats
+                // Get rootcats.
                 if (!$cats = $DB->get_records('question_categories', array('parent' => $rootcategory), 'sortorder, id', 'id,name')) {
-                    // this may be a bad case.... lost cat or something similar
+                    // This may be a bad case.... lost cat or something similar.
                     continue;
                 }
                 $rootcats[$rootcategory] = $cats;
             }
 
-            // block id (userquiz_monitor) is deduced from attempt's course heuristic
-            $theBlock = userquiz_block_from_attempt($attempt);
+            // Block id (userquiz_monitor) is deduced from attempt's course heuristic.
+            $theblock = userquiz_block_from_attempt($attempt);
 
-            // reset attempt stats
+            // Reset attempt stats.
             $attempt->serieaanswered = 0;
             $attempt->seriecanswered = 0;
             $attempt->serieamatched = 0;
             $attempt->seriecmatched = 0;
             $attempt->qcount = 0;
 
-            userquiz_precompile_results_worker($attempt, $rootcats[$rootcategory], $theBlock, false);
-            userquiz_precompile_userstats_worker($attempt, $rootcats[$rootcategory], $theBlock, false);
-            // if (debugging()) echo "<br/>";
+            userquiz_precompile_results_worker($attempt, $rootcats[$rootcategory], $theblock, false);
+            userquiz_precompile_userstats_worker($attempt, $rootcats[$rootcategory], $theblock, false);
+
             $j++;
         }
 
         $out = " compiled $j attempts";
-        if ($output){
+        if ($output) {
             mtrace($out.'<br/>');
         } else {
-            debug_trace($out);
+            if (function_exists('debug_trace')) {
+                debug_trace($out);
+            }
         }
 
-        userquiz_precompile_coverage_ratios(); // recompile all ratios (for all blocks);
+        userquiz_precompile_coverage_ratios(); // Recompile all ratios (for all blocks).
         return $attemptscount;
     }
     return false;
@@ -386,9 +414,9 @@ function userquiz_bloc_from_attempt($quizattempt) {
     $attemptcourse = $DB->get_field('quiz', 'course', array('id' => $attempt->quiz));
     $coursecontext = context_course::instance($attemptcourse->id);
     $blockinstance = $DB->get_record('block_instances', array('parentcontextid' => $coursecontext->id, 'blockname', 'userquiz_monitor'));
-    $theBlock = block_instance('userquiz_monitor', $blockinstance);
+    $theblock = block_instance('userquiz_monitor', $blockinstance);
 
-    return $theBlock;
+    return $theblock;
 }
 
 /**
@@ -403,7 +431,7 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
         return false;
     }
 
-    // get real instances and discard all page jumps.
+    // Get real instances and discard all page jumps.
     $questioninstances = explode(',', $attempt->layout);
     foreach ($questioninstances as $instance) {
         if ($instance == 0) {
@@ -413,21 +441,23 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
     }
     $realinstancelist = implode(',', $realinstances);
 
-    // get real questions, analyse answers and make A and C counts (serie 1 / serie 2)
+    // Get real questions, analyse answers and make A and C counts (serie 1 / serie 2).
     if (!$questions = $DB->get_records_list('question', 'id', $realinstancelist)) {
         $out = "($attempt->id:$realinstancelist)";
         if ($verbose && $output) {
              echo $out;
         } else {
-            debug_param($out);
+            if (function_exists('debug_trace')) {
+                debug_param($out);
+            }
         }
     }
     $attempt->qcount = count($questions);
 
-    // initialize
+    // Initialize.
     $attempts = array();
 
-    // Compile answered and matched questions
+    // Compile answered and matched questions.
     if ($allstates = get_all_user_records($attempt->uniqueid, $attempt->userid, null, true)) {
 
         if (!$allstates->valid()) {
@@ -436,7 +466,9 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
                 if ($verbose && $output) {
                     echo ".";
                 } else {
-                    debug_trace(".");
+                    if (function_exists('debug_trace')) {
+                        debug_trace(".");
+                    }
                 }
                 $question = $DB->get_record_select('question', " id = $state->question ", array(), 'id, defaultgrade, category');
                 $parent = $DB->get_field('question_categories', 'parent', array('id' => $question->category));
@@ -445,9 +477,11 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
                     if ($verbose && $output) {
                         echo "f";
                     } else {
-                        debug_trace("f ");
+                        if (function_exists('debug_trace')) {
+                            debug_trace("f ");
+                        }
                     }
-                    continue; // fix lost states
+                    continue; // Fix lost states.
                 }
 
                 while (!in_array($parent, array_keys($rootcats)) && $parent != 0) {
@@ -458,14 +492,14 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
                 if ($question->defaultmark == '1000') {
                     $attempts[$parent]->ccount = @$attempts[$parent]->ccount + 1;
                     $attempt->seriecanswered++;
-                    if ($state->grade > 0){
+                    if ($state->grade > 0) {
                         $attempts[$parent]->cmatched = @$attempts[$parent]->cmatched + 1;
                         $attempt->seriecmatched++;
                     }
                 } else {
                     $attempts[$parent]->acount = @$attempts[$parent]->acount + 1;
                     $attempt->serieaanswered++;
-                    if ($state->grade > 0){
+                    if ($state->grade > 0) {
                         $attempts[$parent]->amatched = @$attempts[$parent]->amatched + 1;
                         $attempt->serieamatched++;
                     }
@@ -476,16 +510,20 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
             if ($verbose && $output) {
                 echo $out;
             } else {
-                debug_trace($out);
+                if (function_exists('debug_trace')) {
+                    debug_trace($out);
+                }
             }
         }
-        //free some memory here ?
+        // Free some memory here ?
         unset($allstates);
     } else {
-        if ($verbose && $output) echo 0;
+        if ($verbose && $output) {
+            echo 0;
+        }
     }
 
-    // save back compilation
+    // Save back compilation.
     $recattempt->id = $DB->get_field('userquiz_attempts', 'id', array('uniqueid' => $attempt->uniqueid));
     $recattempt->uniqueid = $attempt->uniqueid;
     $recattempt->qcount = 0 + @$attempt->qcount;
@@ -499,11 +537,12 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
         if ($verbose && $output) {
             echo 'u';
         } else {
-            debug_trace('u ');
+            if (function_exists('debug_trace')) {
+                debug_trace('u ');
+            }
         }
     }
 
-    // $attempt->extraresults = json_encode($attempts);
     if (!$nocats) {
         foreach ($attempts as $catid => $catattempt) {
             $catattempt = new StdClass;
@@ -517,12 +556,15 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
                 attemptid = ? AND
                 quiz = ?
             ";
-            if ($exists = $DB->get_record_select('userquiz_monitor_cat_stats', $select, array($catid, $attempt->userid, $attempt->uniqueid, $attempt->quiz))) {
+            $params = array($catid, $attempt->userid, $attempt->uniqueid, $attempt->quiz);
+            if ($exists = $DB->get_record_select('userquiz_monitor_cat_stats', $select, $params)) {
                 if ($DB->update_record('userquiz_monitor_cat_stats', $catattempt)) {
                     if ($verbose && $output) {
                         echo 'u';
                     } else {
-                        debug_trace('u ');
+                        if (function_exists('debug_trace')) {
+                            debug_trace('u ');
+                        }
                     }
                 }
             } else {
@@ -530,14 +572,16 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
                     if ($verbose && $output) {
                         echo 'i';
                     } else {
-                        debug_trace('i ');
+                        if (function_exists('debug_trace')) {
+                            debug_trace('i ');
+                        }
                     }
                 }
             }
         }
     }
 
-    // free as much memory as possible
+    // Free as much memory as possible.
     unset($attempts);
 }
 
@@ -554,9 +598,9 @@ function userquiz_precompile_userstats_worker(&$attempt, &$rootcats, &$block, $v
         return false;
     }
 
-    // get real instances and discard all page jumps.
+    // Get real instances and discard all page jumps.
     $questioninstances = explode(',', $attempt->layout);
-    foreach($questioninstances as $instance) {
+    foreach ($questioninstances as $instance) {
         if ($instance == 0) {
             continue;
         }
@@ -564,10 +608,10 @@ function userquiz_precompile_userstats_worker(&$attempt, &$rootcats, &$block, $v
     }
     $realinstancelist = implode(',', $realinstances);
 
-    // initialize
+    // Initialize.
     $attempts = array();
 
-    // Compile answered and matched questions
+    // Compile answered and matched questions.
     if ($allstates = get_all_user_records($attempt->uniqueid, $attempt->userid, null, true)) {
 
         if ($allstates->valid()) {
@@ -581,22 +625,20 @@ function userquiz_precompile_userstats_worker(&$attempt, &$rootcats, &$block, $v
                     continue;
                 }
 
-                // question has matched, unconditionnaly (or partially), we can mark it for match stats
+                // Question has matched, unconditionnaly (or partially), we can mark it for match stats.
                 if ($state->grade > 0) {
-                    // $usercoverage->coveragematchedcount++;
                     $coverage[$question->id]->matched = 1;
                 }
-                // $usercoverage->coverageseencount++;
                 $coverage[$question->id]->seen = 1;
             }
         }
     }
 
-    // get root category from block instance config
+    // Get root category from block instance config.
 
-    // finally record results
+    // Finally record results.
 
-    // records coverage map for all used questions
+    // Records coverage map for all used questions.
     if (!empty($coverage)) {
         foreach ($coverage as $qid => $qc) {
             $newrec = false;
@@ -611,18 +653,22 @@ function userquiz_precompile_userstats_worker(&$attempt, &$rootcats, &$block, $v
             $rec->matchcount = 0 + @$rec->matchcount + @$qc->matched;
             if ($newrec) {
                 if ($DB->insert_record('userquiz_monitor_coverage', $rec)) {
-                if ($verbose && $output) {
-                    echo 'ci';
-                } else {
-                    debug_trace('ci ');
-                }
+                    if ($verbose && $output) {
+                        echo 'ci';
+                    } else {
+                        if (function_exists('debug_trace')) {
+                            debug_trace('ci ');
+                        }
+                    }
                 }
             } else {
                 if ($DB->update_record('userquiz_monitor_coverage', $rec)) {
                     if ($verbose && $output) {
                         echo 'cu';
                     } else {
-                        debug_trace('cu ');
+                        if (function_exists('debug_trace')) {
+                            debug_trace('cu ');
+                        }
                     }
                 }
             }
@@ -647,9 +693,9 @@ function userquiz_precompile_coverage_ratios() {
 
     $blocks = $DB->get_records('block_instances', 'blockname', 'userquiz_monitor');
     foreach ($blocks as $ablock) {
-        $theBlock = block_instance('userquiz_monitor', $ablock);
+        $theblock = block_instance('userquiz_monitor', $ablock);
 
-        $testquizzes = implode(',', $theBlock->config->trainingquizzes);
+        $testquizzes = implode(',', $theblock->config->trainingquizzes);
 
         $sql = "
             SELECT DISTINCT
@@ -662,7 +708,7 @@ function userquiz_precompile_coverage_ratios() {
         ";
         if ($users = $DB->get_records_sql($sql)) {
             foreach ($users as $user) {
-                userquiz_precompile_question_coverage_worker($user->userid, $theBlock);
+                userquiz_precompile_question_coverage_worker($user->userid, $theblock);
             }
         }
     }
@@ -680,9 +726,9 @@ function userquiz_precompile_question_coverage_worker($userid, &$block) {
 
     $output = optional_record('output', 0, PARAM_INT);
 
-    // finally compute coverage rates on distinct questions
+    // Finally compute coverage rates on distinct questions.
 
-    // count all questions available
+    // Count all questions available.
     $allcats = new StdClass;
     count_questions_in_categories_rec($block->config->rootcategory, $allcats);
     $allquestions = $allcats->count;
@@ -716,7 +762,7 @@ function userquiz_precompile_question_coverage_worker($userid, &$block) {
         $rec = new StdClass;
         $rec->userid = $userid;
         $rec->blockid = $block->instance->id;
-        $rec->attemptid = 0; // userquiz direct id
+        $rec->attemptid = 0; // Userquiz direct id.
         $newrec = true;
     }
     
@@ -731,28 +777,33 @@ function userquiz_precompile_question_coverage_worker($userid, &$block) {
         if ($output) {
             echo 'i';
         } else {
-            debug_trace('i ');
+            if (function_exists('debug_trace')) {
+                debug_trace('i ');
+            }
         }
     } else {
         $DB->update_record('userquiz_monitor_user_stats', $rec);
         if ($output) {
             echo 'u';
         } else {
-            debug_trace('u ');
+            if (function_exists('debug_trace')) {
+                debug_trace('u ');
+            }
         }
     }
     if ($i && ($i % 25 == 0)) {
         if ($verbose && $output) {
             echo '<br/>';
         } else {
-            debug_trace("\n");
+            if (function_exists('debug_trace')) {
+                debug_trace("\n");
+            }
         }
     }
     $i++;
 }
 
 /**
- *
  *
  */
 function userquiz_get_weekly_globals($userid, $quizzeslist, $from, $to) {
@@ -802,8 +853,6 @@ function userquiz_get_weekly_globals($userid, $quizzeslist, $from, $to) {
             WEEK(FROM_UNIXTIME(timefinish))
     ";
 
-    // echo $sql;
-
     if ($stats = $DB->get_records_sql($sql)) {
         foreach ($stats as $stat) {
             $stat->hitratio = ($stat->answered != 0) ? sprintf("%0.2f", $stat->matched / $stat->answered) : 0;
@@ -816,7 +865,6 @@ function userquiz_get_weekly_globals($userid, $quizzeslist, $from, $to) {
 }
 
 /**
- *
  *
  */
 function userquiz_get_user_globals($userid, $quizzeslist, $from, $to) {
@@ -865,8 +913,6 @@ function userquiz_get_user_globals($userid, $quizzeslist, $from, $to) {
             qa.userid
     ";
 
-    // echo $sql;
-
     if ($stats = $DB->get_records_sql($sql)) {
         foreach ($stats as $stat) {
             $stat->hitratio = ($stat->answered != 0) ? floor($stat->matched / $stat->answered * 100) : 0;
@@ -914,7 +960,6 @@ function userquiz_get_attempts_subcats($userid, $quizzeslist, $from, $to) {
             WEEK(FROM_UNIXTIME(timefinish))
     ";
 
-    // echo $sql;
     $stats = $DB->get_records_sql($sql);
 
     return $stats;
@@ -934,7 +979,7 @@ function userquiz_get_user_subcats($userid, $quizzeslist, $from = 0, $to = 0) {
     } else {
         $quizzesidlist = str_replace(',', "','", $quizzeslist);
     }
-    $quizzesclause = (!empty($quizzesidlist)) ? " cs.userquiz IN ('$quizzesidlist') " : '' ;
+    $quizzesclause = (!empty($quizzesidlist)) ? " cs.userquiz IN ('$quizzesidlist') " : '';
 
     $sql = "
         SELECT
@@ -957,7 +1002,6 @@ function userquiz_get_user_subcats($userid, $quizzeslist, $from = 0, $to = 0) {
             cs.categoryid
     ";
 
-    // echo $sql;
     $stats = get_records_sql($sql, array($userid));
 
     return $stats;
@@ -1013,8 +1057,6 @@ function userquiz_get_attempts_stats($userid, $quizzeslist, $from = 0, $to = 0) 
         ORDER BY
             qa.timefinish
     ";
-
-    // echo $sql;
 
     if ($stats = $DB->get_records_sql($sql, array($userid))) {
         foreach ($stats as $stat) {

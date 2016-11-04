@@ -1,4 +1,27 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * This file contains functions used by the examtraining report
+ *
+ * @package    report
+ * @subpackage examtraining
+ * @copyright  2012 Valery Fremaux (valery.fremaux@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 defined('MOODLE_INTERNAL') || die;
 
@@ -6,30 +29,30 @@ defined('MOODLE_INTERNAL') || die;
  * direct log construction implementation
  *
  */
+require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
+require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
-include_once $CFG->dirroot.'/blocks/use_stats/locallib.php';
-include_once $CFG->dirroot.'/report/examtraining/locallib.php';
-
-$id = required_param('id', PARAM_INT) ; // the course id
-$orderby = optional_param('orderby', 'DESC', PARAM_ALPHA) ; // ordering of the result ASC or DESC 
+$id = required_param('id', PARAM_INT) ; // The course id.
+$orderby = optional_param('orderby', 'DESC', PARAM_ALPHA) ; // Ordering of the result ASC or DESC.
 $num = optional_param('num', 15, PARAM_INT);
-$startday = optional_param('startday', -1, PARAM_INT) ; // from (-1 is from course start)
-$startmonth = optional_param('startmonth', -1, PARAM_INT) ; // from (-1 is from course start)
-$startyear = optional_param('startyear', -1, PARAM_INT) ; // from (-1 is from course start)
-$endday = optional_param('endday', -1, PARAM_INT) ; // to (-1 is till now)
-$endmonth = optional_param('endmonth', -1, PARAM_INT) ; // to (-1 is till now)
-$endyear = optional_param('endyear', -1, PARAM_INT) ; // to (-1 is till now)
-$fromstart = optional_param('fromstart', 0, PARAM_INT) ; // force reset to course startdate
-$from = optional_param('from', -1, PARAM_INT) ; // alternate way of saying from when for XML generation
-$to = optional_param('to', -1, PARAM_INT) ; // alternate way of saying from when for XML generation
+$startday = optional_param('startday', -1, PARAM_INT) ; // From (-1 is from course start).
+$startmonth = optional_param('startmonth', -1, PARAM_INT) ; // From (-1 is from course start).
+$startyear = optional_param('startyear', -1, PARAM_INT) ; // From (-1 is from course start).
+$endday = optional_param('endday', -1, PARAM_INT) ; // To (-1 is till now).
+$endmonth = optional_param('endmonth', -1, PARAM_INT) ; // To (-1 is till now).
+$endyear = optional_param('endyear', -1, PARAM_INT) ; // To (-1 is till now).
+$fromstart = optional_param('fromstart', 0, PARAM_INT) ; // Force reset to course startdate.
+$from = optional_param('from', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
+$to = optional_param('to', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
 
 ini_set('memory_limit', '2048M');
 
-// TODO : secure groupid access depending on proper capabilities
+// TODO : secure groupid access depending on proper capabilities.
 
-// calculate start time
+// Calculate start time.
 
-if ($from == -1){ // maybe we get it from parameters
+if ($from == -1) {
+    // Maybe we get it from parameters.
     if ($startday == -1 || $fromstart) {
         $from = $course->startdate;
     } else {
@@ -41,7 +64,8 @@ if ($from == -1){ // maybe we get it from parameters
     }
 }
 
-if ($to == -1){ // maybe we get it from parameters
+if ($to == -1) {
+    // Maybe we get it from parameters.
     if ($endday == -1) {
         $to = time();
     } else {
@@ -53,23 +77,28 @@ if ($to == -1){ // maybe we get it from parameters
     }
 }
 
-// Pre print the group selector
-// time and group period form
-include $CFG->dirroot."/report/examtraining/course_selector_form.html";
+/*
+ * Pre print the group selector
+ * time and group period form
+ */
+require($CFG->dirroot.'/report/examtraining/course_selector_form.html');
 
-// compute target group
+// Compute target group.
 
 if ($groupid) {
     $targetusers = groups_get_members($groupid);
     $max = count($targetusers);
     $page = count($targetusers);
 } else {
-    $allusers = get_users_by_capability($context, 'moodle/course:view', 'u.id, '.get_all_user_name_fields(true, 'u'), 'lastname');
+    $fields = 'u.id, '.get_all_user_name_fields(true, 'u');
+    $allusers = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname');
     $max = count($allusers);
-    $targetusers = get_users_by_capability($context, 'moodle/course:view', 'u.id, '.get_all_user_name_fields(true, 'u').', email, institution', 'lastname');
+    $fields = 'u.id, '.get_all_user_name_fields(true, 'u').', email, institution';
+    $targetusers = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname');
 }
 
-// fitlers teachers out
+// Fitlers teachers out.
+
 if (!empty($targetusers)) {
     foreach ($targetusers as $uid => $user) {
         if (has_capability('report/examtraining:isteacher', $context, $user->id)) {
@@ -78,7 +107,8 @@ if (!empty($targetusers)) {
     }
 }
 
-// print result
+// Print result.
+
 echo '<br/>';
 
 echo '<form action="" method="get" name="paramform">';
@@ -122,7 +152,7 @@ if (!empty($targetusers)) {
         LIMIT
             0,$num
     ";
-    // echo ($sql);
+
     $topexams = $DB->get_records_sql($sql);
 
     $testquizzes = implode("','", array_keys($amf_context->trainingquizzes));
@@ -150,8 +180,8 @@ if (!empty($targetusers)) {
         unset($table);
     }
     echo '</tr></table></center>';
-    
-    /// toplist by questions and by coverage
+
+    // Toplist by questions and by coverage.
 
     $sql = "
         SELECT
@@ -190,7 +220,6 @@ if (!empty($targetusers)) {
             0,$num
     ";
 
-    // echo ($sql);
     $topmatchedcoverage = $DB->get_records_sql($sql);
 
     $questionsstr = get_string('questions', 'report_examtraining');
@@ -211,7 +240,7 @@ if (!empty($targetusers)) {
             $groups = examtraining_get_grouplist($id, $top->userid);
             $groupclause = ($groups) ? " ($groups) " : '';
             $userurl = new moodle_url('/user/view.php', array('id' => $top->userid));
-            $userline = "<a href="'.$userurl.'">".fullname($targetusers[$top->userid]).' '.$groupclause.'</a>';
+            $userline = '<a href="'.$userurl.'">'.fullname($targetusers[$top->userid]).' '.$groupclause.'</a>';
             $table->data[] = array($top->qcount, $userline);
         }
         echo html_writer::table($table);
@@ -230,7 +259,7 @@ if (!empty($targetusers)) {
         $table->width = '90%';
         foreach ($topmatchedcoverage as $top) {
             $groups = examtraining_get_grouplist($id, $top->userid);
-            $groupclause = ($groups) ? " ($groups) " : '' ;
+            $groupclause = ($groups) ? " ($groups) " : '';
             $userline = "<a href=\"{$CFG->wwwroot}/user/view.php?id={$top->userid}\">".fullname($targetusers[$top->userid]).' '.$groupclause.'</a>';
             $table->data[] = array($top->coveragematched.' %', $userline);
         }
