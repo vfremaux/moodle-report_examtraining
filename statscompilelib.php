@@ -202,7 +202,7 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
  * precompile all uncompiled results in userquiz attemps records
  */
 function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_precompile_results_worker') {
-    global $CFG, $DB;
+    global $DB;
 
     list($insql, $inparams) = $DB->in_or_equal('id', $ids);
 
@@ -291,7 +291,7 @@ function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_preco
  *
  */
 function userquiz_cron_results() {
-    global $CFG, $DB;
+    global $DB;
 
     $sql = "
         SELECT
@@ -424,6 +424,7 @@ function userquiz_bloc_from_attempt($quizattempt) {
  *
  */
 function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verbose, $nocats = false) {
+    global $DB;
 
     $output = optional_param('output', 0, PARAM_INT);
 
@@ -689,7 +690,7 @@ function userquiz_precompile_userstats_worker(&$attempt, &$rootcats, &$block, $v
  *
  */
 function userquiz_precompile_coverage_ratios() {
-    global $CFG, $DB;
+    global $DB;
 
     $blocks = $DB->get_records('block_instances', 'blockname', 'userquiz_monitor');
     foreach ($blocks as $ablock) {
@@ -721,7 +722,7 @@ function userquiz_precompile_coverage_ratios() {
 *
 */
 function userquiz_precompile_question_coverage_worker($userid, &$block) {
-    global $CFG, $DB;
+    global $DB;
     static $i = 0;
 
     $output = optional_record('output', 0, PARAM_INT);
@@ -756,16 +757,17 @@ function userquiz_precompile_question_coverage_worker($userid, &$block) {
             matchcount > 0
     ";
     $matchedquestions = $DB->get_field_sql($sql);
-    
+
     $newrec = false;
-    if (!$rec = $DB->get_record_select('userquiz_monitor_user_stats', " userid = {$userid} AND blockid = {$block->instance->id} AND attemptid = 0 ")) {
+    $select = " userid = ? AND blockid = ? AND attemptid = 0 ";
+    if (!$rec = $DB->get_record_select('userquiz_monitor_user_stats', $select, array($userid, $block->instance->id))) {
         $rec = new StdClass;
         $rec->userid = $userid;
         $rec->blockid = $block->instance->id;
         $rec->attemptid = 0; // Userquiz direct id.
         $newrec = true;
     }
-    
+
     if ($output) {
         debug_trace("[$userid, $seenquestions, $matchedquestions, $allquestions]\n");
     }
@@ -807,7 +809,7 @@ function userquiz_precompile_question_coverage_worker($userid, &$block) {
  *
  */
 function userquiz_get_weekly_globals($userid, $quizzeslist, $from, $to) {
-    global $CFG, $DB;
+    global $DB;
 
     if (is_array($quizzeslist)) {
         $quizzesidlist = implode("','", $quizzeslist);
@@ -868,7 +870,7 @@ function userquiz_get_weekly_globals($userid, $quizzeslist, $from, $to) {
  *
  */
 function userquiz_get_user_globals($userid, $quizzeslist, $from, $to) {
-    global $CFG, $DB;
+    global $DB;
 
     if (is_array($quizzeslist)) {
         $quizzesidlist = implode("','", $quizzeslist);
@@ -928,7 +930,6 @@ function userquiz_get_user_globals($userid, $quizzeslist, $from, $to) {
  *
  */
 function userquiz_get_attempts_subcats($userid, $quizzeslist, $from, $to) {
-    global $CFG;
 
     $toclause = ($to != 0) ? " AND qa.timefinish <= $to " : '';
     $fromclause = ($from != 0) ? " AND qa.timefinish >= $from " : '';
@@ -969,7 +970,7 @@ function userquiz_get_attempts_subcats($userid, $quizzeslist, $from, $to) {
  * aggegates all attempts for each category
  */
 function userquiz_get_user_subcats($userid, $quizzeslist, $from = 0, $to = 0) {
-    global $CFG, $DB;
+    global $DB;
 
     $toclause = ($to != 0) ? " AND qa.timefinish <= $to " : '';
     $fromclause = ($from != 0) ? " AND qa.timefinish >= $from " : '';
@@ -1012,7 +1013,7 @@ function userquiz_get_user_subcats($userid, $quizzeslist, $from = 0, $to = 0) {
  *
  */
 function userquiz_get_attempts_stats($userid, $quizzeslist, $from = 0, $to = 0) {
-    global $CFG, $DB;
+    global $DB;
 
     $toclause = ($to != 0) ? " AND qa.timefinish <= $to " : '';
     $fromclause = ($from != 0) ? " AND qa.timefinish >= $from " : '';

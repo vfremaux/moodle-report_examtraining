@@ -15,18 +15,20 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains functions used by the examtraining report
+ * Version details.
  *
- * @package    report
- * @subpackage examtraining
- * @copyright  2012 Valery Fremaux (valery.fremaux@gmail.com)
+ * @package    report_examtraining
+ * @category   report
+ * @author     valery fremaux <valery.fremaux@gmail.com>
+ * @copyright  2016 onwards valery fremaux (valery.fremaux@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 $plugin->version  = 2016070501;
 $plugin->requires = 2013111800;
 $plugin->component = 'report_examtraining';
-$plugin->maturity = MATURITY_ALPHA;
+$plugin->release = '2.7.0 (Build 2016070501)';
+$plugin->maturity = MATURITY_BETA;
 
 // Non moodle attributes.
 $plugin->codeincrement = '2.7.0000';

@@ -69,7 +69,12 @@ if ($output == 'html') {
 
     echo '<br/>';
 
-    $params = array('id' => $id, 'view' => 'course_group', 'from' => $input->from, 'to' => $input->to, 'groupid' => $groupid, 'output' => 'html');
+    $params = array('id' => $id,
+                    'view' => 'course_group',
+                    'from' => $input->from,
+                    'to' => $input->to,
+                    'groupid' => $groupid,
+                    'output' => 'html');
     $url = new moodle_url('/report/examtraining/index.php', $params);
     echo $renderer->pager($max, $offset, $page, $url);
 
@@ -84,8 +89,9 @@ if ($output == 'html') {
 
             $weeklogs = use_stats_extract_logs(time() - 7 * DAYSECS, time(), $userid, $course->id);
             $weekaggregate = use_stats_aggregate_logs($weeklogs, 'module', $input->from, $input->to);
-    
-            $userglobals = userquiz_get_user_globals(array_keys($targetusers), $reportcontext->trainingquizzes, $input->from, $input->to);
+
+            $userglobals = userquiz_get_user_globals(array_keys($targetusers), $reportcontext->trainingquizzes,
+                                                     $input->from, $input->to);
 
             $logusers = $auser->id;
 
