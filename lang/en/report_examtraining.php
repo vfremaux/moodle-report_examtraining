@@ -164,4 +164,4 @@ $string['dateofbirth'] = 'Date of birth';
 $string['placeofbirth'] = 'Place of birth';
 $string['c3'] = 'C3';
 
-$string['extrafields_desc'] = 'champs supplémentaires de profil à ajouter aux rapports.';
+$string['extrafields_desc'] = 'Additional profile fields to add to reports';

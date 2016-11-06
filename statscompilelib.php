@@ -20,6 +20,7 @@
  * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/blocks/userquiz_monitor/block_userquiz_monitor_lib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
@@ -28,7 +29,8 @@ require_once($CFG->dirroot.'/report/examtraining/locallib.php');
  * precompile all uncompiled results in userquiz attemps records
  *
  */
-function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_results_worker', $nocats = true, $range = true, $fromid = '') {
+function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_results_worker', $nocats = true,
+                                     $range = true, $fromid = '') {
     global $CFG, $DB;
 
     $rangeclause = ($range) ? ' ua.datecompiled = 0 AND ' : '';
@@ -112,10 +114,10 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
         $attempts = $DB->get_records_select($sql, array(), 'id');
     }
 
-    // only process finished attempts
+    // Only process finished attempts.
     if (!empty($attempts)) {
 
-        // set default value
+        // Set default value.
         $rootcats = array();
         $rootcats[0] = array();
 
@@ -147,7 +149,8 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
 
             if ($rootcategory && !isset($rootcats[$rootcategory])) {
                 // Get rootcats.
-                if (!$cats = $DB->get_records('question_categories', array('parent' => $rootcategory), 'sortorder, id', 'id,name')) {
+                $params = array('parent' => $rootcategory);
+                if (!$cats = $DB->get_records('question_categories', $params, 'sortorder, id', 'id,name')) {
                     // This may be a bad case.... lost cat or something similar.
                     continue;
                 }
@@ -156,7 +159,8 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
 
             // Block id (userquiz_monitor) is deduced from attempt's course heuristic.
             $attemptcourse = $DB->get_field('quiz', 'course', array('id' => $attempt->quiz));
-            $blockinstance = $DB->get_record('block_instances', array('pageid' => $attemptcourse, 'blockname' => 'userquiz_monitor'));
+            $params = array('pageid' => $attemptcourse, 'blockname' => 'userquiz_monitor');
+            $blockinstance = $DB->get_record('block_instances', $params);
             $theblock = block_instance('userquiz_monitor', $blockinstance);
 
             $attempt->serieaanswered = 0;
@@ -244,7 +248,7 @@ function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_preco
             // Get rootcat heuristic for attempt. We try getting this cat from the first cat in the list.
             $rootcategory = 0;
             if ($attempt->categories) {
-                $catarr = explode(',',$attempt->categories);
+                $catarr = explode(',', $attempt->categories);
                 $parent = $DB->get_field('question_categories', 'parent', array('id' => $catarr[0]));
                 if (!$parent) {
                     $rootcategory = $catarr[0];
@@ -259,8 +263,9 @@ function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_preco
             $DB->update_field('userquiz_attempts', 'datecompiled', time(), array('uniqueid' => $attempt->uniqeid));
 
             if ($rootcategory && !isset($rootcats[$rootcategory])) {
-                // get rootcats
-                if (!$cats = $DB->get_records('question_categories', array('parent' => $rootcategory), 'sortorder, id', 'id,name')) {
+                // Get rootcats.
+                $params = array('parent' => $rootcategory);
+                if (!$cats = $DB->get_records('question_categories', $params, 'sortorder, id', 'id,name')) {
                     // This may be a bad case.... lost cat or something similar.
                     continue;
                 }
@@ -551,7 +556,7 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
             $catattempt->userid = $attempt->userid;
             $catattempt->attemptid = $attempt->uniqueid;
             $catattempt->userquiz = $attempt->userquiz;
-            $select = " 
+            $select = "
                 categoryid = ? AND
                 userid = ? AND
                 attemptid = ? AND
@@ -643,7 +648,8 @@ function userquiz_precompile_userstats_worker(&$attempt, &$rootcats, &$block, $v
     if (!empty($coverage)) {
         foreach ($coverage as $qid => $qc) {
             $newrec = false;
-            if (!$rec = $DB->get_record('userquiz_monitor_coverage', 'userid', $attempt->userid, 'blockid', $block->instance->id, 'questionid', $qid)) {
+            $params = array('userid' => $attempt->userid, 'blockid' => $block->instance->id);
+            if (!$rec = $DB->get_record('userquiz_monitor_coverage', $params, 'questionid', $qid)) {
                 $rec = new StdClass;
                 $rec->questionid = $qid;
                 $rec->userid = $attempt->userid;
@@ -683,7 +689,7 @@ function userquiz_precompile_userstats_worker(&$attempt, &$rootcats, &$block, $v
 }
 
 /**
- * enter by searching blocks instances that are userquiz_monitors, 
+ * enter by searching blocks instances that are userquiz_monitors,
  * than fetch blockinstances for each and $testquizzes list in config
  * Fetch all distinct users in each block, than call a worker thread
  * to process those results in userquiz_monitor_coverage
@@ -713,14 +719,14 @@ function userquiz_precompile_coverage_ratios() {
             }
         }
     }
-    
+
     return false;
 }
 
 /**
-*
-*
-*/
+ *
+ *
+ */
 function userquiz_precompile_question_coverage_worker($userid, &$block) {
     global $DB;
     static $i = 0;
@@ -885,7 +891,7 @@ function userquiz_get_user_globals($userid, $quizzeslist, $from, $to) {
     if (is_array($userid)) {
         $userclause = " userid IN ('".implode("','", $userid)."') AND ";
     } else {
-        $userclause =  " userid = $userid AND ";
+        $userclause = " userid = $userid AND ";
     }
 
     $sql = "

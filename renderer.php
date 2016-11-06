@@ -274,7 +274,8 @@ class report_examtraining_renderer extends plugin_renderer_base {
         $str .= ' : ';
         $str .= get_user_roles_in_context($userid, $context);
 
-        $examreporturl = new moodle_url('/report/examtraining/index.php', array('view' => 'user', 'id' => $courseid, 'userid' => $userid));
+        $params = array('view' => 'user', 'id' => $courseid, 'userid' => $userid);
+        $examreporturl = new moodle_url('/report/examtraining/index.php', $params);
         $str .= '<br/><a href="'.$examreporturl.'">'.get_string('seedetails', 'report_examtraining').'</a>';
 
         // Start printing the overall times.

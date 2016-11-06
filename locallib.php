@@ -697,11 +697,11 @@ function examtraining_print_date_selector($day, $month, $year, $currenttime = 0,
      * clearly grouped. However this causes problems with display. See Mozilla
      * bug 474415
      */
-    $result .= '<label class="accesshide" for="menu'.$day.'">'.get_string('day','form').'</label>';
+    $result .= '<label class="accesshide" for="menu'.$day.'">'.get_string('day', 'form').'</label>';
     $result .= html_writer::select($days,   $day,   $currentdate['mday']);
-    $result .= '<label class="accesshide" for="menu'.$month.'">'.get_string('month','form').'</label>';
+    $result .= '<label class="accesshide" for="menu'.$month.'">'.get_string('month', 'form').'</label>';
     $result .= html_writer::select($months, $month, $currentdate['mon']);
-    $result .= '<label class="accesshide" for="menu'.$year.'">'.get_string('year','form').'</label>';
+    $result .= '<label class="accesshide" for="menu'.$year.'">'.get_string('year', 'form').'</label>';
     $result .= html_writer::select($years,  $year,  $currentdate['year']);
 
     if ($return) {
@@ -1072,7 +1072,7 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
                         @$results->attempts[$attempt->id]->{$cpt}++;
                         $results->attempts[$attempt->id]->timefinish = $attempt->timefinish;
                         $results->modules[$attempt->userquiz][$attempt->id] = 1; // To count frequency of use of questionset.
-    
+
                         do {
                             $previouscatid = $currentcat->id;
                             $results->categories[$currentcat->id]->{$ht} = 1;
@@ -1193,8 +1193,12 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
     }
 
     if (isset($results->categories[$examcontext->rootcategory])) {
-        $results->items = @$results->categories[$examcontext->rootcategory]->count_proposed_C + @$results->categories[$examcontext->rootcategory]->count_proposed_A;
-        $results->done = @$results->categories[$examcontext->rootcategory]->count_matched_C + @$results->categories[$examcontext->rootcategory]->count_matched_A;
+        $itemsc = 0 + @$results->categories[$examcontext->rootcategory]->count_proposed_C;
+        $itemsa = 0 + @$results->categories[$examcontext->rootcategory]->count_proposed_A;
+        $results->items = $itemsa + $itemsc;
+        $donec = 0 + @$results->categories[$examcontext->rootcategory]->count_matched_C;
+        $donea = 0 + @$results->categories[$examcontext->rootcategory]->count_matched_A;
+        $results->done = $donec + $donea;
 
         if ($cats->count > 0) {
             $ratio = (0 + @$results->categories[$examcontext->rootcategory]->count_matched) / $cats->count;
@@ -1223,8 +1227,7 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
  *
  */
 function examtraining_compute_global_results($userid, $from, $to) {
-    global $USER;
-    global $CFG;
+    global $USER, $CFG;
     global $questions;
 
     // Init structure.
