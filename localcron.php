@@ -43,7 +43,7 @@ if (!$batchcontext->course = $DB->get_record('course', array('id' => $courseid))
 $COURSE = $batchcontext->course;
 
 // Just for code reuse. We don'nt use any form.
-$input = examtraining_reports_input($batchcontext->course)
+$input = examtraining_reports_input($batchcontext->course);
 
 $batchcontext->from = $input->from;
 $batchcontext->to = $input->to;

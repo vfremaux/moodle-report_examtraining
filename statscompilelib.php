@@ -741,7 +741,7 @@ function userquiz_precompile_question_coverage_worker($userid, &$block) {
     count_questions_in_categories_rec($block->config->rootcategory, $allcats);
     $allquestions = $allcats->count;
 
-    $params = array($block->instance->id, $userid)
+    $params = array($block->instance->id, $userid);
 
     $sql = "
         SELECT COUNT(DISTINCT
