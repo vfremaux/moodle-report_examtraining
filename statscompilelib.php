@@ -42,7 +42,7 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
             (*)
         FROM
             {quiz_attempts} qa,
-            {userquiz_attempts} ua
+            {report_examtraining} ua
         WHERE
             ua.uniqueid = qa.uniqueid AND
             $fromidclause
@@ -81,7 +81,7 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
                 *
             FROM
                 {quiz_attempts} qa,
-                {userquiz_attempts} ua
+                {report_examtraining} ua
             WHERE
                 ua.uniqueid = qa.uniqueid,
                 $fromidclause
@@ -101,7 +101,7 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
                 *
             FROM
                 {quiz_attempts} qa,
-                {userquiz_attempts} ua,
+                {report_examtraining} ua,
                 {qa_chooseconstraints_attempt} qca
             WHERE
                 ua.uniqueid = qa.uniqueid AND
@@ -215,7 +215,7 @@ function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_preco
             *
         FROM
             {quiz_attempts} qa,
-            {userquiz_attempts} ua,
+            {report_examtraining} ua,
             {qa_chooseconstraints_attempt} qca
         WHERE
             qa.uniqueid = ua.uniqueid AND
@@ -302,7 +302,8 @@ function userquiz_cron_results() {
         SELECT
             *
         FROM
-            userquiz_attempts
+            {quiz_attempt} qa
+            {report_examtraining} ua
         WHERE
             ua.uniqueid = qa.uniqueid AND
             ua.datecompiled = 0 AND
@@ -329,7 +330,7 @@ function userquiz_cron_results() {
             *
         FROM
             {quiz_attempts} qa,
-            {userquiz_attempts} ua
+            {report_examtraining} ua
         WHERE
             qa.uniqueid = ua.uniqueid AND
             ua.datecompiled = 0 AND
@@ -371,7 +372,7 @@ function userquiz_cron_results() {
                 }
             }
 
-            $DB->update_field('userquiz_attempts', 'datecompiled', time(), array('uniqueid' => $attempt->uniqueid));
+            $DB->update_field('report_examtraining', 'datecompiled', time(), array('uniqueid' => $attempt->uniqueid));
 
             if ($rootcategory && !isset($rootcats[$rootcategory])) {
                 // Get rootcats.
@@ -530,16 +531,16 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
     }
 
     // Save back compilation.
-    $recattempt->id = $DB->get_field('userquiz_attempts', 'id', array('uniqueid' => $attempt->uniqueid));
+    $recattempt->id = $DB->get_field('report_examtraining', 'id', array('uniqueid' => $attempt->uniqueid));
     $recattempt->uniqueid = $attempt->uniqueid;
     $recattempt->qcount = 0 + @$attempt->qcount;
     $recattempt->serieaanswered = 0 + @$attempt->serieaanswered;
     $recattempt->seriecanswered = 0 + @$attempt->seriecanswered;
     $recattempt->serieamatched = 0 + @$attempt->serieamatched;
     $recattempt->seriecmatched = 0 + @$attempt->seriecmatched;
-    $recattempt->lastcompiled = time();
+    $recattempt->datecompiled = time();
 
-    if ($DB->update_record('userquiz_attempts', $recattempt)) {
+    if ($DB->update_record('report_examtraining', $recattempt)) {
         if ($verbose && $output) {
             echo 'u';
         } else {
@@ -555,7 +556,7 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
             $catattempt->categoryid = $catid;
             $catattempt->userid = $attempt->userid;
             $catattempt->attemptid = $attempt->uniqueid;
-            $catattempt->userquiz = $attempt->userquiz;
+            $catattempt->quizid = $attempt->quizid;
             $select = "
                 categoryid = ? AND
                 userid = ? AND
@@ -740,17 +741,7 @@ function userquiz_precompile_question_coverage_worker($userid, &$block) {
     count_questions_in_categories_rec($block->config->rootcategory, $allcats);
     $allquestions = $allcats->count;
 
-    $sql = "
-        SELECT COUNT(DISTINCT
-            questionid)
-        FROM
-            {userquiz_monitor_coverage}
-        WHERE
-            blockid = {$block->instance->id} AND
-            userid = $userid AND
-            usecount > 0
-    ";
-    $seenquestions = $DB->get_field_sql($sql);
+    $params = array($block->instance->id, $userid)
 
     $sql = "
         SELECT COUNT(DISTINCT
@@ -758,11 +749,23 @@ function userquiz_precompile_question_coverage_worker($userid, &$block) {
         FROM
             {userquiz_monitor_coverage}
         WHERE
-            blockid = {$block->instance->id} AND
-            userid = $userid AND
+            blockid = ? AND
+            userid = ? AND
+            usecount > 0
+    ";
+    $seenquestions = $DB->get_field_sql($sql, $params);
+
+    $sql = "
+        SELECT COUNT(DISTINCT
+            questionid)
+        FROM
+            {userquiz_monitor_coverage}
+        WHERE
+            blockid = ? AND
+            userid = ? AND
             matchcount > 0
     ";
-    $matchedquestions = $DB->get_field_sql($sql);
+    $matchedquestions = $DB->get_field_sql($sql, $params);
 
     $newrec = false;
     $select = " userid = ? AND blockid = ? AND attemptid = 0 ";
@@ -843,12 +846,12 @@ function userquiz_get_weekly_globals($userid, $quizzeslist, $from, $to) {
             SUM(serieamatched) + SUM(seriecmatched) as matched
         FROM
             {quiz_attempts} qa,
-            {userquiz_attempts} ua,
+            {report_examtraining} ua,
             {user} u
         WHERE
             qa.id = ua.quizattemptid AND
             u.id = ua.userid AND
-            userid = $userid AND
+            userid = ? AND
             $quizzesclause
             $fromclause
             $toclause
@@ -861,7 +864,7 @@ function userquiz_get_weekly_globals($userid, $quizzeslist, $from, $to) {
             WEEK(FROM_UNIXTIME(timefinish))
     ";
 
-    if ($stats = $DB->get_records_sql($sql)) {
+    if ($stats = $DB->get_records_sql($sql, array($userid))) {
         foreach ($stats as $stat) {
             $stat->hitratio = ($stat->answered != 0) ? sprintf("%0.2f", $stat->matched / $stat->answered) : 0;
             $stat->ahitratio = ($stat->aanswered != 0) ? sprintf("%0.2f", $stat->amatched / $stat->aanswered) : 0;
@@ -908,7 +911,7 @@ function userquiz_get_user_globals($userid, $quizzeslist, $from, $to) {
         FROM
             {quiz_attempts} qa
         LEFT JOIN
-            {userquiz_attempts} ua
+            {report_examtraining} ua
         ON
             ua.uniqueid = qa.uniqueid
         WHERE
@@ -957,7 +960,7 @@ function userquiz_get_attempts_subcats($userid, $quizzeslist, $from, $to) {
             {quiz_attempts} qa
         WHERE
             qa.uniqueid = cs.attemptid AND
-            qa.userid = $userid AND
+            qa.userid = ? AND
             $quizzesclause
             qa.timefinish != 0
             $toclause
@@ -967,7 +970,7 @@ function userquiz_get_attempts_subcats($userid, $quizzeslist, $from, $to) {
             WEEK(FROM_UNIXTIME(timefinish))
     ";
 
-    $stats = $DB->get_records_sql($sql);
+    $stats = $DB->get_records_sql($sql, array($userid));
 
     return $stats;
 }
@@ -1052,7 +1055,7 @@ function userquiz_get_attempts_stats($userid, $quizzeslist, $from = 0, $to = 0) 
         ON
             u.id = qa.userid
         LEFT JOIN
-            {userquiz_attempts} ua
+            {report_examtraining} ua
         ON
             ua.uniqueid = qa.uniqueid
         WHERE

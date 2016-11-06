@@ -43,8 +43,8 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
         $ccountstr = get_string('countC', 'report_examtraining');
 
         // Global result.
-        $outputdoc->write_string($startrow,0, get_string('overalhitstraining', 'report_examtraining'),$xlsformats['t']);
-        $outputdoc->merge_cells($startrow,0,$startrow,4);
+        $outputdoc->write_string($startrow, 0, get_string('overalhitstraining', 'report_examtraining'), $xlsformats['t']);
+        $outputdoc->merge_cells($startrow, 0, $startrow,4);
         $startrow++;
 
         $outputdoc->write_string($startrow, 0, $ratiostr, $xlsformats['tt']);

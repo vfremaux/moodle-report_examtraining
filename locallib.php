@@ -845,7 +845,7 @@ function examtraining_get_module_count($userid, $from, $to) {
         FROM
             {quiz_attempts} qa
         LEFT JOIN
-            {userquiz_attempts} ua
+            {report_examtraining} ua
         ON
             qa.uniqueid = ua.uniqueid
         WHERE
