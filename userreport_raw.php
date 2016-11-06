@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-/**
+/*
  * direct log construction implementation
  */
 
@@ -40,66 +40,67 @@ ini_set('memory_limit', '1024M');
 
 // Get data.
 
-    $logs = use_stats_extract_logs($from, $to, $userid, $COURSE->id);
-    $aggregate = use_stats_aggregate_logs($logs, 'module', $from, $to);
+$logs = use_stats_extract_logs($input->from, $input->to, $userid, $COURSE->id);
+$aggregate = use_stats_aggregate_logs($logs, 'module', $input->from, $input->to);
 
 // Get results.
 
-    $questionresults = compute_results($userid, $from, $to, 'training');
-    $examresults = compute_results($userid, $from, $to, 'exam');
+$questionresults = compute_results($userid, $input->from, $input->to, 'training');
+$examresults = compute_results($userid, $input->from, $input->to, 'exam');
 
 // Print result.
 
-    $globalresults->items = $questionresults->items;
-    $globalresults->from = 0 + $from;
-    $globalresults->to = 0 + $to;
-    $globalresults->done = $questionresults->done;
-    $globalresults->elapsed = 0;
-    $globalresults->events = 0;
-    foreach ($aggregate as $classarray) {
-        foreach ($classarray as $modulestat) {
-            $globalresults->elapsed += $modulestat->elapsed;
-            $globalresults->events += $modulestat->events;
-        }
+$globalresults->items = $questionresults->items;
+$globalresults->from = 0 + $input->from;
+$globalresults->to = 0 + $input->to;
+$globalresults->done = $questionresults->done;
+$globalresults->elapsed = 0;
+$globalresults->events = 0;
+foreach ($aggregate as $classarray) {
+    foreach ($classarray as $modulestat) {
+        $globalresults->elapsed += $modulestat->elapsed;
+        $globalresults->events += $modulestat->events;
     }
+}
 
 
-    if ($output == 'html') {
-        // Time period form.
+if ($output == 'html') {
+    // Time period form.
 
-        echo '<link rel="stylesheet" href="reports.css" type="text/css" />';
+    echo '<link rel="stylesheet" href="reports.css" type="text/css" />';
 
-        include "selector_form.html";
+    include($CFG->dirroot.'/report/examtraining/selector_form.html');
 
-        examtraining_reports_print_header_html($userid, $course->id, $globalresults);
-        examtraining_reports_print_trainings_globals_html($userid, $course->id, $questionresults);
-        examtraining_reports_print_times_html($userid, $globalresults);
-        examtraining_reports_print_exams_summary_html($userid, $course->id, $examresults);
-        examtraining_reports_print_trainings_html($userid, $course->id, $questionresults);
-        examtraining_reports_print_exams_html($userid, $course->id, $examresults);
-        examtraining_reports_print_assiduity_html($userid, $course->id, $questionresults, $examresults, $from, $to);
-        examtraining_reports_print_modules_html($userid, $course->id, $questionresults);
+    examtraining_reports_print_header_html($userid, $course->id, $globalresults);
+    examtraining_reports_print_trainings_globals_html($userid, $course->id, $questionresults);
+    examtraining_reports_print_times_html($userid, $globalresults);
+    examtraining_reports_print_exams_summary_html($userid, $course->id, $examresults);
+    examtraining_reports_print_trainings_html($userid, $course->id, $questionresults);
+    examtraining_reports_print_exams_html($userid, $course->id, $examresults);
+    examtraining_reports_print_assiduity_html($userid, $course->id, $questionresults, $examresults, $input->from, $input->to);
+    examtraining_reports_print_modules_html($userid, $course->id, $questionresults);
 
-        examtraining_reports_print_radar_html(@$questionresults->masteringdata, @$questionresults->masteringheaders);
-        examtraining_reports_print_knowledge_covering_html($userid, $course->id, $from, $to);
+    examtraining_reports_print_radar_html(@$questionresults->masteringdata, @$questionresults->masteringheaders);
+    examtraining_reports_print_knowledge_covering_html($userid, $course->id, $input->from, $input->to);
 
-    } else {
+} else {
 
-        $filename = 'examtraining_sessions_report_'.date('d-M-Y', time()).'.xls';
-        $workbook = new MoodleExcelWorkbook("-");
-        // Sending HTTP headers.
-        $workbook->send($filename);
+    $filename = 'examtraining_sessions_report_'.date('d-M-Y', time()).'.xls';
+    $workbook = new MoodleExcelWorkbook("-");
+    // Sending HTTP headers.
+    $workbook->send($filename);
 
-        // Preparing some formats.
-        $xls_formats = examtraining_reports_xls_formats($workbook);
-        $worksheet = examtraining_reports_init_worksheet($userid, $xls_formats, $workbook);
-        $startrow = examtraining_reports_print_header_xls($worksheet, $userid, $course->id, $globalresults, $xls_formats);
-        $startrow = examtraining_reports_print_trainings_xls($worksheet, $startrow, $xls_formats, $userid, $course->id, $questionresults);
-        $startrow = examtraining_reports_print_exams_xls($worksheet, $startrow, $xls_formats, $userid, $course->id, $examresults);
-        $startrow = examtraining_reports_print_assiduity_xls($worksheet, $startrow, $xls_formats, $userid, $course->id, $questionresults, $examresults, $from, $to);
-        $startrow = examtraining_reports_print_modules_xls($worksheet, $startrow, $xls_formats, $userid, $course->id, $questionresults);
+    // Preparing some formats.
+    $xlsformats = examtraining_reports_xls_formats($workbook);
+    $worksheet = examtraining_reports_init_worksheet($userid, $xlsformats, $workbook);
+    $startrow = examtraining_reports_print_header_xls($worksheet, $userid, $course->id, $globalresults, $xlsformats);
+    $startrow = examtraining_reports_print_trainings_xls($worksheet, $startrow, $xlsformats, $userid, $course->id, $questionresults);
+    $startrow = examtraining_reports_print_exams_xls($worksheet, $startrow, $xlsformats, $userid, $course->id, $examresults);
+    $startrow = examtraining_reports_print_assiduity_xls($worksheet, $startrow, $xlsformats, $userid, $course->id,
+                                                         $questionresults, $examresults, $input->from, $input->to);
+    $startrow = examtraining_reports_print_modules_xls($worksheet, $startrow, $xlsformats, $userid, $course->id, $questionresults);
 
-        ob_end_clean();
-        $workbook->close();
+    ob_end_clean();
+    $workbook->close();
 
-    }
+}

@@ -32,8 +32,8 @@ defined('MOODLE_INTERNAL') || die;
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
-$id = required_param('id', PARAM_INT) ; // The course id.
-$orderby = optional_param('orderby', 'DESC', PARAM_ALPHA) ; // Ordering of the result ASC or DESC.
+$id = required_param('id', PARAM_INT); // The course id.
+$orderby = optional_param('orderby', 'DESC', PARAM_ALPHA); // Ordering of the result ASC or DESC.
 $num = optional_param('num', 15, PARAM_INT);
 $input = examtraining_reports_input($course);
 
@@ -121,7 +121,7 @@ if (!empty($targetusers)) {
 
     $topexams = $DB->get_records_sql($sql);
 
-    $testquizzes = implode("','", array_keys($amf_context->trainingquizzes));
+    $testquizzes = implode("','", array_keys($examcontext->trainingquizzes));
 
     echo '<center><table width="100%"><tr valign="top"><td width="100%" align="center">';
 
@@ -179,8 +179,8 @@ if (!empty($targetusers)) {
             {userquiz_monitor_user_stats} us
         WHERE
             userid IN ('$targetuserlist') AND
-            blockid = $amf_context->instanceid
-        ORDER BY 
+            blockid = $examcontext->instanceid
+        ORDER BY
             coveragematched $orderby
         LIMIT
             0,$num

@@ -39,7 +39,7 @@ function report_compile_users_preworker(&$context) {
 
     $start = $context->to - DAYSECS * 7;
     $end = time();
-    $weeklogs = use_stats_extract_logs($start, , array_keys($context->sourcerecs), $context->course->id);
+    $weeklogs = use_stats_extract_logs($start, $end, array_keys($context->sourcerecs), $context->course->id);
     $context->weekaggregate = use_stats_aggregate_logs($weeklogs, 'module', $from, $to);
 
     if (file_exists($CFG->dataroot.'/'.$context->course->id.'/'.$context->filename)) {
