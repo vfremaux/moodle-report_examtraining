@@ -30,7 +30,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
-require_once($CFG->dirroot.'/course/report/barchenamf3/locallib.php');
+require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
 $attemptid = required_param('attemptid', PARAM_INT);
 
@@ -62,6 +62,7 @@ foreach ($questionset as $qid) {
     $q = $DB->get_record('question', 'id', $qid);
 
     // If randomized, need fetch the effective question.
+    // TODO / Redraw, question_states not exists anymore.
     if (preg_match('/^random/', $q->qtype)) {
         if ($state = get_record('question_states', 'attempt', $attemptid, 'question', $q->id, 'event', 0)) {
             if (preg_match("/^{$q->qtype}(\\d+)-/", $state->answer, $matches)) {
