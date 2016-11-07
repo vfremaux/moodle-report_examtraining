@@ -20,10 +20,11 @@
  * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/local/lib/batchlib.php');
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
-include_once($CFG->dirroot.'/report/examtraining/locallib.php');
+require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
 /**
  * pre worker hook
@@ -31,10 +32,14 @@ include_once($CFG->dirroot.'/report/examtraining/locallib.php');
 function report_compile_users_preworker(&$context) {
     global $CFG;
 
-    $logs = use_stats_extract_logs($context->from, $context->to, array_keys($context->sourcerecs), $context->course->id);
+    $start = $context->from;
+    $end = $context->to;
+    $logs = use_stats_extract_logs($start, $end, array_keys($context->sourcerecs), $context->course->id);
     $context->aggregate = use_stats_aggregate_logs($logs, 'module', $from, $to);
 
-    $weeklogs = use_stats_extract_logs($context->to - DAYSECS * 7, time(), array_keys($context->sourcerecs), $context->course->id);
+    $start = $context->to - DAYSECS * 7;
+    $end = time();
+    $weeklogs = use_stats_extract_logs($start, $end, array_keys($context->sourcerecs), $context->course->id);
     $context->weekaggregate = use_stats_aggregate_logs($weeklogs, 'module', $from, $to);
 
     if (file_exists($CFG->dataroot.'/'.$context->course->id.'/'.$context->filename)) {
@@ -59,7 +64,6 @@ function report_compile_users_preworker(&$context) {
         }
 
         fputs($context->rawfile, mb_convert_encoding(implode(';', $resultset)."\n", 'ISO-8859-1', 'UTF-8'));
-
     }
 }
 
@@ -81,8 +85,8 @@ function report_compile_users_worker($rec, &$context) {
     }
 
     if (isset($context->weekaggregate[$rec->id])) {
-        foreach($context->weekaggregate[$rec->id] as $classarray) {
-            foreach($classarray as $modid => $modulestat) {
+        foreach ($context->weekaggregate[$rec->id] as $classarray) {
+            foreach ($classarray as $modid => $modulestat) {
                 $context->globalresults->weekelapsed += $modulestat->elapsed;
             }
         }

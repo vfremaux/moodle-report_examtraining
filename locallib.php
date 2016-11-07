@@ -173,7 +173,8 @@ function examtraining_reports_print_exams_xls(&$xlsdoc, $startrow, $xlsformats, 
             $attemptres->ratio = $attemptres->ratio * $attemptres->count_proposed / 100;
 
             $xlsdoc->write_string($startrow, 0, $i, $xlsformats['p']);
-            $xlsdoc->write_string($startrow, 1, examtraining_reports_format_time($attemptres->timefinish, 'xls'), $xlsformats['zt']);
+            $timevalue = examtraining_reports_format_time($attemptres->timefinish, 'xls');
+            $xlsdoc->write_string($startrow, 1, $timevalue, $xlsformats['zt']);
             $xlsdoc->write_string($startrow, 2, ($attemptres->ratio + 0).' %', $xlsformats['p']);
             $xlsdoc->write_string($startrow, 3, (@$attemptres->ratio_A + 0).' %', $xlsformats['p']);
             $xlsdoc->write_string($startrow, 4, (@$attemptres->ratio_C + 0).' %', $xlsformats['p']);
@@ -184,10 +185,10 @@ function examtraining_reports_print_exams_xls(&$xlsdoc, $startrow, $xlsformats, 
             $i++;
         }
     } else {
-        $xlsdoc->write_string($startrow, 0, get_string('examtries', 'report_examtraining'),$xlsformats['t']);
+        $xlsdoc->write_string($startrow, 0, get_string('examtries', 'report_examtraining'), $xlsformats['t']);
         $xlsdoc->merge_cells($startrow, 0, $startrow, 6);
         $startrow++;
-        $xlsdoc->write_string($startrow, 0, get_string('noexamtries', 'report_examtraining'),$xlsformats['tt']);
+        $xlsdoc->write_string($startrow, 0, get_string('noexamtries', 'report_examtraining'), $xlsformats['tt']);
         $startrow++;
     }
 
@@ -564,10 +565,10 @@ function examtraining_reports_print_header_xls(&$xlsdoc, $userid, $courseid, $da
             userid = ?
     ";
     $lastcon = $DB->get_record_sql($sql, array($userid));
-    $xlsdoc->write_string($row, 0, get_string('lastconnection', 'report_examtraining').' :', $xlsformats['ctr']);    
-    $maxtime = ($lastcon->maxtime) ? userdate($lastcon->maxtime) : get_string('never') ;
+    $xlsdoc->write_string($row, 0, get_string('lastconnection', 'report_examtraining').' :', $xlsformats['ctr']);
+    $maxtime = ($lastcon->maxtime) ? userdate($lastcon->maxtime) : get_string('never');
     $xlsdoc->write_string($row, 1, $maxtime, $xlsformats['pl']);
-    $xlsdoc->merge_cells($row, 1, $row, 12);    
+    $xlsdoc->merge_cells($row, 1, $row, 12);
     $row++;
 
     // Jump a line.
@@ -599,7 +600,7 @@ function examtraining_reports_init_worksheet($userid, &$xlsformats, &$workbook, 
     } else {
         foreach ($columndef as $def) {
             list($start, $end, $width) = $def;
-            $xlsdoc->set_column($start, $end, $width); 
+            $xlsdoc->set_column($start, $end, $width);
         }
     }
 
@@ -620,7 +621,9 @@ function examtraining_get_context($courseid = 0, $passthru = false) {
     $coursecontext = context_course::instance($COURSE->id);
     $params = array('blockname' => 'userquiz_monitor', 'parentcontextid' => $coursecontext->id);
     if (!$instance = $DB->get_record('block_instances', $params)) {
-        if (!$passthru) print_error('no userquiz monitor here', 'block_userquiz_monitor');
+        if (!$passthru) {
+            print_error('no userquiz monitor here', 'block_userquiz_monitor');
+        }
         return false;
     }
 
@@ -687,19 +690,19 @@ function examtraining_print_date_selector($day, $month, $year, $currenttime = 0,
 
     // Build or print result.
 
-    $result='';
+    $result = '';
 
     /*
      * Note: There should probably be a fieldset around these fields as they are
      * clearly grouped. However this causes problems with display. See Mozilla
      * bug 474415
      */
-    $result.='<label class="accesshide" for="menu'.$day.'">'.get_string('day','form').'</label>';
-    $result.= html_writer::select($days,   $day,   $currentdate['mday']);
-    $result.='<label class="accesshide" for="menu'.$month.'">'.get_string('month','form').'</label>';
-    $result.= html_writer::select($months, $month, $currentdate['mon']);
-    $result.='<label class="accesshide" for="menu'.$year.'">'.get_string('year','form').'</label>';
-    $result.= html_writer::select($years,  $year,  $currentdate['year']);
+    $result .= '<label class="accesshide" for="menu'.$day.'">'.get_string('day', 'form').'</label>';
+    $result .= html_writer::select($days,   $day,   $currentdate['mday']);
+    $result .= '<label class="accesshide" for="menu'.$month.'">'.get_string('month', 'form').'</label>';
+    $result .= html_writer::select($months, $month, $currentdate['mon']);
+    $result .= '<label class="accesshide" for="menu'.$year.'">'.get_string('year', 'form').'</label>';
+    $result .= html_writer::select($years,  $year,  $currentdate['year']);
 
     if ($return) {
         return $result;
@@ -751,7 +754,7 @@ function examtraining_print_questionstats($orderby) {
 
     $data = array();
     for ($i = 0; $i <= 20; $i++) {
-        $data[''.($i*5)] = 0;
+        $data[''.($i * 5)] = 0;
     }
 
     foreach ($questionlines as $elm) {
@@ -798,21 +801,22 @@ function examtraining_print_questionstats($orderby) {
 
         foreach ($errorquestions as $errq) {
             $qlink = new moodle_url('/question/question.php', array('id' => $errq->questionid, 'courseid' => $COURSE->id));
-            $caneditq = has_capability('moodle/question:editall', context_course::instance($COURSE->id)) || ($errq->createdby = $USER->id && has_capability('moodle/question:editmine', context_course::instance($COURSE->id)));
+            $caneditq = has_capability('moodle/question:editall', context_course::instance($COURSE->id)) ||
+                    ($errq->createdby = $USER->id &&
+                            has_capability('moodle/question:editmine', context_course::instance($COURSE->id)));
             $qname = ($caneditq) ? '<a href="'.$qlink.'">'.$errq->name.'</a>' : $errq->name;
             $table->data[] = array($errq->errorrate, $errq->totaluse, $qname);
         }
         print_table($table);
     }
-
 }
 
 /**
-* a raster for html printing of a report structure.
-*
-* @param string ref $str a buffer for accumulating output
-* @param object $structure a course structure object.
-*/
+ * a raster for html printing of a report structure.
+ *
+ * @param string ref $str a buffer for accumulating output
+ * @param object $structure a course structure object.
+ */
 function examtraining_reports_print_modules_html($userid, $from, $to) {
 
     $modulestr = get_string('seriesize', 'report_examtraining');
@@ -841,7 +845,7 @@ function examtraining_get_module_count($userid, $from, $to) {
         FROM
             {quiz_attempts} qa
         LEFT JOIN
-            {userquiz_attempts} ua
+            {report_examtraining} ua
         ON
             qa.uniqueid = ua.uniqueid
         WHERE
@@ -908,7 +912,9 @@ function examtraining_reports_print_assiduity_html($userid, $from, $to) {
         $assiduityarr[] = array_keys($assiduity);
         $assiduityarr[] = array_values($assiduity);
 
-        jqplot_print_timecurve_bars($assiduityarr, get_string('assiduity', 'report_examtraining'), 'assiduity', $labels, get_string('attemptquantity', 'report_examtraining'));
+        $lbl1 = get_string('assiduity', 'report_examtraining');
+        $lbl2 = get_string('attemptquantity', 'report_examtraining');
+        jqplot_print_timecurve_bars($assiduityarr, $lbl1, 'assiduity', $labels, $lbl2);
     }
 }
 
@@ -964,7 +970,8 @@ function examtraining_reports_print_assiduity2_html($userid, $from, $to) {
             $i++;
         }
 
-        jqplot_print_assiduity_bargraph($attemptstable, array_keys($attemptstable), get_string('assiduity', 'report_examtraining'), 'assiduity');
+        $label = get_string('assiduity', 'report_examtraining');
+        jqplot_print_assiduity_bargraph($attemptstable, array_keys($attemptstable), $label, 'assiduity');
     }
 }
 
@@ -982,7 +989,7 @@ function examtraining_get_grouplist($courseid, $userid) {
             $groupnames[] = $DB->get_field('groups', 'name', array('id' => $groupid));
         }
     }
-    
+
     return implode(', ', $groupnames);
 }
 
@@ -1006,7 +1013,7 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
     if (empty($questions)) {
         $questions = $DB->get_records('question', array(), 'id', 'id,defaultgrade,category');
     }
-    if (empty($qcategories)){
+    if (empty($qcategories)) {
         $qcategories = get_records('question_categories', array(), 'id', 'id,parent');
     }
 
@@ -1015,7 +1022,7 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
     $cats = new StdClass;
     $totalquestions = count_questions_in_categories_rec($examcontext->rootcategory, $cats);
 
-    // compute results
+    // Compute results.
 
     $results = new StdClass;
     $results->categories = array();
@@ -1033,7 +1040,7 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
 
     if ($attempts) {
         foreach ($attempts as $attempt) {
-            if ($statesrs = get_all_user_records($attempt->uniqueid, $userid, null, true)){
+            if ($statesrs = get_all_user_records($attempt->uniqueid, $userid, null, true)) {
                 if ($statesrs->valid()) {
                     foreach ($statesrs as $state) {
 
@@ -1050,14 +1057,14 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
                         $cpt = "count_proposed";
                         $cmt = "count_matched";
 
-                        // aggregate upper category till rootcategory
+                        // Aggregate upper category till rootcategory.
                         $currentcat = &$qcategories[$question->category];
 
                         if ($state->grade > 0) {
                             @$results->attempts[$attempt->id]->{$cm}++;
                             @$results->attempts[$attempt->id]->{$cmt}++;
                         }
-                        if (strstr($state->answer, ':') !== false){
+                        if (strstr($state->answer, ':') !== false) {
                             @$results->attempts[$attempt->id]->{$ca}++;
                             @$results->attempts[$attempt->id]->{$cat}++;
                         }
@@ -1065,7 +1072,7 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
                         @$results->attempts[$attempt->id]->{$cpt}++;
                         $results->attempts[$attempt->id]->timefinish = $attempt->timefinish;
                         $results->modules[$attempt->userquiz][$attempt->id] = 1; // To count frequency of use of questionset.
-    
+
                         do {
                             $previouscatid = $currentcat->id;
                             $results->categories[$currentcat->id]->{$ht} = 1;
@@ -1092,32 +1099,38 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
     if (!empty($results->categories)) {
         foreach (array_keys($results->categories) as $catid) {
             if (@$results->categories[$catid]->count_answered_A) {
-                $results->categories[$catid]->hitratio_A = round(@$results->categories[$catid]->count_matched_A / $results->categories[$catid]->count_answered_A * 100);
+                $ratio = @$results->categories[$catid]->count_matched_A / $results->categories[$catid]->count_answered_A;
+                $results->categories[$catid]->hitratio_A = round($ratio * 100);
             } else {
                 $results->categories[$catid]->hitratio_A = 0;
             }
             if (@$results->categories[$catid]->count_proposed_A) {
-                $results->categories[$catid]->ratio_A = round(@$results->categories[$catid]->count_matched_A / $results->categories[$catid]->count_proposed_A * 100);
+                $ratio = @$results->categories[$catid]->count_matched_A / $results->categories[$catid]->count_proposed_A;
+                $results->categories[$catid]->ratio_A = round($ratio * 100);
             } else {
                 $results->categories[$catid]->ratio_A = 0;
             }
             if (@$results->categories[$catid]->count_answered_C) {
-                $results->categories[$catid]->hitratio_C = round(@$results->categories[$catid]->count_matched_C / $results->categories[$catid]->count_answered_C * 100);
+                $ratio = @$results->categories[$catid]->count_matched_C / $results->categories[$catid]->count_answered_C;
+                $results->categories[$catid]->hitratio_C = round($ratio * 100);
             } else {
                 $results->categories[$catid]->hitratio_C = 0;
             }
             if (@$results->categories[$catid]->count_proposed_C) {
-                $results->categories[$catid]->ratio_C = round(@$results->categories[$catid]->count_matched_C / $results->categories[$catid]->count_proposed_C * 100);
+                $ratio = @$results->categories[$catid]->count_matched_C / $results->categories[$catid]->count_proposed_C;
+                $results->categories[$catid]->ratio_C = round($ratio * 100);
             } else {
                 $results->categories[$catid]->ratio_C = 0;
             }
             if (@$results->categories[$catid]->count_answered) {
-                $results->categories[$catid]->hitratio = round(@$results->categories[$catid]->count_matched / $results->categories[$catid]->count_answered * 100);
+                $ratio = @$results->categories[$catid]->count_matched / $results->categories[$catid]->count_answered;
+                $results->categories[$catid]->hitratio = round($ratio * 100);
             } else {
                 $results->categories[$catid]->hitratio = 0;
             }
             if (@$results->categories[$catid]->count_proposed) {
-                $results->categories[$catid]->ratio = round(@$results->categories[$catid]->count_matched / $results->categories[$catid]->count_proposed * 100);
+                $ratio = @$results->categories[$catid]->count_matched / $results->categories[$catid]->count_proposed;
+                $results->categories[$catid]->ratio = round($ratio * 100);
             } else {
                 $results->categories[$catid]->ratio = 0;
             }
@@ -1125,7 +1138,8 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
                 $cat = get_record('question_categories', 'id', $catid);
                 if ($cat->parent == $examcontext->rootcategory) {
                     if (@$cats->subs[$catid]->count > 0) {
-                        $results->categories[$catid]->mastering = (0 + @$results->categories[$catid]->count_matched) / $cats->subs[$catid]->count * 40;
+                        $ratio = (0 + @$results->categories[$catid]->count_matched) / $cats->subs[$catid]->count;
+                        $results->categories[$catid]->mastering = $ratio * 40;
                         $results->masteringdata[$catid] = min(100, $results->categories[$catid]->mastering);
                         $results->masteringheaders[$catid] = shorten_text($cat->name, 15);
                     } else {
@@ -1140,32 +1154,38 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
     if (!empty($results->attempts)) {
         foreach (array_keys($results->attempts) as $attemptid) {
             if (@$results->attempts[$attemptid]->count_answered_A) {
-                $results->attempts[$attemptid]->hitratio_A = round(@$results->attempts[$attemptid]->count_matched_A / $results->attempts[$attemptid]->count_answered_A * 100);
+                $ratio = @$results->attempts[$attemptid]->count_matched_A / $results->attempts[$attemptid]->count_answered_A;
+                $results->attempts[$attemptid]->hitratio_A = round($ratio * 100);
             } else {
                 $results->attempts[$attemptid]->hitratio_A = 0;
             }
             if (@$results->attempts[$attemptid]->count_proposed_A) {
-                $results->attempts[$attemptid]->ratio_A = round(@$results->attempts[$attemptid]->count_matched_A / $results->attempts[$attemptid]->count_proposed_A * 100);
+                $ratio = @$results->attempts[$attemptid]->count_matched_A / $results->attempts[$attemptid]->count_answered_A;
+                $results->attempts[$attemptid]->ratio_A = round($ratio * 100);
             } else {
                 $results->attempts[$attemptid]->ratio_A = 0;
             }
             if (@$results->attempts[$attemptid]->count_answered_C) {
-                $results->attempts[$attemptid]->hitratio_C = round(@$results->attempts[$attemptid]->count_matched_C / $results->attempts[$attemptid]->count_answered_C * 100);
+                $ratio = @$results->attempts[$attemptid]->count_matched_C / $results->attempts[$attemptid]->count_answered_C;
+                $results->attempts[$attemptid]->hitratio_C = round($ratio * 100);
             } else {
                 $results->attempts[$attemptid]->hitratio_C = 0;
             }
             if (@$results->attempts[$attemptid]->count_proposed_C) {
-                $results->attempts[$attemptid]->ratio_C = round(@$results->attempts[$attemptid]->count_matched_C / $results->attempts[$attemptid]->count_proposed_C * 100);
+                $ratio = @$results->attempts[$attemptid]->count_matched_C / $results->attempts[$attemptid]->count_proposed_C;
+                $results->attempts[$attemptid]->ratio_C = round($ratio * 100);
             } else {
                 $results->attempts[$attemptid]->ratio_C = 0;
             }
             if (@$results->attempts[$attemptid]->count_answered) {
-                $results->attempts[$attemptid]->hitratio = round(@$results->attempts[$attemptid]->count_matched / $results->attempts[$attemptid]->count_answered * 100);
+                $ratio = @$results->attempts[$attemptid]->count_matched / $results->attempts[$attemptid]->count_answered;
+                $results->attempts[$attemptid]->hitratio = round($ratio * 100);
             } else {
                 $results->attempts[$attemptid]->hitratio = 0;
             }
             if (@$results->attempts[$attemptid]->count_proposed) {
-                $results->attempts[$attemptid]->ratio = round(@$results->attempts[$attemptid]->count_matched / $results->attempts[$attemptid]->count_proposed * 100);
+                $ratio = @$results->attempts[$attemptid]->count_matched / $results->attempts[$attemptid]->count_proposed;
+                $results->attempts[$attemptid]->ratio = round($ratio * 100);
             } else {
                 $results->attempts[$attemptid]->ratio = 0;
             }
@@ -1173,21 +1193,28 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
     }
 
     if (isset($results->categories[$examcontext->rootcategory])) {
-        $results->items = @$results->categories[$examcontext->rootcategory]->count_proposed_C + @$results->categories[$examcontext->rootcategory]->count_proposed_A;
-        $results->done = @$results->categories[$examcontext->rootcategory]->count_matched_C + @$results->categories[$examcontext->rootcategory]->count_matched_A;
+        $itemsc = 0 + @$results->categories[$examcontext->rootcategory]->count_proposed_C;
+        $itemsa = 0 + @$results->categories[$examcontext->rootcategory]->count_proposed_A;
+        $results->items = $itemsa + $itemsc;
+        $donec = 0 + @$results->categories[$examcontext->rootcategory]->count_matched_C;
+        $donea = 0 + @$results->categories[$examcontext->rootcategory]->count_matched_A;
+        $results->done = $donec + $donea;
 
         if ($cats->count > 0) {
-            $results->categories[$examcontext->rootcategory]->mastering = (0 + @$results->categories[$examcontext->rootcategory]->count_matched) / $cats->count * 40;
+            $ratio = (0 + @$results->categories[$examcontext->rootcategory]->count_matched) / $cats->count;
+            $results->categories[$examcontext->rootcategory]->mastering = $ratio * 40;
         } else {
             $results->categories[$examcontext->rootcategory]->mastering = 0;
         }
         if ($cats->count_a > 0) {
-            $results->categories[$examcontext->rootcategory]->mastering_A = (0 + @$results->categories[$examcontext->rootcategory]->count_matched_A) / $cats->count_a * 40;
+            $ratio = (0 + @$results->categories[$examcontext->rootcategory]->count_matched_A) / $cats->count_a;
+            $results->categories[$examcontext->rootcategory]->mastering_A = $ratio * 40;
         } else {
             $results->categories[$examcontext->rootcategory]->mastering_A = 0;
         }
         if ($cats->count_c > 0) {
-            $results->categories[$examcontext->rootcategory]->mastering_C = (0 + @$results->categories[$examcontext->rootcategory]->count_matched_C) / $cats->count_c * 40;
+            $ratio = (0 + @$results->categories[$examcontext->rootcategory]->count_matched_C) / $cats->count_c;
+            $results->categories[$examcontext->rootcategory]->mastering_C = $ratio * 40;
         } else {
             $results->categories[$examcontext->rootcategory]->mastering_C = 0;
         }
@@ -1200,8 +1227,7 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
  *
  */
 function examtraining_compute_global_results($userid, $from, $to) {
-    global $USER;
-    global $CFG;
+    global $USER, $CFG;
     global $questions;
 
     // Init structure.
@@ -1328,18 +1354,18 @@ function raw_format_duration($secs) {
 function examtraining_reports_print_questiondetail_xls(&$xlsdoc, $startrow, $effg, $xlsformats) {
     global $qcategories;
 
-    $xlsdoc->write_string($startrow, 0, get_string('questionsort', 'report_examtraining', $effg->sortorder),$xlsformats['t']);
+    $xlsdoc->write_string($startrow, 0, get_string('questionsort', 'report_examtraining', $effg->sortorder), $xlsformats['t']);
     $xlsdoc->merge_cells($startrow , 0, $startrow, 6);
     $xlsdoc->merge_cells($startrow + 1, 0, $startrow + 1, 6);
-    $xlsdoc->write_string($startrow, 7, $effg->name,$xlsformats['tw']);
+    $xlsdoc->write_string($startrow, 7, $effg->name, $xlsformats['tw']);
     $xlsdoc->merge_cells($startrow, 7, $startrow, 12);
 
     $startrow++;
-    $xlsdoc->write_string($startrow, 7, $effg->questiontext,$xlsformats['tw']);
+    $xlsdoc->write_string($startrow, 7, $effg->questiontext, $xlsformats['tw']);
     $xlsdoc->merge_cells($startrow, 7, $startrow, 12);
 
     $startrow++;
-    $xlsdoc->write_string($startrow, 0, get_string('answers', 'report_examtraining'),$xlsformats['t']);
+    $xlsdoc->write_string($startrow, 0, get_string('answers', 'report_examtraining'), $xlsformats['t']);
     $ansnum = 0;
     foreach ($effg->answers as $a) {
         $format = ($a->fraction) ? $xlsformats['t+'] : $xlsformats['t-'];
@@ -1348,18 +1374,18 @@ function examtraining_reports_print_questiondetail_xls(&$xlsdoc, $startrow, $eff
         $startrow++;
         $ansnum++;
     }
-    $xlsdoc->merge_cells($startrow - $ansnum, 0, $startrow  - $ansnum, 6);   // Answer title line.
+    $xlsdoc->merge_cells($startrow - $ansnum, 0, $startrow - $ansnum, 6);   // Answer title line.
     $xlsdoc->merge_cells($startrow - $ansnum + 1, 0, $startrow - 1, 6);  // Other answers.
 
     $givenanswerclass = ($effg->score) ? 'qcorrect' : 'qfailed';
     $givenanswerformat = ($effg->defaultgrade == 1000) ? $xlsformats['t+'] : $xlsformats['t-'];
-    $xlsdoc->write_string($startrow, 0, get_string('givenanswer', 'report_examtraining'),$xlsformats['t']);
+    $xlsdoc->write_string($startrow, 0, get_string('givenanswer', 'report_examtraining'), $xlsformats['t']);
     $xlsdoc->merge_cells($startrow, 0, $startrow, 6);
     $xlsdoc->write_string($startrow, 7, $effg->answeredtext, $givenanswerformat);
     $xlsdoc->merge_cells($startrow, 7, $startrow, 12);
 
     $startrow++;
-    $xlsdoc->write_string($startrow, 0, get_string('category', 'report_examtraining'),$xlsformats['t']);
+    $xlsdoc->write_string($startrow, 0, get_string('category', 'report_examtraining'), $xlsformats['t']);
     $xlsdoc->merge_cells($startrow, 0, $startrow, 6);
     $xlsdoc->write_string($startrow, 7, $qcategories[$effg->category]->name, $xlsformats['t']);
     $xlsdoc->merge_cells($startrow, 7, $startrow, 12);
@@ -1410,15 +1436,15 @@ function examtraining_reports_print_overralcatscores_xls($worksheet, $startrow, 
 function examtraining_reports_input($course) {
     $input = new StdClass();
 
-    $input->startday = optional_param('startday', -1, PARAM_INT) ; // From (-1 is from course start).
-    $input->startmonth = optional_param('startmonth', -1, PARAM_INT) ; // From (-1 is from course start).
-    $input->startyear = optional_param('startyear', -1, PARAM_INT) ; // From (-1 is from course start).
-    $input->endday = optional_param('endday', -1, PARAM_INT) ; // To (-1 is till now).
-    $input->endmonth = optional_param('endmonth', -1, PARAM_INT) ; // To (-1 is till now).
-    $input->endyear = optional_param('endyear', -1, PARAM_INT) ; // To (-1 is till now).
-    $input->fromstart = optional_param('fromstart', 0, PARAM_INT) ; // Force reset to course startdate.
-    $input->from = optional_param('from', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
-    $input->to = optional_param('to', -1, PARAM_INT) ; // Alternate way of saying from when for XML generation.
+    $input->startday = optional_param('startday', -1, PARAM_INT); // From (-1 is from course start).
+    $input->startmonth = optional_param('startmonth', -1, PARAM_INT); // From (-1 is from course start).
+    $input->startyear = optional_param('startyear', -1, PARAM_INT); // From (-1 is from course start).
+    $input->endday = optional_param('endday', -1, PARAM_INT); // To (-1 is till now).
+    $input->endmonth = optional_param('endmonth', -1, PARAM_INT); // To (-1 is till now).
+    $input->endyear = optional_param('endyear', -1, PARAM_INT); // To (-1 is till now).
+    $input->fromstart = optional_param('fromstart', 0, PARAM_INT); // Force reset to course startdate.
+    $input->from = optional_param('from', -1, PARAM_INT); // Alternate way of saying from when for XML generation.
+    $input->to = optional_param('to', -1, PARAM_INT); // Alternate way of saying from when for XML generation.
     $input->offset = optional_param('offset', 0, PARAM_INT);
 
     // Calculate effective start time.

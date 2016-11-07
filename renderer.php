@@ -31,27 +31,29 @@ class report_examtraining_renderer extends plugin_renderer_base {
      * @param string ref $str a buffer for accumulating output
      * @param object $structure a course structure object.
      */
-    function trainings_globals($userid, $from, $to, $height = 'large', &$stats) {
-        global $CFG;
+    public function trainings_globals($userid, $from, $to, $height = 'large', &$stats) {
 
-        $exam_context = examtraining_get_context();
+        $examcontext = examtraining_get_context();
 
         if (is_null($stats)) {
-            $stats = userquiz_get_user_globals($userid, $exam_context->testquizzes, $from, $to);
+            $stats = userquiz_get_user_globals($userid, $examcontext->testquizzes, $from, $to);
         }
 
         $label = get_string('overalhitstraining', 'report_examtraining');
         jqplot_print_horiz_bar_headgraph($stats[$userid], $label, 'overalhitstraining', $height);
 
-        $Aratiostr = get_string('ratioA', 'report_examtraining');
-        $Cratiostr = get_string('ratioC', 'report_examtraining');
-        $Acountstr = get_string('countA', 'report_examtraining');
-        $Ccountstr = get_string('countC', 'report_examtraining');
-        $table->head = array("<b>$Aratiostr</b>", "<b>$Cratiostr</b>", "<b>$Acountstr</b>", "<b>$Ccountstr</b>");
+        $aratiostr = get_string('ratioA', 'report_examtraining');
+        $cratiostr = get_string('ratioC', 'report_examtraining');
+        $acountstr = get_string('countA', 'report_examtraining');
+        $ccountstr = get_string('countC', 'report_examtraining');
+        $table->head = array("<b>$aratiostr</b>", "<b>$cratiostr</b>", "<b>$acountstr</b>", "<b>$ccountstr</b>");
         $table->size = array('25%', '25%', '25%', '25%');
         $table->width = '90%';
         $table->align = array('center', 'center', 'center', 'center');
-        $table->data[] = array((@$stats[$userid]->ahitratio + 0).' %', (@$stats[$userid]->chitratio + 0).' %', @$stats[$userid]->aanswered + 0, @$stats[$userid]->canswered + 0);
+        $table->data[] = array((@$stats[$userid]->ahitratio + 0).' %',
+                               (@$stats[$userid]->chitratio + 0).' %',
+                               @$stats[$userid]->aanswered + 0,
+                               @$stats[$userid]->canswered + 0);
 
         return html_writer::table($table);
     }
@@ -62,16 +64,16 @@ class report_examtraining_renderer extends plugin_renderer_base {
      * @param string ref $str a buffer for accumulating output
      * @param object $structure a course structure object.
      */
-    function trainings($userid, $from, $to){
-        global $CFG, $OUTPUT;
+    public function trainings($userid, $from, $to) {
+        global $DB, $OUTPUT;
 
-        $exam_context = examtraining_get_context();
-        $params = array('parent' => $exam_context->rootcategory);
+        $examcontext = examtraining_get_context();
+        $params = array('parent' => $examcontext->rootcategory);
         $subcats = $DB->get_records('question_categories', $params, 'id, name', 'sortorder');
 
         $str = '';
 
-        if (!$stats = userquiz_get_weekly_globals($userid, $exam_context->testquizzes, $from, $to)) {
+        if (!$stats = userquiz_get_weekly_globals($userid, $examcontext->testquizzes, $from, $to)) {
             $str .= $OUTPUT->heading(get_string('traininghits', 'report_examtraining'));
             $str .= get_string('notrainingactivity', 'report_examtraining');
             return $str;
@@ -86,8 +88,8 @@ class report_examtraining_renderer extends plugin_renderer_base {
             $firstdayinyear = mktime(0, 0, 0, 1, 1, $statsrawarr[0]->year);
             $statdate = ($firstdayinyear + $stat->week * 7 * DAYSECS) * 1000;
             $data[0][] = $statdate;
-            $data[1][] = $exam_context->rateAserie;
-            $data[2][] = $exam_context->rateCserie;
+            $data[1][] = $examcontext->rateAserie;
+            $data[2][] = $examcontext->rateCserie;
             $data[3][] = $stat->ahitratio * 100;
             $data[4][] = $stat->chitratio * 100;
         }
@@ -117,7 +119,8 @@ class report_examtraining_renderer extends plugin_renderer_base {
                 'showMarker' => 'true'
             ),
         );
-        $str .= jqplot_print_timecurve_graph($data, get_string('globalprogress', 'report_examtraining'), 'globalprogress', $labels, true);
+        $label = get_string('globalprogress', 'report_examtraining');
+        $str .= jqplot_print_timecurve_graph($data, $label, 'globalprogress', $labels, true);
         $str .= "</center>";
 
         return $str;
@@ -129,19 +132,18 @@ class report_examtraining_renderer extends plugin_renderer_base {
      * @param string ref $str a buffer for accumulating output
      * @param object $structure a course structure object.
      */
-    function exams_summary($userid, $from, $to) {
-        global $CFG;
+    public function exams_summary($userid, $from, $to) {
 
-        $exam_context = examtraining_get_context();
+        $examcontext = examtraining_get_context();
 
-        if (!$stats = userquiz_get_user_globals($userid, $exam_context->examquizzes, $from, $to)){
+        if (!$stats = userquiz_get_user_globals($userid, $examcontext->examquizzes, $from, $to)) {
             return "no records";
         }
-        return jqplot_print_horiz_bar_headgraph($stats, get_string('examtries', 'report_examtraining'), 'examtries', true);
+        $label = get_string('examtries', 'report_examtraining');
+        return jqplot_print_horiz_bar_headgraph($stats, $label, 'examtries', true);
     }
 
-    function pager($maxobjects, $offset, $page, $url) {
-        global $CFG;
+    public function pager($maxobjects, $offset, $page, $url) {
 
         if ($maxobjects <= $page) {
             return '';
@@ -175,13 +177,13 @@ class report_examtraining_renderer extends plugin_renderer_base {
      * @param string ref $str a buffer for accumulating output
      * @param object $structure a course structure object.
      */
-    function exams($userid, $from, $to) {
-        global $CFG, $COURSE;
+    public function exams($userid, $from, $to) {
+        global $COURSE, $OUTPUT;
 
-        $exam_context = examtraining_get_context();
+        $examcontext = examtraining_get_context();
         $context = context_course::instance($COURSE->id);
 
-        if (!$stats = userquiz_get_attempts_stats($userid, $exam_context->examquiz, $from, $to)) {
+        if (!$stats = userquiz_get_attempts_stats($userid, $examcontext->examquiz, $from, $to)) {
             return;
         }
 
@@ -234,8 +236,8 @@ class report_examtraining_renderer extends plugin_renderer_base {
      * a raster for html printing of a report structure global header
      * with all the relevant data about a user.
      */
-    function globalheader($userid, $courseid, &$data) {
-        global $CFG, $COURSE, $DB, $OUTPUT;
+    public function globalheader($userid, $courseid, &$data) {
+        global $COURSE, $DB, $OUTPUT;
 
         $user = $DB->get_record('user', array('id' => $userid));
         if ($COURSE->id != $courseid) {
@@ -272,7 +274,8 @@ class report_examtraining_renderer extends plugin_renderer_base {
         $str .= ' : ';
         $str .= get_user_roles_in_context($userid, $context);
 
-        $examreporturl = new moodle_url('/report/examtraining/index.php', array('view' => 'user', 'id' => $courseid, 'userid' => $userid));
+        $params = array('view' => 'user', 'id' => $courseid, 'userid' => $userid);
+        $examreporturl = new moodle_url('/report/examtraining/index.php', $params);
         $str .= '<br/><a href="'.$examreporturl.'">'.get_string('seedetails', 'report_examtraining').'</a>';
 
         // Start printing the overall times.
@@ -289,17 +292,17 @@ class report_examtraining_renderer extends plugin_renderer_base {
     }
 
     /**
-     * prints a jqplot graph using 
+     * prints a jqplot graph using
      *
      */
-    function coverage_vs_ratio(&$users, $courseid, $from, $to, $hits) {
+    public function coverage_vs_ratio(&$users, $courseid, $from, $to, $hits) {
         global $DB;
 
         $userids = implode("','", array_keys($users));
 
-        $exam_context = examtraining_get_context();
+        $examcontext = examtraining_get_context();
 
-        $params = array('blockid' => $exam_context->instanceid);
+        $params = array('blockid' => $examcontext->instanceid);
         $coverage = $DB->get_records('userquiz_monitor_user_stats', $params, 'userid', 'userid, coverageseen, coveragematched');
         $data = array();
 
@@ -313,6 +316,7 @@ class report_examtraining_renderer extends plugin_renderer_base {
     }
 
     public function time_selector_form() {
+
         $str = '';
 
         $str .= '<center>';

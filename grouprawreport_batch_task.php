@@ -35,7 +35,7 @@ require('../../../config.php');
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
-$id = required_param('id', PARAM_INT) ; // The course id.
+$id = required_param('id', PARAM_INT); // The course id.
 
 if (!$course = $DB->get_record('course', array('id' => $id))) {
     die ('Invalid course ID');
@@ -43,8 +43,8 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
 $context = context_course::instance($course->id);
 
 $input = examtraining_reports_input($course);
-$groupid = required_param('groupid', PARAM_INT) ; // Group id.
-$timesession = required_param('timesession', PARAM_INT) ; // Time of the generation batch.
+$groupid = required_param('groupid', PARAM_INT); // Group id.
+$timesession = required_param('timesession', PARAM_INT); // Time of the generation batch.
 $readabletimesession = date('Ymd_H_i_s', $timesession);
 $sessionday = date('Ymd', $timesession);
 
@@ -83,7 +83,7 @@ if (!empty($targetusers)) {
 
     $rawfile = mb_convert_encoding(implode(';', $resultset)."\n", 'ISO-8859-1', 'UTF-8');
 
-    $report_context = examtraining_get_context($course->id);
+    $reportcontext = examtraining_get_context($course->id);
 
     global $COURSE;
     $COURSE->id = $course->id;

@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-/**
+/*
  * direct log construction implementation
  *
  */
@@ -73,7 +73,7 @@ foreach ($targetusers as $uid => $user) {
     }
 }
 
-// print result
+// Print result.
 
 if (!empty($targetusers)) {
 
@@ -98,7 +98,7 @@ if (!empty($targetusers)) {
 
     fputs($rawfile, mb_convert_encoding(implode(';', $resultset)."\n", 'ISO-8859-1', 'UTF-8'));
 
-    $examtraining_context = examtraining_get_context();
+    $examtrainingcontext = examtraining_get_context();
 
     foreach ($targetusers as $uid => $auser) {
         $logs = use_stats_extract_logs($input->from, $input->to, $uid, $COURSE->id);
@@ -149,7 +149,8 @@ if (!empty($targetusers)) {
     $fs->create_file_from_string($filerec, $rawfile);
 
     $strupload = get_string('uploadresult', 'report_examtraining');
-    $reporturl = moodle_url::make_file_url('/pluginfile.php', array($context->id, 'report_examtraining', 'instantreport', '0', '/', $filename));
+    $reporturl = moodle_url::make_file_url('/pluginfile.php', array($context->id, 'report_examtraining', 'instantreport',
+                                           '0', '/', $filename));
     echo '<a href="'.$reporturl.'">'.$strupload.'</a>';
 } else {
     print_string('nothing', 'report_examtraining');

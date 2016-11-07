@@ -22,33 +22,34 @@
  * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die();
 
 class report_examtraining_raw_renderer extends plugin_renderer_base {
 
     /**
-     * a raster for printing in raw format 
+     * a raster for printing in raw format
      * with all the relevant data about a user.
      */
-    function globalheader_raw($userid, $courseid, &$data, $from, $to) {
+    public function globalheader_raw($userid, $courseid, &$data, $from, $to) {
         global $CFG, $COURSE, $DB;
-        static $DOBfieldid = 0;
-        static $POBfieldid = 0;
-        static $C3fieldid = 0;
+        static $dobfieldid = 0;
+        static $pobfieldid = 0;
+        static $c3fieldid = 0;
 
         $loginfo = examtraining_get_log_reader_info();
 
-        if ($DOBfieldid == 0) {
-            $DOBfieldid = $DB->get_field('user_info_field', 'id', array('shortname' => 'AMFDOB'));
+        if ($dobfieldid == 0) {
+            $dobfieldid = $DB->get_field('user_info_field', 'id', array('shortname' => 'AMFDOB'));
         }
-        if ($POBfieldid == 0) {
-            $POBfieldid = $DB->get_field('user_info_field', 'id', array('shortname' => 'AMFPOB'));
-        }
-
-        if ($C3fieldid == 0) {
-            $C3fieldid = $DB->get_field('user_info_field', 'id', array('shortname' => 'c3'));
+        if ($pobfieldid == 0) {
+            $pobfieldid = $DB->get_field('user_info_field', 'id', array('shortname' => 'AMFPOB'));
         }
 
-        $exam_context = examtraining_get_context($courseid);
+        if ($c3fieldid == 0) {
+            $c3fieldid = $DB->get_field('user_info_field', 'id', array('shortname' => 'c3'));
+        }
+
+        $examcontext = examtraining_get_context($courseid);
 
         $user = $DB->get_record('user', array('id' => $userid));
         if ($courseid != $COURSE->id) {
@@ -89,13 +90,13 @@ class report_examtraining_raw_renderer extends plugin_renderer_base {
         ";
 
         $firstenroll = $DB->get_field_sql($sql, array($user->id));
-        $resultset[] = ($firstenroll) ? date('d/m/Y', $firstenroll) : '' ; // From date.
+        $resultset[] = ($firstenroll) ? date('d/m/Y', $firstenroll) : ''; // From date.
         $select = " userid = ? AND action = '".$loginfo->loggedin."' ";
         $firstlogin = $DB->get_field_select($loginfo->table, 'MIN('.$loginfo->timeparam.')', $select, array($user->id));
-        $resultset[] = ($firstlogin) ? date('d/m/Y', $firstlogin) : '' ; // Firstlogin.
+        $resultset[] = ($firstlogin) ? date('d/m/Y', $firstlogin) : ''; // Firstlogin.
         $select = " userid = ? AND action = '".$loginfo->loggedin."' ";
         $lastlogin = $DB->get_field_select($loginfo->table, 'MAX('.$loginfo->timeparam.')', $select, array($user->id));
-        $resultset[] = ($lastlogin) ? date('d/m/Y', $lastlogin) : '' ; // Firstlogin.
+        $resultset[] = ($lastlogin) ? date('d/m/Y', $lastlogin) : ''; // Firstlogin.
         $resultset[] = date('d/m/Y', $from); // From date.
         $resultset[] = date('d/m/Y', $to); // To date.
         $resultset[] = date('d/m/Y', $to - DAYSECS * 7); // Last week of period.
@@ -119,8 +120,8 @@ class report_examtraining_raw_renderer extends plugin_renderer_base {
         $resultset[] = raw_format_duration(@$data->elapsed); // Elapsed time.
         $resultset[] = raw_format_duration(@$data->weekelapsed); // Elapsed time this week.
 
-        $trainingstats = userquiz_get_user_globals($userid, $exam_context->trainingquizzes, $from, $to);
-        $weektrainingstats = userquiz_get_user_globals($userid, $exam_context->trainingquizzes, $to - DAYSECS * 7, $to);
+        $trainingstats = userquiz_get_user_globals($userid, $examcontext->trainingquiz, $from, $to);
+        $weektrainingstats = userquiz_get_user_globals($userid, $examcontext->trainingquizzes, $to - DAYSECS * 7, $to);
 
         $resultset[] = 0 + @$trainingstats[$userid]->aanswered; // Answered A questions on training.
         $resultset[] = 0 + @$weektrainingstats[$userid]->aanswered; // Answered A questions on training this week.
@@ -134,16 +135,17 @@ class report_examtraining_raw_renderer extends plugin_renderer_base {
         $resultset[] = ((0 + @$trainingstats[$userid]->chitratio)).' %'; // Ratio C.
         $resultset[] = ((0 + @$weektrainingstats[$userid]->chitratio)).' %'; // Ratio C.
 
-        // $select = " userid = $userid AND blockid = {$exam_context->instanceid} AND attemptid = 0 ";
+        // $select = " userid = $userid AND blockid = {$examcontext->instanceid} AND attemptid = 0 ";
         // $resultset[] = 0 + get_field_select('userquiz_monitor_user_stats', 'coverageseen', $select).' %'; // knowledge covering
         // $resultset[] = 0 + get_field_select('userquiz_monitor_user_stats', 'coveragematched', $select).' %'; // knowledge covering
 
-        $examstats = userquiz_get_user_globals($userid, $exam_context->examquiz, $from, $to);
+        $examstats = userquiz_get_user_globals($userid, $examcontext->examquiz, $from, $to);
 
         $matchedexams = 0;
-        if ($stats = userquiz_get_attempts_stats($userid, $exam_context->examquiz, $from, $to)) {
+        if ($stats = userquiz_get_attempts_stats($userid, $examcontext->examquiz, $from, $to)) {
             foreach ($stats as $attemptid => $attemptres) {
-                if ($attemptres->ahitratio * 100 >= $exam_context->rateAserie && $attemptres->chitratio * 100 >= $exam_context->rateCserie) {
+                if (($attemptres->ahitratio * 100 >= $examcontext->rateAserie) &&
+                        ($attemptres->chitratio * 100 >= $examcontext->rateCserie)) {
                     $matchedexams++;
                 }
             }
@@ -169,24 +171,24 @@ class report_examtraining_raw_renderer extends plugin_renderer_base {
 
         // Get special fields.
         // Date of birth.
-        if ($DOBfieldid) {
-            $dob = $DB->get_field('user_info_data', 'data', array('fieldid' => $DOBfieldid, 'userid' => $user->id));
+        if ($dobfieldid) {
+            $dob = $DB->get_field('user_info_data', 'data', array('fieldid' => $dobfieldid, 'userid' => $user->id));
             $resultset[] = $dob;
         } else {
             $resultset[] = '[N.C.]';
         }
 
         // Place of birth.
-        if ($POBfieldid) {
-            $pob = $DB->get_field('user_info_data', 'data', array('fieldid' => $POBfieldid, 'userid' => $user->id));
+        if ($pobfieldid) {
+            $pob = $DB->get_field('user_info_data', 'data', array('fieldid' => $pobfieldid, 'userid' => $user->id));
             $resultset[] = $pob;
         } else {
             $resultset[] = '[N.C.]';
         }
 
         // C3 completion state.
-        if ($C3fieldid) {
-            $c3 = $DB->get_field('user_info_data', 'data', array('fieldid' => $C3fieldid, 'userid' => $user->id));
+        if ($c3fieldid) {
+            $c3 = $DB->get_field('user_info_data', 'data', array('fieldid' => $c3fieldid, 'userid' => $user->id));
             $resultset[] = ($c3) ? 'Certified' : '';
         } else {
             $resultset[] = '[N.C.]';

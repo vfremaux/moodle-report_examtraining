@@ -42,44 +42,13 @@ if (!$batchcontext->course = $DB->get_record('course', array('id' => $courseid))
 
 $COURSE = $batchcontext->course;
 
-$batchcontext->from = optional_param('from', -1, PARAM_INT);
-$batchcontext->to = optional_param('to', -1, PARAM_INT);
-
 // Just for code reuse. We don'nt use any form.
-$startday = optional_param('startday', -1, PARAM_INT); // From (-1 is from course start).
-$startmonth = optional_param('startmonth', -1, PARAM_INT); // From (-1 is from course start).
-$startyear = optional_param('startyear', -1, PARAM_INT); // From (-1 is from course start).
-$endday = optional_param('endday', -1, PARAM_INT); // To (-1 is till now).
-$endmonth = optional_param('endmonth', -1, PARAM_INT); // To (-1 is till now).
-$endyear = optional_param('endyear', -1, PARAM_INT); // To (-1 is till now).
+$input = examtraining_reports_input($batchcontext->course);
+
+$batchcontext->from = $input->from;
+$batchcontext->to = $input->to;
 
 $filename = optional_param('filename', '', PARAM_TEXT);
-
-if ($batchcontext->from == -1) {
-    // Maybe we get it from parameters.
-    if ($startday == -1 || $fromstart) {
-        $batchcontext->from = $batchcontext->course->startdate;
-    } else {
-        if ($startmonth != -1 && $startyear != -1) {
-            $batchcontext->from = mktime(0, 0, 8, $startmonth, $startday, $startyear);
-        } else {
-            print_error('Bad start date');
-        }
-    }
-}
-
-if ($batchcontext->to == -1) {
-    // Maybe we get it from parameters.
-    if ($endday == -1) {
-        $batchcontext->to = time();
-    } else {
-        if ($endmonth != -1 && $endyear != -1) {
-            $batchcontext->to = mktime(0, 0, 8, $endmonth, $endday, $endyear);
-        } else {
-            print_error('Bad end date');
-        }
-    }
-}
 
 $context = context_course::instance($courseid);
 

@@ -34,7 +34,7 @@ require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
 $input = examtraining_reports_input($course);
-$input->userid = optional_param('userid', $USER->id, PARAM_INT) ; // Admits special values : -1 current group, -2 course users.
+$input->userid = optional_param('userid', $USER->id, PARAM_INT); // Admits special values : -1 current group, -2 course users.
 
 ini_set('memory_limit', '1024M');
 
@@ -91,13 +91,14 @@ if ($output == 'html') {
     $workbook->send($filename);
 
     // Preparing some formats.
-    $xls_formats = examtrainings_reports_xls_formats($workbook);
-    $worksheet = examtrainings_reports_init_worksheet($input->userid, $xls_formats, $workbook);
-    $startrow = examtrainings_reports_print_header_xls($worksheet, $input->userid, $course->id, $globalresults, $xls_formats);
-    $startrow = examtrainings_reports_print_trainings_xls($worksheet, $startrow, $xls_formats, $input->userid, $course->id, $questionresults);
-    $startrow = examtrainings_reports_print_exams_xls($worksheet, $startrow, $xls_formats, $input->userid, $course->id, $examresults);
-    $startrow = examtrainings_reports_print_assiduity_xls($worksheet, $startrow, $xls_formats, $input->userid, $course->id, $questionresults, $examresults, $input->from, $input->to);
-    $startrow = examtrainings_reports_print_modules_xls($worksheet, $startrow, $xls_formats, $input->userid, $course->id, $questionresults);
+    $xlsformats = examtrainings_reports_xls_formats($workbook);
+    $worksheet = examtrainings_reports_init_worksheet($input->userid, $xlsformats, $workbook);
+    $startrow = examtrainings_reports_print_header_xls($worksheet, $input->userid, $course->id, $globalresults, $xlsformats);
+    $startrow = examtrainings_reports_print_trainings_xls($worksheet, $startrow, $xlsformats, $input->userid, $course->id, $questionresults);
+    $startrow = examtrainings_reports_print_exams_xls($worksheet, $startrow, $xlsformats, $input->userid, $course->id, $examresults);
+    $startrow = examtrainings_reports_print_assiduity_xls($worksheet, $startrow, $xlsformats, $input->userid, $course->id,
+                                                          $questionresults, $examresults, $input->from, $input->to);
+    $startrow = examtrainings_reports_print_modules_xls($worksheet, $startrow, $xlsformats, $input->userid, $course->id, $questionresults);
 
     ob_end_clean();
     $workbook->close();

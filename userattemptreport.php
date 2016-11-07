@@ -25,12 +25,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-/**
+/*
  * direct log construction implementation
  */
 
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
-require_once($CFG->dirroot.'/course/report/barchenamf3/locallib.php');
+require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
 $attemptid = required_param('attemptid', PARAM_INT);
 
@@ -45,8 +45,8 @@ require_capability('report/examtraining:viewall', $context);
 
 // Get data.
 
-$attempt = get_record('userquiz_attempts', 'uniqueid', $attemptid);
-$quiz = get_record('userquiz', 'id', $attempt->userquiz);
+$attempt = get_record('quiz_attempts', 'uniqueid', $attemptid);
+$quiz = get_record('userquiz', 'id', $attempt->quiz);
 
 $user = get_record('user', 'id', $attempt->userid);
 
@@ -61,22 +61,23 @@ foreach ($questionset as $qid) {
 
     $q = $DB->get_record('question', 'id', $qid);
 
-        // If randomized, need fetch the effective question.
-        if (preg_match('/^random/', $q->qtype)){
-            if ($state = get_record('question_states', 'attempt', $attemptid, 'question', $q->id, 'event', 0)) {
-                if (preg_match("/^{$q->qtype}(\\d+)-/", $state->answer, $matches)){
-                    $effectiveqid = $matches[1];
-                }
+    // If randomized, need fetch the effective question.
+    // TODO / Redraw, question_states not exists anymore.
+    if (preg_match('/^random/', $q->qtype)) {
+        if ($state = get_record('question_states', 'attempt', $attemptid, 'question', $q->id, 'event', 0)) {
+            if (preg_match("/^{$q->qtype}(\\d+)-/", $state->answer, $matches)) {
+                $effectiveqid = $matches[1];
             }
-        } else {
-            $effectiveqid = $qid;
         }
-
-        $questions[$qid] = $q;
-        $questions[$effectiveqid] = get_record('question', 'id', $effectiveqid);
-        $questionforwards[$qid] = $effectiveqid;
-
+    } else {
+        $effectiveqid = $qid;
     }
+
+    $questions[$qid] = $q;
+    $questions[$effectiveqid] = get_record('question', 'id', $effectiveqid);
+    $questionforwards[$qid] = $effectiveqid;
+
+}
 
 // Print result.
 
@@ -90,13 +91,13 @@ $cscore = 0;
 global $qcategories;
 
 $qcategories = array();
-$EFFQS = array();
+$effqs = array();
 
 // Compute question and prepare some data for output (html or xls).
-foreach($realquestions as $qid) {
+foreach ($realquestions as $qid) {
 
     // Get effective question for answers, check it is a straight forward question.
-    if (array_key_exists($qid, $questionforwards)){
+    if (array_key_exists($qid, $questionforwards)) {
         $effectiveqid = $questionforwards[$qid];
     } else {
         $effectiveqid = $qid;
@@ -121,7 +122,7 @@ foreach($realquestions as $qid) {
 
     $effg->answeredtext = get_string('unanswered', 'report_examtraining');
     foreach ($effg->answers as $aid => $a) {
-        if ($a->id == $answerid){
+        if ($a->id == $answerid) {
             $effg->answeredtext = "<div>$a->answer</div>";
         }
         $answerclass = ($a->fraction) ? 'qcorrect' : 'qfailed';
@@ -130,7 +131,7 @@ foreach($realquestions as $qid) {
 
     $effg->sortorder = $i;
 
-    $effg->htmloutput = "<table width=\"$tablewidth\" class=\"generaltable\">";    
+    $effg->htmloutput = "<table width=\"$tablewidth\" class=\"generaltable\">";
     $effg->htmloutput .= '<tr valign="top" class="header r0">';
     $effg->htmloutput .= '<td width="10%" class=="header c0">Question :</td>';
     $effg->htmloutput .= '<td class="questioninfo">';
@@ -142,14 +143,17 @@ foreach($realquestions as $qid) {
     }
     $effg->htmloutput .= '</ul><br/>';
     $givenanswerclass = ($effg->score) ? 'qcorrect' : 'qfailed';
-    $effg->type = ($effq->defaultgrade == 1000) ? 'C' : 'A' ;
-    $effg->typeoutput = ($effq->defaultgrade == 1000) ? '<img width="14" height="15" src="'.$CFG->wwwroot.'/blocks/userquiz_monitor/pix/c.png" />' : '<img width="14" height="15" src="'.$CFG->wwwroot.'/blocks/userquiz_monitor/pix/a.png" />' ;
-    $effg->htmloutput .= get_string('givenanswer', 'report_examtraining', '<div class="'.$givenanswerclass.'">'.$effg->answeredtext.'</div>');
+    $effg->type = ($effq->defaultgrade == 1000) ? 'C' : 'A';
+    $pix1 = '<img width="14" height="15" src="'.$CFG->wwwroot.'/blocks/userquiz_monitor/pix/c.png" />';
+    $pix2 = '<img width="14" height="15" src="'.$CFG->wwwroot.'/blocks/userquiz_monitor/pix/a.png" />';
+    $effg->typeoutput = ($effq->defaultgrade == 1000) ? $pix1 : $pix2;
+    $e = '<div class="'.$givenanswerclass.'">'.$effg->answeredtext.'</div>';
+    $effg->htmloutput .= get_string('givenanswer', 'report_examtraining', $e);
     $effg->htmloutput .= "Categorie : <span class=\"qcategory\">".$qcategories[$effq->category]->name.'</span><br/>';
     $effg->htmloutput .= "Type : <span class=\"qtype\">".$effg->typeoutput.'</span><br/>';
     $effg->htmloutput .= "Score : <span class=\"qscore\">".$effg->score.'</span><br/>';
     $effg->htmloutput .= '</td></tr>';
-    $effg->htmloutput .= "</table>";    
+    $effg->htmloutput .= "</table>";
 
     $qcategories[$effq->category]->qs = @$qcategories[$effq->category]->qs + 1;
     if ($effq->defaultgrade == 1000) {
@@ -168,7 +172,7 @@ foreach($realquestions as $qid) {
         }
     }
 
-    $EFFQS[$qid] = $effg;
+    $effqs[$qid] = $effg;
 
     $i++;
 }
@@ -200,12 +204,12 @@ function sortcatsbyname($a, $b) {
 uasort($qcategories, 'sortcatsbyname');
 
 $total = $atype + $ctype;
-$aratio = ($atype) ? $ascore / $atype * 100 : 0 ;
-$cratio = ($ctype) ? $cscore / $ctype * 100 : 0 ;
+$aratio = ($atype) ? $ascore / $atype * 100 : 0;
+$cratio = ($ctype) ? $cscore / $ctype * 100 : 0;
 
 /*
  * Rastering output document
-*/
+ */
 
 if ($output == 'html' || $output == 'pdf') {
     // Time period form.
@@ -222,12 +226,12 @@ if ($output == 'html' || $output == 'pdf') {
         if (!empty($usergroups)) {
             foreach ($usergroups as $group) {
                 $str = $group->name;
-                if ($group->id == get_current_group($COURSE->id)){
+                if ($group->id == get_current_group($COURSE->id)) {
                     $str = "<b>$str</b>";
                 }
                 $groupnames[] = $str;
             }
-            $groupsinfo = implode(', ', $groupnames);                        
+            $groupsinfo = implode(', ', $groupnames);
         }
 
         $html .= "<table width=\"$tablewidth\" class=\"generaltable\"><tr>";
@@ -277,7 +281,7 @@ if ($output == 'html' || $output == 'pdf') {
 
     $html .= '<h2>'.get_string('questionanswersdetail', 'report_examtraining').'</h2>';
 
-    foreach ($EFFQS as $effq) {
+    foreach ($effqs as $effq) {
         $html .= $effq->htmloutput;
     }
 
@@ -290,8 +294,19 @@ if ($output == 'html' || $output == 'pdf') {
                 <th align="center" class="header c1">%</th>
                 <th align="center" class="header c2">#</th>
               </tr>';
-    $html .= '<tr><td>Type A</td><td align="center">'.sprintf('%0.2f', $aratio).'</td><td align="center">'.$ascore.'/'.$atype.'</td></tr>';
-    $html .= '<tr><td>Type C</td><td align="center">'.sprintf('%0.2f', $cratio).'</td><td align="center">'.$cscore.'/'.$ctype.'</td></tr>';
+
+    $html .= '<tr>';
+    $html .= '<td>Type A</td>';
+    $html .= '<td align="center">'.sprintf('%0.2f', $aratio).'</td>';
+    $html .= '<td align="center">'.$ascore.'/'.$atype.'</td>';
+    $html .= '</tr>';
+
+    $html .= '<tr>';
+    $html .= '<td>Type C</td>';
+    $html .= '<td align="center">'.sprintf('%0.2f', $cratio).'</td>';
+    $html .= '<td align="center">'.$cscore.'/'.$ctype.'</td>';
+    $html .= '</tr>';
+
     $html .= '</table></p>';
 
     $html .= '<h2>'.get_string('categoryscores', 'report_examtraining').'</h2>';
@@ -301,16 +316,19 @@ if ($output == 'html' || $output == 'pdf') {
         $total = 0 + @$scores->atype + @$scores->ctype;
         $aratio = (@$scores->atype) ? @$scores->ascore / @$scores->atype * 100 : 0;
         $cratio = (@$scores->ctype) ? @$scores->cscore / @$scores->ctype * 100 : 0;
-        $catstyle = (@$scores->atype) ? 'atype' : 'ctype' ;
+        $catstyle = (@$scores->atype) ? 'atype' : 'ctype';
         $html .= '<p><table width="'.$tablewidth.'" class="generaltable">';
+
         $html .= '<tr>';
-        $html .= "<th width=\"50%\" class=\"qcategory $catstyle\">".$scores->name.'</th>';
-        $html .= "<th align=\"center\" class=\"header c1 $catstyle\" width=\"25%\">%</th>";
-        $html .= "<th align=\"center\" class=\"header c2 $catstyle\" width=\"25%\">#</th>";
+        $html .= '<th width="50%" class="qcategory '.$catstyle.'">'.$scores->name.'</th>';
+        $html .= '<th align="center" class="header c1 '.$catstyle.'" width="25%">%</th>';
+        $html .= '<th align="center" class="header c2 '.$catstyle.'" width="25%">#</th>';
         $html .= '</tr>';
+
         if (!empty($scores->atype)) {
             $html .= '<tr>';
-            $html .= '<td>Type A</td><td align="center">'.sprintf('%0.2f', $aratio).'</td>';
+            $html .= '<td>Type A</td>';
+            $html ?= '<td align="center">'.sprintf('%0.2f', $aratio).'</td>';
             $html .= '<td align="center">'.@$scores->ascore.'/'.@$scores->atype.'</td>';
             $html .= '</tr>';
         }
@@ -363,19 +381,19 @@ if ($output == 'html' || $output == 'pdf') {
     $globalresults->events = 0;
 
     // Preparing some formats.
-    $xls_formats = examtraining_reports_xls_formats($workbook);
-    $worksheet = examtraining_reports_init_worksheet($user->id, $xls_formats, $workbook, array(0, 3, 70));
-    $startrow = examtraining_reports_print_header_xls($worksheet, $user->id, $course->id, $globalresults, $xls_formats);
+    $xlsformats = examtraining_reports_xls_formats($workbook);
+    $worksheet = examtraining_reports_init_worksheet($user->id, $xlsformats, $workbook, array(0, 3, 70));
+    $startrow = examtraining_reports_print_header_xls($worksheet, $user->id, $course->id, $globalresults, $xlsformats);
 
-    foreach ($EFFQS as $effg) {
-        $startrow = examtraining_reports_print_questiondetail_xls($worksheet, $startrow, $effg, $xls_formats);
+    foreach ($effqs as $effg) {
+        $startrow = examtraining_reports_print_questiondetail_xls($worksheet, $startrow, $effg, $xlsformats);
     }
 
     foreach ($qcategories as $catid => $scores) {
         $scores->total = 0 + @$scores->atype + @$scores->ctype;
         $scores->aratio = (@$scores->atype) ? @$scores->ascore / @$scores->atype * 100 : 0;
         $scores->cratio = (@$scores->ctype) ? @$scores->cscore / @$scores->ctype * 100 : 0;
-        $startrow = examtraining_reports_print_catscores_xls($worksheet, $startrow, $scores, $xls_formats);
+        $startrow = examtraining_reports_print_catscores_xls($worksheet, $startrow, $scores, $xlsformats);
     }
 
     ob_end_clean();
