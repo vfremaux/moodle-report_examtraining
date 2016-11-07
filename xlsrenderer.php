@@ -54,11 +54,11 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
         $outputdoc->write_string($startrow, 4, $ccountstr, $xlsformats['tt']);
         $startrow++;
 
-        $outputdoc->write_string($startrow, 0,(@$results->hitratio + 0).'%', $xlsformats['p']);
-        $outputdoc->write_string($startrow, 1,(@$results->ahitratio + 0).'%', $xlsformats['p']);
-        $outputdoc->write_string($startrow, 1,(@$results->chitratio + 0).'%', $xlsformats['p']);
-        $outputdoc->write_string($startrow, 1,(@$results->aanswered + 0), $xlsformats['p']);
-        $outputdoc->write_string($startrow, 1,(@$results->canswered + 0), $xlsformats['p']);
+        $outputdoc->write_string($startrow, 0, (@$results->hitratio + 0).'%', $xlsformats['p']);
+        $outputdoc->write_string($startrow, 1, (@$results->ahitratio + 0).'%', $xlsformats['p']);
+        $outputdoc->write_string($startrow, 1, (@$results->chitratio + 0).'%', $xlsformats['p']);
+        $outputdoc->write_string($startrow, 1, (@$results->aanswered + 0), $xlsformats['p']);
+        $outputdoc->write_string($startrow, 1, (@$results->canswered + 0), $xlsformats['p']);
         $startrow++;
 
         // Jump line.
@@ -109,7 +109,7 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
     }
 
     /**
-     * a raster for printing in an xls file 
+     * a raster for printing in an xls file
      * with all the relevant data about a user.
      *
      */
@@ -139,7 +139,7 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
                 }
                 $groupnames[] = $str;
             }
-            $data = implode(', ', $groupnames); // entity
+            $data = implode(', ', $groupnames); // Entity.
 
         }
         $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
