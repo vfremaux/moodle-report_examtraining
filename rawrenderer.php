@@ -22,6 +22,7 @@
  * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 defined('MOODLE_INTERNAL') || die();
 
 class report_examtraining_raw_renderer extends plugin_renderer_base {
