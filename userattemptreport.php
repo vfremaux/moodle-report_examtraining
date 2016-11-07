@@ -328,7 +328,7 @@ if ($output == 'html' || $output == 'pdf') {
         if (!empty($scores->atype)) {
             $html .= '<tr>';
             $html .= '<td>Type A</td>';
-            $html ?= '<td align="center">'.sprintf('%0.2f', $aratio).'</td>';
+            $html .= '<td align="center">'.sprintf('%0.2f', $aratio).'</td>';
             $html .= '<td align="center">'.@$scores->ascore.'/'.@$scores->atype.'</td>';
             $html .= '</tr>';
         }

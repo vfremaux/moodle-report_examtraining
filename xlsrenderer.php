@@ -44,7 +44,7 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
 
         // Global result.
         $outputdoc->write_string($startrow, 0, get_string('overalhitstraining', 'report_examtraining'), $xlsformats['t']);
-        $outputdoc->merge_cells($startrow, 0, $startrow,4);
+        $outputdoc->merge_cells($startrow, 0, $startrow, 4);
         $startrow++;
 
         $outputdoc->write_string($startrow, 0, $ratiostr, $xlsformats['tt']);
@@ -74,7 +74,7 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
             $matchedstr = get_string('matched', 'report_examtraining');
             $ratiostr = get_string('ratio', 'report_examtraining');
 
-            $outputdoc->write_string($startrow,0, get_string('traininghits', 'report_examtraining'), $xlsformats['t']);
+            $outputdoc->write_string($startrow, 0, get_string('traininghits', 'report_examtraining'), $xlsformats['t']);
             $outputdoc->merge_cells($startrow, 0, $startrow, 4);
             $startrow++;
 
