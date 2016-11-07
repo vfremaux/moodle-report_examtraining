@@ -45,8 +45,8 @@ require_capability('report/examtraining:viewall', $context);
 
 // Get data.
 
-$attempt = get_record('userquiz_attempts', 'uniqueid', $attemptid);
-$quiz = get_record('userquiz', 'id', $attempt->userquiz);
+$attempt = get_record('quiz_attempts', 'uniqueid', $attemptid);
+$quiz = get_record('userquiz', 'id', $attempt->quiz);
 
 $user = get_record('user', 'id', $attempt->userid);
 

@@ -105,7 +105,7 @@ if (!empty($targetusers)) {
             COUNT(*) attempts
         FROM
             {quiz_attempts} qa,
-            {userquiz_attempts} ua
+            {report_examtraining} ua
         WHERE
             qa.uniqueid = ua.uniqueid AND
             userid IN ('$targetuserlist') AND
@@ -155,7 +155,7 @@ if (!empty($targetusers)) {
             SUM(qcount) as qcount
         FROM
             {quiz_attempts} qa,
-            {userquiz_attempts} ua
+            {report_examtraining} ua
         WHERE
             qa.uniqueid = ua.uniqueid AND
             userid IN ('$targetuserlist') AND
