@@ -33,63 +33,57 @@
 <table width="90%">
 <tr valign="top">
     <td align="center" colspan="2">
-<?php
-print_string('from');
-echo ' : ';
-examtraining_print_date_selector('startday', 'startmonth', 'startyear', $from, false, 2009, 2020);
-echo '<br/>';
-examtraining_print_date_selector('endday', 'endmonth', 'endyear', $to, false, 2009, 2020);
-?>
+        <?php
+            print_string('from');
+            echo ' : ';
+            examtraining_print_date_selector('startday', 'startmonth', 'startyear', $from, false, 2009, 2020);
+            echo '<br/>';
+            examtraining_print_date_selector('endday', 'endmonth', 'endyear', $to, false, 2009, 2020);
+        ?>
     </td>
 </tr>
 <tr valign="top">
     <td align="right">
         <b><?php
-print_string('chooseagroup', 'report_examtraining');
-?> :</b>
+            print_string('chooseagroup', 'report_examtraining');
+         ?> :</b>
     </td>
     <td>
-<?php
-
-// First clear all groups if only group allowed.
-$defaultgroup = 0;
-if (!has_any_capability(array('block/use_stats:seecoursedetails', 'block/use_stats:seesitedetails'), $context)) {
-    if (!has_capability('block/use_stats:seegroupdetails', $context)) { // Checked in course context.
-        print_error('accessdenied', 'block_use_stats');
-    }
-    $mygroupings = groups_get_user_groups($course->id);
-    $mygroups = array();
-    foreach ($mygroupings as $grouping) {
-        $mygroups = $mygroups + $grouping;
-    }
-} else {
-    $groupoptions[0] = get_string('allgroups', 'report_examtraining');
-    $mygroups = groups_get_all_groups($course->id);
-}
-
-if (!empty($mygroups)) {
-    $groupkeys = array_keys($mygroups);
-    $defaultgroup = $groupkeys[0];
-    foreach ($mygroups as $group) {
-        if (is_numeric($group)) {
-            if ($groupid === false) {
-                $groupid = $group;
-                // Forces a group if not mentionned.
+        <?php
+            
+            // first clear all groups if only group allowed
+            $defaultgroup = 0;
+            if (!has_any_capability(array('block/use_stats:seecoursedetails', 'block/use_stats:seesitedetails'), $context)){
+                if (!has_capability('block/use_stats:seegroupdetails', $context)){ // checked in course context
+                    print_error('accessdenied', 'block_use_stats');
+                }
+                $mygroupings = groups_get_user_groups($course->id);
+                $mygroups = array();
+                foreach($mygroupings as $grouping){
+                    $mygroups = $mygroups + $grouping;
+                }
+            } else {
+                $groupoptions[0] = get_string('allgroups', 'report_examtraining');
+                $mygroups = groups_get_all_groups($course->id);
             }
-            $members = groups_get_members($group, 'u.id, u.username');
-            $groupoptions[$group] = get_field('groups', 'name', 'id', $group). ' ('.count($members).')';
-        } else {
-            if ($groupid === false) {
-                // Forces a group if not mentionned.
-                $groupid = $group->id;
+            
+            if (!empty($mygroups)){
+                $groupkeys = array_keys($mygroups);
+                $defaultgroup = $groupkeys[0];
+                foreach($mygroups as $group){
+                    if (is_numeric($group)){
+                        if ($groupid === false) $groupid = $group; // forces a group if not mentionned.
+                        $members = groups_get_members($group, 'u.id, u.username');
+                        $groupoptions[$group] = get_field('groups', 'name', 'id', $group). ' ('.count($members).')';
+                    } else {
+                        if ($groupid === false) $groupid = $group->id; // forces a group if not mentionned.
+                        $members = groups_get_members($group->id, 'u.id, u.username');
+                        $groupoptions[$group->id] = $group->name. ' ('.count($members).')';
+                    }
+                }
             }
-            $members = groups_get_members($group->id, 'u.id, u.username');
-            $groupoptions[$group->id] = $group->name. ' ('.count($members).')';
-        }
-    }
-}
-echo html_writer::select($groupoptions, 'groupid', $groupid);
-?>
+            echo html_writer::select($groupoptions, 'groupid', $groupid);
+        ?>
     </td>
 </tr>
 <tr>

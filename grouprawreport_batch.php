@@ -17,18 +17,18 @@
 /**
  * This file contains functions used by the examtraining report
  *
- * @package     report_examtraining
- * @category    report
- * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    report
+ * @subpackage examtraining
+ * @copyright  2012 Valery Fremaux (valery.fremaux@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
- * This script handles the report generation in batch task for a single group.
+ * This script handles the report generation in batch task for a single group. 
  * It may produce a group csv report.
- * groupid must be provided.
+ * groupid must be provided. 
  * This script should be sheduled in a redirect bouncing process for maintaining
- * memory level available for huge batches.
+ * memory level available for huge batches. 
  */
 require('../../../config.php');
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
@@ -36,9 +36,9 @@ require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
 $maxbatchduration = 4 * HOURSECS;
 
-$id = required_param('id', PARAM_INT); // The course id.
-$from = optional_param('from', -1, PARAM_INT); // Alternate way of saying from when for XML generation.
-$to = optional_param('to', -1, PARAM_INT); // Alternate way of saying from when for XML generation.
+$id = required_param('id', PARAM_INT) ; // the course id
+$from = optional_param('from', -1, PARAM_INT) ; // alternate way of saying from when for XML generation
+$to = optional_param('to', -1, PARAM_INT) ; // alternate way of saying from when for XML generation
 
 ini_set('memory_limit', '256M');
 
@@ -47,19 +47,19 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
 }
 $context = context_course::instance($course->id);
 
-// TODO : secure groupid access depending on proper capabilities.
+// TODO : secure groupid access depending on proper capabilities
 
-// Calculate start time. Defaults ranges to "last week".
+// calculate start time. Defaults ranges to "last week".
 
-if ($from == -1) { // Maybe we get it from parameters.
+if ($from == -1) { // maybe we get it from parameters
     $from = time() - 7 * DAYSECS;
 }
 
-if ($to == -1) { // Maybe we get it from parameters.
+if ($to == -1) { // maybe we get it from parameters
     $to = time();
 }
 
-// Compute target group.
+// compute target group
 
 $groups = groups_get_all_groups($id);
 
@@ -70,17 +70,19 @@ $i = 0;
 
 foreach ($groups as $group) {
 
+    // for unit test only
+    // if ($i > $testmax) continue;
     $i++;
 
     $targetusers = groups_get_members($group->id);
 
-    // Filters teachers out.
+    // filters teachers out
     foreach ($targetusers as $uid => $user) {
         if (has_capability('report/examtraining:isteacher', $context, $user->id)) {
             unset($targetusers[$uid]);
         }
 
-        // Check user for beeing certified.
+        // check user for beeing certified
         $c3field = $DB->get_record('user_info_field', array('shortname' => 'C3'));
         if ($c3certified = $DB->get_field('user_info_data', 'data', array('userid' => $uid, 'fieldid' => $c3field->id))) {
             unset($targetusers[$uid]);
@@ -119,13 +121,13 @@ foreach ($groups as $group) {
 
         $res = xmlrpc_decode(curl_exec($ch));
 
-        // Check for curl errors.
+        // check for curl errors
         $curlerrno = curl_errno($ch);
         if ($curlerrno != 0) {
             debugging("Request for $uri failed with curl error $curlerrno");
-        }
-
-        // Check HTTP error code.
+        } 
+    
+        // check HTTP error code
         $info = curl_getinfo($ch);
         if (!empty($info['http_code']) && ($info['http_code'] != 200)) {
             debugging("Request for $uri failed with HTTP code ".$info['http_code']);
