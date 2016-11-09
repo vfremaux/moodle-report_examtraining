@@ -54,5 +54,6 @@ $result = $DB->delete_records('userquiz_monitor_coverage');
 $result = $DB->delete_records('userquiz_monitor_user_stats');
 
 if ($id) {
-    echo $OUTPUT->continue(new moodle_url('/report/examtraining/index.php', array('view' => 'compilationtools', 'id' => $id)));
+    $returnurl = new moodle_url('/report/examtraining/index.php', array('view' => 'compilationtools', 'id' => $id));
+    echo $OUTPUT->continue_button($returnurl);
 }

@@ -48,13 +48,14 @@ $PAGE->set_pagelayout('admin');
 
 echo $OUTPUT->header();
 
-if (!userquiz_precompile_results($id, 'userquiz_precompile_results_worker', $cats, $new, $fromid)){
+if (!userquiz_precompile_results($id, 'userquiz_precompile_results_worker', $cats, $new, $fromid)) {
     echo $OUTPUT->notification("No more results to compile");
 } else {
     echo $OUTPUT->notification("Still results to compile");
 }
 if ($id) {
-    echo $OUTPUT->continue_button(new moodle_url('/report/examtraining/index.php', array('view' => 'compilationtools', 'id' => $id)));
+    $params = new moodle_url('/report/examtraining/index.php', array('view' => 'compilationtools', 'id' => $id));
+    echo $OUTPUT->continue_button($params);
 }
 
 echo $OUTPUT->footer();

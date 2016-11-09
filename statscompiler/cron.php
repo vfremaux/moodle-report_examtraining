@@ -36,4 +36,4 @@ $attempts = userquiz_cron_results();
 
 $admin = get_admin();
 
-email_to_user($admin, $admin, $SITE->fullname." : Userquiz Statcompilation : $attempts attempts compiled", 'Done.', 'Done.');	
+email_to_user($admin, $admin, $SITE->fullname." : Userquiz Statcompilation : $attempts attempts compiled", 'Done.', 'Done.');

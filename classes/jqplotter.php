@@ -20,6 +20,7 @@
  * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die();
 
 class jqplot_renderer {
 
@@ -30,7 +31,7 @@ class jqplot_renderer {
         $htmlid = $htmlid.'_'.$instance;
         $instance++;
 
-        $graphheight = ($height == 'thin') ? 300 : 400 ;
+        $graphheight = ($height == 'thin') ? 300 : 400;
 
         if (empty($data)) {
             return;
@@ -38,11 +39,16 @@ class jqplot_renderer {
 
         $str = '';
 
-        $str .= "<center><div id=\"$htmlid\" style=\"margin-bottom:20px; margin-left:20px; width:700px; height:{$graphheight}px;\"></div></center>";
-        $str .= "<script type=\"text/javascript\" language=\"javascript\">";
-        $str .= "
+        $str .= '<center>';
+        $str .= '<div id="'.$htmlid.'"
+                      style="width:700px; height:'.$graphheight.'px;"></div>';
+        $str .= '</center>';
+
+        $str .= '<script type="text/javascript" language="javascript">';
+
+        $str .= '
             $.jqplot.config.enablePlugins = true;
-        ";
+        ';
 
         $title = addslashes($title);
 
@@ -56,15 +62,15 @@ class jqplot_renderer {
         $str .= local_vflibs_jqplot_barline('answered', $answeredarr);
         $str .= local_vflibs_jqplot_barline('hitratio', $hitratioarr);
         $str .= "
-            plot{$plotid} = $.jqplot(
+            plot{$plotid} = \$.jqplot(
                 '$htmlid',
                 [answered, hitratio],
                 { legend:{show:true, location:'e', placement:'outsideGrid'},
                 title:'$title',
-                seriesDefaults:{ renderer:$.jqplot.BarRenderer,
+                seriesDefaults:{ renderer:\$.jqplot.BarRenderer,
                                    rendererOptions:{barDirection:'horizontal',
                                                     barPadding: 6,
-                                                    barMargin:15}, 
+                                                    barMargin:15},
                                    shadowAngle:135
                 },
                 series:[
@@ -75,9 +81,9 @@ class jqplot_renderer {
                     show: false,
                 },
                 axesDefaults:{useSeriesColor: false, syncTicks:true},
-                axes:{ xaxis:{label:'Questions', min:0, tickOptions:{textColor:'#D67B16', formatString:'%d'}}, 
+                axes:{ xaxis:{label:'Questions', min:0, tickOptions:{textColor:'#D67B16', formatString:'%d'}},
                        x2axis:{label:'{$hitratiostr}', min:0, max:100, tickOptions:{formatString:'%d\%', textColor:'#A5A9DA'}},
-                          yaxis:{renderer:$.jqplot.CategoryAxisRenderer, ticks:['A', 'C']}
+                          yaxis:{renderer:\$.jqplot.CategoryAxisRenderer, ticks:['A', 'C']}
                 }
             });
         ";
@@ -93,7 +99,7 @@ class jqplot_renderer {
      *
      *
      */
-    function assiduity_bargraph(&$data, $ticks, $title, $htmlid) {
+    public function assiduity_bargraph(&$data, $ticks, $title, $htmlid) {
         global $plotid;
         static $instance = 0;
 
@@ -155,19 +161,20 @@ class jqplot_renderer {
             });
         ";
 
-        echo '</script>';
+        $str .= '</script>';
         $plotid++;
-    
+
+        return $str;
     }
 
     /**
      *
      *
      */
-    function modules_bargraph(&$data, $title, $htmlid) {
+    public function modules_bargraph(&$data, $title, $htmlid) {
         global $plotid;
         static $instance = 0;
-        
+
         $htmlid = $htmlid.'_'.$instance;
         $instance++;
 
@@ -198,13 +205,13 @@ class jqplot_renderer {
 
             xticks = [{$xticks}];
 
-            plot{$plotid} = $.jqplot(
+            plot{$plotid} = \$.jqplot(
                 '$htmlid',
                 [data_$htmlid],
                 {
                 title:'$title',
                 seriesDefaults:{
-                    renderer:$.jqplot.BarRenderer,
+                    renderer: \$.jqplot.BarRenderer,
                     rendererOptions:{barPadding: 6, barMargin:4}
                 },
                 series:[
@@ -213,7 +220,7 @@ class jqplot_renderer {
                 highlighter: {
                     show: false,
                 },
-                axes:{ xaxis:{renderer:$.jqplot.CategoryAxisRenderer, label:'{$qstr}', ticks:xticks},
+                axes:{ xaxis:{renderer: \$.jqplot.CategoryAxisRenderer, label:'{$qstr}', ticks:xticks},
                        yaxis:{label:'{$numberstr}', autoscale:true}
                 },
             });
@@ -229,7 +236,7 @@ class jqplot_renderer {
      *
      *
      */
-    function questionuse_graph(&$data, $title, $htmlid) {
+    public function questionuse_graph(&$data, $title, $htmlid) {
         global $plotid;
         static $instance = 0;
 
@@ -273,7 +280,7 @@ class jqplot_renderer {
                       shadowAngle: 135,
                       shadowDepth: 2,
                       lineWidth: 1
-                }, 
+                },
                 series:[
                     {label: 'Used'},
                     {label: 'Matched'},

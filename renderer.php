@@ -34,7 +34,7 @@ class report_examtraining_renderer extends plugin_renderer_base {
      * @param int $currenttime A default timestamp in GMT
      * @param boolean $return
      */
-    function date_selector($day, $month, $year, $currenttime = 0, $return = false, $from = 1970, $to = 2020) {
+    public function date_selector($day, $month, $year, $currenttime = 0, $return = false, $from = 1970, $to = 2020) {
 
         if (!$currenttime) {
             $currenttime = time();
