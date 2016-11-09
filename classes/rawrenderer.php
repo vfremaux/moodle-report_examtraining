@@ -31,7 +31,7 @@ class report_examtraining_raw_renderer extends plugin_renderer_base {
      * a raster for printing in raw format
      * with all the relevant data about a user.
      */
-    public function globalheader_raw($userid, $courseid, &$data, $from, $to) {
+    public function globalheader($userid, $courseid, &$data, $from, $to) {
         global $CFG, $COURSE, $DB;
         static $dobfieldid = 0;
         static $pobfieldid = 0;

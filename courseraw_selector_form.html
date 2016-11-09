@@ -36,9 +36,9 @@
 <?php
 print_string('from');
 echo ' : ';
-examtraining_print_date_selector('startday', 'startmonth', 'startyear', $input->from, false, 2009, 2020);
+echo $renderer->date_selector('startday', 'startmonth', 'startyear', $input->from, false, 2014, 2020);
 echo '<br/>';
-examtraining_print_date_selector('endday', 'endmonth', 'endyear', $input->to, false, 2009, 2020);
+echo $renderer->date_selector('endday', 'endmonth', 'endyear', $input->to, false, 2014, 2020);
 ?>
     </td>
 </tr>

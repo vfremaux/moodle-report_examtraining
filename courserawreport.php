@@ -133,7 +133,7 @@ if (!empty($targetusers)) {
             }
         }
 
-        $rawfile .= $rawrenderer->globalheader_raw($auser->id, $course->id, $globalresults, $input->from, $input->to);
+        $rawfile .= $rawrenderer->globalheader($auser->id, $course->id, $globalresults, $input->from, $input->to);
     }
 
     $fs = get_file_storage();

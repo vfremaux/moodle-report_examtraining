@@ -17,21 +17,19 @@
 /**
  * This file contains functions used by the examtraining report
  *
- * @package    report
- * @subpackage examtraining
- * @copyright  2012 Valery Fremaux (valery.fremaux@gmail.com)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package     report_examtraining
+ * @category    report
+ * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 defined('MOODLE_INTERNAL') || die();
-
-/*
- * direct log construction implementation
- */
 
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
+/*
+ * direct log construction implementation
+ */
 $input = examtraining_reports_input($course);
 
 ini_set('memory_limit', '1024M');
@@ -62,7 +60,6 @@ foreach ($aggregate as $classarray) {
         $globalresults->events += $modulestat->events;
     }
 }
-
 
 if ($output == 'html') {
     // Time period form.

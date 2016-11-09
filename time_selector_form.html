@@ -33,7 +33,7 @@
         <?php
             print_string('from');
             echo ' : ';
-            print_date_selector('startday', 'startmonth', 'startyear', $from);
+            echo $renderer->date_selector('endday', 'endmonth', 'endyear', $input->from, false, 2014, 2020);
         ?>
     </td>
     <td align="left">

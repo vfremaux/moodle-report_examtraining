@@ -30,6 +30,8 @@ defined('MOODLE_INTERNAL') || die();
  */
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
+require_once($CFG->dirroot.'/report/examtraining/classes/htmlrenderer.php');
+require_once($CFG->dirroot.'/local/vflibs/jqplotlib.php');
 
 
 $input = examtraining_reports_input($course);
@@ -69,6 +71,8 @@ if (!empty($targetusers)) {
     }
 }
 
+$htmlrenderer = $PAGE->get_renderer('report_examtraining', 'html');
+
 // Print result.
 echo '<br/>';
 
@@ -79,7 +83,7 @@ if (!empty($targetusers)) {
     echo '<td width="80%">';
     $reportcontext = examtraining_get_context();
     $userglobals = userquiz_get_user_globals(array_keys($targetusers), $reportcontext->trainingquizzes, $input->from, $input->to);
-    echo $renderer->coverage_vs_ratio($targetusers, $course->id, $input->from, $input->to, $userglobals);
+    echo $htmlrenderer->coverage_vs_ratio($targetusers, $course->id, $input->from, $input->to, $userglobals);
     echo '</td><td width="20%">';
     $advicestr = get_string('jqplotzoomadvice', 'report_examtraining');
     echo '<span class="smalltext">'.$advicestr.'</span>';

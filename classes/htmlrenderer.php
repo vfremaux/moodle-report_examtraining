@@ -37,7 +37,7 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
         global $DB;
 
         $modulestr = get_string('assiduity', 'report_examtraining');
-        $attemptsstr = get_string('attempts', 'userquiz');
+        $attemptsstr = get_string('attempts', 'report_examtraining');
 
         $examcontext = examtraining_get_context();
 
@@ -81,7 +81,7 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
 
             $label = get_string('assiduity', 'report_examtraining');
             $jqplotter = new jqplot_renderer();
-            $str .= $jqplotter->assiduity_bargraph($attemptstable, array_keys($attemptstable), $label, 'assiduity');
+            $str = $jqplotter->assiduity_bargraph($attemptstable, array_keys($attemptstable), $label, 'assiduity');
 
             return $str;
         }
@@ -212,7 +212,8 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
         $str = '';
 
         $jqplotter = new jqplot_renderer();
-        $str .= $jqplotter->horiz_bar_headgraph($stats[$userid], get_string('overalhitstraining', 'report_examtraining'), 'overalhitstraining', $height);
+        $label = get_string('overalhitstraining', 'report_examtraining');
+        $str .= $jqplotter->horiz_bar_headgraph($stats[$userid], $label, 'overalhitstraining', $height);
 
         $aratiostr = get_string('ratioA', 'report_examtraining');
         $cratiostr = get_string('ratioC', 'report_examtraining');
@@ -223,7 +224,10 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
         $table->size = array('25%', '25%', '25%', '25%');
         $table->width = '90%';
         $table->align = array('center', 'center', 'center', 'center');
-        $table->data[] = array((@$stats[$userid]->ahitratio + 0).' %', (@$stats[$userid]->chitratio + 0).' %', @$stats[$userid]->aanswered + 0, @$stats[$userid]->canswered + 0);
+        $table->data[] = array((@$stats[$userid]->ahitratio + 0).' %',
+                               (@$stats[$userid]->chitratio + 0).' %',
+                               @$stats[$userid]->aanswered + 0,
+                               @$stats[$userid]->canswered + 0);
 
         $str .= html_writer::table($table);
 
@@ -264,7 +268,8 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
 
         $modulecount = examtraining_get_module_count($userid, $from, $to);
 
-        $str = jqplot_print_modules_bargraph($modulecount, get_string('permodule', 'report_examtraining'), 'permodule');
+        $jqplotter = new jqplot_renderer();
+        $str = $jqplotter->modules_bargraph($modulecount, get_string('permodule', 'report_examtraining'), 'permodule');
         return $str;
     }
 
@@ -285,13 +290,14 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
         $matched = userquiz_get_user_subcats($userid, $quizzes, $from, $to);
 
         // For each root cat, calculate the hitratio.
-        $maincats = $DB->get_records('question_categories', 'parent', $examcontext->rootcategory, 'sortorder', 'id, name');
+        $maincats = $DB->get_records('question_categories', array('parent' => $examcontext->rootcategory), 'sortorder', 'id, name');
         $radardata = array();
         $radarheaders = array();
         if ($matched) {
             foreach ($maincats as $id => $cat) {
                 if (!empty($matched[$cat->id]->qcount)) {
-                    $overalratio = (@$matched[$cat->id]->amatched + @$matched[$cat->id]->cmatched) / $matched[$cat->id]->qcount * 100;
+                    $allmatched = (@$matched[$cat->id]->amatched + @$matched[$cat->id]->cmatched);
+                    $overalratio = $allmatched / $matched[$cat->id]->qcount * 100;
                 } else {
                     $overalratio = 0;
                 }
@@ -331,8 +337,8 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
         $str = '';
 
         if (!$stats = userquiz_get_weekly_globals($userid, $examcontext->trainingquizzes, $from, $to)) {
-            $str .= $OUTPUT->heading(get_string('traininghits', 'report_examtraining'));
-            $str .= get_string('notrainingactivity', 'report_examtraining');
+            $str .= $this->output->heading(get_string('traininghits', 'report_examtraining'));
+            $str .= $this->output->notification(get_string('notrainingactivity', 'report_examtraining'));
             return $str;
         }
 
@@ -383,6 +389,88 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
         return $str;
     }
 
+    public function trainings_subcats($userid, $from, $to, $printmode = 'table') {
+        global $CFG;
+
+        $examcontext = examtraining_get_context();
+
+        if (!$stats = userquiz_get_attempts_subcats($userid, $examcontext->trainingquizzes, $from, $to)) {
+            $str = $this->output->heading(get_string('traininghitspercategory', 'report_examtraining'));
+            $str .= $this->output->notification(get_string('notrainingactivity', 'report_examtraining'));
+            return $str;
+        }
+
+        $str = $this->output->heading(get_string('traininghitspercategory', 'report_examtraining'));
+        $str .= '<center>';
+        $statsrawarr = array_values($stats);
+        $datacats = array();
+        foreach ($statsrawarr as $stat) {
+            $firstdayinyear = mktime(0, 0, 0, 1, 1, $statsrawarr[0]->year);
+            $statdate = ($firstdayinyear + $stat->week * 7 * DAYSECS);
+            $subcatid = $stat->categoryid;
+            $datacats[$subcatid][$statdate]->ccount = @$datacats[$subcatid][$statdate]->ccount + $stat->ccount;
+            $datacats[$subcatid][$statdate]->acount = @$datacats[$subcatid][$statdate]->acount + $stat->acount;
+            $datacats[$subcatid][$statdate]->cmatched = @$datacats[$subcatid][$statdate]->cmatched + $stat->cmatched;
+            $datacats[$subcatid][$statdate]->amatched = @$datacats[$subcatid][$statdate]->amatched + $stat->amatched;
+            $datacatstot[$subcatid]->ccount = @$datacatstot[$subcatid]->ccount + $stat->ccount;
+            $datacatstot[$subcatid]->acount = @$datacatstot[$subcatid]->acount + $stat->acount;
+            $datacatstot[$subcatid]->cmatched = @$datacatstot[$subcatid]->cmatched + $stat->cmatched;
+            $datacatstot[$subcatid]->amatched = @$datacatstot[$subcatid]->amatched + $stat->amatched;
+        }
+
+        if (!function_exists('sortbysubcatname')) {
+            function sortbysubcatname($a, $b) {
+                global $DB;
+
+                $subcatordera = $DB->get_field('question_categories', 'sortorder', array('id' => $a));
+                $subcatorderb = $DB->get_field('question_categories', 'sortorder', array('id' => $b));
+                if ($subcatordera == $subcatorderb) {
+                    return 0;
+                }
+                if ($subcatordera > $subcatorderb) {
+                    return 1;
+                }
+                return -1;
+            }
+        }
+
+        uksort($datacats, 'sortbysubcatname');
+
+        $subcatshitratios = array();
+        // Post compile hitratios.
+        foreach ($datacats as $subcatid => $datacatarr) {
+            $cats[$subcatid]->count = 0 + @$datacatstot[$subcatid]->ccount + @$datacatstot[$subcatid]->acount;
+            $cats[$subcatid]->matched = 0 + @$datacatstot[$subcatid]->cmatched + @$datacatstot[$subcatid]->amatched;
+            $ratio = $cats[$subcatid]->matched / ($cats[$subcatid]->count) * 100;
+            $cats[$subcatid]->ratio = ($cats[$subcatid]->count) ? round($ratio) : 0;
+        }
+
+        if ($printmode == 'jqplot') {
+            $label = get_string('questionspercategories', 'report_examtraining');
+            jqplot_print_timecurve_subcats($subcatshitratios, $label, 'questionspercategories', 'multiplot');
+        } else {
+            $categorystr = get_string('categoryname', 'report_examtraining');
+            $ratiostr = get_string('ratio', 'report_examtraining');
+
+            // Per category result.
+            $table = new html_table();
+            $table->head = array("<b>$categorystr</b>", "<b>$ratiostr</b>");
+            $table->size = array('80%', '20%');
+            $table->width = '90%';
+            $table->align = array('left', 'left');
+            foreach ($cats as $catid => $cat) {
+                $catname = get_field('question_categories', 'name', 'id', $catid);
+                $table->data[] = array($catname, $cats[$catid]->ratio. '% ('.$cats[$catid]->matched.'/'.$cats[$catid]->count.')');
+            }
+
+            $this->output->heading(get_string('traininghits', 'report_examtraining'));
+            $str .= html_writer::table($table);
+        }
+        $str .= '</center>';
+
+        return $str;
+    }
+
     /**
      * a raster for html printing of a report structure.
      *
@@ -398,34 +486,6 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
         }
         $label = get_string('examtries', 'report_examtraining');
         return jqplot_print_horiz_bar_headgraph($stats, $label, 'examtries', true);
-    }
-
-    public function pager($maxobjects, $offset, $page, $url) {
-
-        if ($maxobjects <= $page) {
-            return '';
-        }
-
-        $str = '';
-
-        $current = ceil(($offset + 1) / $page);
-        $pages = array();
-        $off = 0;
-
-        for ($p = 1; $p <= ceil($maxobjects / $page); $p++) {
-            if ($p == $current) {
-                $pages[] = '<u>'.$p.'</u>';
-            } else {
-                $pages[] = '<a class="pagelink" href="'.$url.'&offset='.$off.'">'.$p.'</a>';
-            }
-            $off = $off + $page;
-        }
-
-        $str .= "<center>";
-        $str .= implode(' - ', $pages);
-        $str .= "</center>";
-
-        return $str;
     }
 
     /**
@@ -494,7 +554,7 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
      * with all the relevant data about a user.
      */
     public function globalheader($userid, $courseid, &$data) {
-        global $COURSE, $DB, $OUTPUT;
+        global $COURSE, $DB;
 
         $user = $DB->get_record('user', array('id' => $userid));
         if ($COURSE->id != $courseid) {
@@ -505,7 +565,7 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
 
         $str = '';
 
-        $str .= $OUTPUT->user($user, $course);
+        $str .= $this->output->user_picture($user);
 
         $usergroups = groups_get_all_groups($courseid, $userid, 0, 'g.id, g.name');
 
@@ -525,11 +585,10 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
             }
             $str .= implode(', ', $groupnames);
         }
-        $context = context_course::instance($courseid);
         $str .= '<br/>';
         $str .= get_string('roles');
         $str .= ' : ';
-        $str .= get_user_roles_in_context($userid, $context);
+        $str .= get_user_roles_in_course($userid, $courseid);
 
         $params = array('view' => 'user', 'id' => $courseid, 'userid' => $userid);
         $examreporturl = new moodle_url('/report/examtraining/index.php', $params);
@@ -569,7 +628,12 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
             $data[2][] = fullname($user);
         }
 
-        jqplot_print_labelled_graph($data, get_string('grouplocation', 'report_examtraining'), 'examtries');
+        $options = array('width' => 600,
+                         'height' => 600,
+                         'xlabel' => get_string('coverage', 'report_examtraining'),
+                         'ylabel' => get_string('ratio', 'report_examtraining'));
+        $label = get_string('grouplocation', 'report_examtraining');
+        return local_vflibs_jqplot_print_labelled_graph($data, $label, 'examtries', $options);
     }
 
     public function time_selector_form() {
@@ -612,13 +676,13 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
 
         $sql = "
             SELECT
-                qc.questionid,
+                q.id,
                 q.name,
                 SUM(usecount > 0) as usecount,
                 SUM(matchcount > 0) as matchcount
             FROM
-                {userquiz_monitor_coverage} qc,
-                {question} q
+                {question} q,
+                {userquiz_monitor_coverage} qc
             WHERE
                 qc.questionid = q.id AND
                 blockid = ?
@@ -630,17 +694,22 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
 
         $questionlines = $DB->get_records_sql($sql, array($examcontext->instanceid));
 
-        $i = 1;
-        foreach ($questionlines as $elm) {
-            $data[0][0][] = $i;
-            $data[0][1][] = $elm->usecount;
-            $data[0][2][] = preg_replace('/\s.*$/', '', $elm->name);
-            $data[1][$i] = $elm->matchcount;
-            $data[2][$i] = round(($elm->usecount - $elm->matchcount) / $elm->usecount * 100);
-            $i++;
-        }
+        if (!empty($questionlines)) {
+            $i = 1;
+            foreach ($questionlines as $elm) {
+                $data[0][0][] = $i;
+                $data[0][1][] = $elm->usecount;
+                $data[0][2][] = preg_replace('/\s.*$/', '', $elm->name);
+                $data[1][$i] = $elm->matchcount;
+                $data[2][$i] = round(($elm->usecount - $elm->matchcount) / $elm->usecount * 100);
+                $i++;
+            }
 
-        $str .= jqplot_print_questionuse_graph($data, get_string('questionusage', 'report_examtraining'), 'quse');
+            $jqplotter = new jqplot_renderer();
+            $str = $jqplotter->questionuse_graph($data, get_string('questionusage', 'report_examtraining'), 'quse');
+        } else {
+            return $this->output->notification(get_string('noquestionsusage', 'report_examtraining'));
+        }
 
         $data = array();
         for ($i = 0; $i <= 20; $i++) {
@@ -653,14 +722,15 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
             $i++;
         }
 
-        $str .= jqplot_print_simple_bargraph($data, get_string('errorratio', 'report_examtraining'), 'qerrors');
+        $arr = array();
+        $str .= local_vflibs_jqplot_print_simple_bargraph($data, $arr, get_string('errorratio', 'report_examtraining'), 'qerrors');
 
         $sql = "
             SELECT
                 qc.questionid,
                 q.name,
                 q.createdby,
-                (SUM(usecount > 0) - SUM(matchcount > 0)) / SUM(usecount > 0) * 100". sql_as()." errorrate,
+                (SUM(usecount > 0) - SUM(matchcount > 0)) / SUM(usecount > 0) * 100 AS errorrate,
                 SUM(usecount) as totaluse
             FROM
                 {userquiz_monitor_coverage} qc,

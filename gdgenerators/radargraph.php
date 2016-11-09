@@ -23,14 +23,14 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require("../../../../config.php");
+require("../../../config.php");
 
 ob_start();
 
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
 $radar = explode(',', required_param('radar', PARAM_RAW));
-$headers = explode(',', optional_param('headers', PARAM_RAW));
+$headers = explode(',', optional_param('headers', '',  PARAM_RAW));
 
 // Operates a quarter rotation.
 array_push($radar, array_shift($radar));

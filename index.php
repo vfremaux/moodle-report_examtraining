@@ -31,10 +31,10 @@ require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
 @raise_memory_limit('512M');
 
-$url = new moodle_url('/report/examtraining/index.php');
-$PAGE->set_url($url);
-
 $id = required_param('id', PARAM_INT); // The course id.
+
+$url = new moodle_url('/report/examtraining/index.php', array('id' => $id));
+$PAGE->set_url($url);
 
 $context = context_course::instance($id);
 $PAGE->set_context($context);
