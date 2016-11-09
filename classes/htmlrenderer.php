@@ -212,7 +212,8 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
         $str = '';
 
         $jqplotter = new jqplot_renderer();
-        $str .= $jqplotter->horiz_bar_headgraph($stats[$userid], get_string('overalhitstraining', 'report_examtraining'), 'overalhitstraining', $height);
+        $label = get_string('overalhitstraining', 'report_examtraining');
+        $str .= $jqplotter->horiz_bar_headgraph($stats[$userid], $label, 'overalhitstraining', $height);
 
         $aratiostr = get_string('ratioA', 'report_examtraining');
         $cratiostr = get_string('ratioC', 'report_examtraining');
@@ -223,7 +224,10 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
         $table->size = array('25%', '25%', '25%', '25%');
         $table->width = '90%';
         $table->align = array('center', 'center', 'center', 'center');
-        $table->data[] = array((@$stats[$userid]->ahitratio + 0).' %', (@$stats[$userid]->chitratio + 0).' %', @$stats[$userid]->aanswered + 0, @$stats[$userid]->canswered + 0);
+        $table->data[] = array((@$stats[$userid]->ahitratio + 0).' %',
+                               (@$stats[$userid]->chitratio + 0).' %',
+                               @$stats[$userid]->aanswered + 0,
+                               @$stats[$userid]->canswered + 0);
 
         $str .= html_writer::table($table);
 
@@ -292,7 +296,8 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
         if ($matched) {
             foreach ($maincats as $id => $cat) {
                 if (!empty($matched[$cat->id]->qcount)) {
-                    $overalratio = (@$matched[$cat->id]->amatched + @$matched[$cat->id]->cmatched) / $matched[$cat->id]->qcount * 100;
+                    $allmatched = (@$matched[$cat->id]->amatched + @$matched[$cat->id]->cmatched);
+                    $overalratio = $allmatched / $matched[$cat->id]->qcount * 100;
                 } else {
                     $overalratio = 0;
                 }
@@ -384,7 +389,7 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
         return $str;
     }
 
-    function trainings_subcats($userid, $from, $to, $printmode = 'table') {
+    public function trainings_subcats($userid, $from, $to, $printmode = 'table') {
         global $CFG;
 
         $examcontext = examtraining_get_context();
@@ -436,7 +441,8 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
         foreach ($datacats as $subcatid => $datacatarr) {
             $cats[$subcatid]->count = 0 + @$datacatstot[$subcatid]->ccount + @$datacatstot[$subcatid]->acount;
             $cats[$subcatid]->matched = 0 + @$datacatstot[$subcatid]->cmatched + @$datacatstot[$subcatid]->amatched;
-            $cats[$subcatid]->ratio = ($cats[$subcatid]->count) ? round($cats[$subcatid]->matched / ($cats[$subcatid]->count) * 100) : 0;
+            $ratio = $cats[$subcatid]->matched / ($cats[$subcatid]->count) * 100;
+            $cats[$subcatid]->ratio = ($cats[$subcatid]->count) ? round($ratio) : 0;
         }
 
         if ($printmode == 'jqplot') {
@@ -626,7 +632,8 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
                          'height' => 600,
                          'xlabel' => get_string('coverage', 'report_examtraining'),
                          'ylabel' => get_string('ratio', 'report_examtraining'));
-        return local_vflibs_jqplot_print_labelled_graph($data, get_string('grouplocation', 'report_examtraining'), 'examtries', $options);
+        $label = get_string('grouplocation', 'report_examtraining');
+        return local_vflibs_jqplot_print_labelled_graph($data, $label, 'examtries', $options);
     }
 
     public function time_selector_form() {

@@ -316,7 +316,7 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
      * a raster for xls printing of a report structure header
      * with all the relevant data about a user.
      */
-    function header(&$xlsdoc, $userid, $courseid, $data, $xlsformats) {
+    public function header(&$xlsdoc, $userid, $courseid, $data, $xlsformats) {
         global $DB;
 
         $loginfo = examtraining_get_log_reader_info();
@@ -445,9 +445,9 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
      *
      *
      */
-    function globalheader(&$xlsdoc, &$xlsformats, &$row) {
+    public function globalheader(&$xlsdoc, &$xlsformats, &$row) {
 
-         $col = 0;
+        $col = 0;
 
         $resultset[] = get_string('entity', 'report_examtraining'); // Groupname.
         $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
@@ -513,7 +513,7 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
     /**
      * a raster for printing exam results in XSL.
      */
-    function exams(&$xlsdoc, $startrow, $xlsformats, $userid) {
+    public function exams(&$xlsdoc, $startrow, $xlsformats, $userid) {
 
         $examcontext = examtraining_get_context();
 
@@ -524,11 +524,11 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
         $cratiostr = get_string('ratioC', 'report_examtraining');
         $acountstr = get_string('countA', 'report_examtraining');
         $ccountstr = get_string('countC', 'report_examtraining');
-    
+
         $xlsdoc->write_string($startrow, 0, get_string('examtries', 'report_examtraining'), $xlsformats['t']);
         $xlsdoc->merge_cells($startrow, 0, $startrow, 6);
         $startrow++;
-    
+
         $xlsdoc->write_string($startrow, 0, $tryindexstr, $xlsformats['tt']);
         $xlsdoc->write_string($startrow, 1, $datestr, $xlsformats['tt']);
         $xlsdoc->write_string($startrow, 2, $ratiostr, $xlsformats['tt']);
@@ -546,7 +546,7 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
 
                 // Fix ratios for exam because exam must always propose 100 questions.
                 $attemptres->ratio = $attemptres->ratio * $attemptres->count_proposed / 100;
-    
+
                 $xlsdoc->write_string($startrow, 0, $i, $xlsformats['p']);
                 $timevalue = examtraining_reports_format_time($attemptres->timefinish, 'xls');
                 $xlsdoc->write_string($startrow, 1, $timevalue, $xlsformats['zt']);

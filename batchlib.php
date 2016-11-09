@@ -66,10 +66,10 @@ function batch($prework = '', $work = '', $postwork = '', $source, $where = ' 1 
                 }
             }
             $start = ($range) ? 0 : $CFG->runs * $limit;
-            $workcontext->sourcerecs = $DB->get_records_select($source, $where . $fromidclause, array(), 'id', '*', $start, $limit);
+            $workcontext->sourcerecs = $DB->get_records_select($source, $where.$fromidclause, array(), 'id', '*', $start, $limit);
         } else {
             $out = "processing $sourcereccount records";
-            if ($output){
+            if ($output) {
                 echo $out;
             } else {
                 if (function_exists('debug_trace')) {
@@ -130,7 +130,9 @@ function batch($prework = '', $work = '', $postwork = '', $source, $where = ' 1 
             sleep($auto);
             if (!$maxruns || @$CFG->runs < $maxruns) {
                 set_config('runs', 1 + @$CFG->runs);
-                $redirecturl = $_SERVER['PHP_SELF']."?course={$workcontext->course->id}&auto=$auto&limit=$limit&maxruns=$maxruns&running=1&fromid=$fromid&from={$workcontext->from}&to={$workcontext->to}&filename={$workcontext->filename}";
+                $redirecturl = $_SERVER['PHP_SELF']."?course={$workcontext->course->id}&auto=$auto&limit=$limit";
+                $redirecturl .= "&maxruns=$maxruns&running=1&fromid=$fromid&from={$workcontext->from}&to={$workcontext->to}";
+                $redirecturl .= "&filename={$workcontext->filename}";
                 if ($output) {
                     flush();
                     redirect($redirecturl);
