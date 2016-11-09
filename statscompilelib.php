@@ -711,7 +711,7 @@ function userquiz_precompile_coverage_ratios() {
         $sql = "
             SELECT DISTINCT
                 userid,
-                quiz
+                userid
             FROM
                 {quiz_attempts}
             WHERE
@@ -735,7 +735,7 @@ function userquiz_precompile_question_coverage_worker($userid, &$block) {
     global $DB;
     static $i = 0;
 
-    $output = optional_record('output', 0, PARAM_INT);
+    $output = optional_param('output', 0, PARAM_INT);
 
     // Finally compute coverage rates on distinct questions.
 
