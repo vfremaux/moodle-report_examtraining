@@ -26,9 +26,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->version  = 2016070503;
-$plugin->requires = 2014110400;
+$plugin->requires = 2014050800;
 $plugin->component = 'report_examtraining';
-$plugin->release = '2.8.0 (Build 2016070503)';
+$plugin->release = '2.7.0 (Build 2016070501)';
 $plugin->maturity = MATURITY_BETA;
 
 // Non moodle attributes.
