@@ -23,12 +23,13 @@
  * @copyright  2016 onwards valery fremaux (valery.fremaux@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die();
 
-$plugin->version  = 2016070501;
+$plugin->version  = 2016070503;
 $plugin->requires = 2014110400;
 $plugin->component = 'report_examtraining';
-$plugin->release = '2.9.0 (Build 2016070501)';
-$plugin->maturity = MATURITY_ALPHA;
+$plugin->release = '2.9.0 (Build 2016070503)';
+$plugin->maturity = MATURITY_BETA;
 
 // Non moodle attributes.
-$plugin->codeincrement = '2.9.0000';
+$plugin->codeincrement = '2.9.0001';
