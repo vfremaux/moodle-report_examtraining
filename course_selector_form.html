@@ -42,9 +42,9 @@ defined('MOODLE_INTERNAL') || die();
         <?php
             print_string('from');
             echo ' : ';
-            amf3_print_date_selector('startday', 'startmonth', 'startyear', $from, false, 2010, 2020);
+            echo $renderer->date_selector('startday', 'startmonth', 'startyear', $input->from, false, 2010, 2020);
             echo '<br/>';
-            amf3_print_date_selector('endday', 'endmonth', 'endyear', $to, false, 2010, 2020);
+            echo $renderer->date_selector('endday', 'endmonth', 'endyear', $input->to, false, 2010, 2020);
         ?>
     </td>
 </tr>

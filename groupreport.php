@@ -28,9 +28,11 @@ defined('MOODLE_INTERNAL') || die;
 
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
+require_once($CFG->dirroot.'/report/examtraining/classes/htmlrenderer.php');
+require_once($CFG->dirroot.'/report/examtraining/classes/xlsrenderer.php');
 
 $input = examtraining_reports_input($course);
-
+$offset = optional_param('offset', 0, PARAM_INT);
 $page = 20;
 
 // TODO : secure groupid access depending on proper capabilities.
@@ -48,7 +50,8 @@ if ($groupid) {
     $max = count($targetusers);
     $page = count($targetusers);
 } else {
-    $allusers = get_users_by_capability($context, 'moodle/course:view', 'u.id, '.get_all_user_name_fields(true, 'u'), 'lastname');
+    $fields = 'u.id,'.get_all_user_name_fields(true, 'u');
+    $allusers = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname');
     $max = count($allusers);
     $fields = 'u.id, '.get_all_user_name_fields(true, 'u').', email, institution';
     $targetusers = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname', $offset, $page);
@@ -66,6 +69,8 @@ if (!empty($targetusers)) {
 // Print result.
 
 if ($output == 'html') {
+
+    $htmlrenderer = $PAGE->get_renderer('report_examtraining', 'html');
 
     echo '<br/>';
 
@@ -95,6 +100,7 @@ if ($output == 'html') {
 
             $logusers = $auser->id;
 
+            $globalresults = new StdClass();
             $globalresults->elapsed = 0;
             $globalresults->events = 0;
             $globalresults->weekelapsed = 0;
@@ -118,10 +124,10 @@ if ($output == 'html') {
                 }
             }
 
-            $gobalresults->linktousersheet = 1;
-            echo $renderer->globalheader($auser->id, $course->id, $globalresults, true);
-            echo $renderer->trainings_globals($auser->id, $input->from, $input->to, 'thin', $userglobals);
-            echo $renderer->exams($auser->id, $input->from, $input->to);
+            $globalresults->linktousersheet = 1;
+            echo $htmlrenderer->globalheader($auser->id, $course->id, $globalresults, true);
+            echo $htmlrenderer->trainings_globals($auser->id, $input->from, $input->to, 'thin', $userglobals);
+            echo $htmlrenderer->exams($auser->id, $input->from, $input->to);
         }
     }
 
@@ -134,14 +140,13 @@ if ($output == 'html') {
     $options['view'] = 'course_group'; // Force course view.
     echo '<center>';
     $buttonurl = new moodle_url('/report/examtraining/index.php');
-    echo $OUTPUT->single_button($buttonurl, $options, get_string('generateXLS', 'report_examtraining'), 'get');
+    echo $OUTPUT->single_button($buttonurl, get_string('generateXLS', 'report_examtraining'), 'post', $options);
     echo '</center>';
 
 } else {
 
     // Generate XLS.
-    require_once($CFG->dirroot.'/report/examtraining/xlsrenderer.php');
-    $xlsrenderer = new report_examtraining_xls_renderer();
+    $xlsrenderer = $PAGE->get_renderer('report_examtraining', 'xls');
 
     if ($groupid) {
         $filename = 'examtraining_group_'.$groupid.'_report_'.date('d-M-Y_h:m:s', time()).'.xls';
@@ -204,4 +209,3 @@ if ($output == 'html') {
     ob_end_clean();
     $workbook->close();
 }
-

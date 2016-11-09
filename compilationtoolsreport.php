@@ -43,12 +43,12 @@ if ($bgenabled) {
 
 $bgchecked = (empty($CFG->backgroundrunsenabled)) ? '' : 'checked="checked"';
 
-$compilerstatsurl = new moodle_url('/blocks/userquiz_monitor/statscompiler/clear_userstats.php');
-$precompileuserstatsurl = new moodle_url('/mod/userquiz/statscompiler/precompile_userstats.php');
-$precompileunityurl = new moodle_url('/blocks/userquiz_monitor/statscompiler/precompile_unity.php');
-$precompileurl = new moodle_url('/mod/userquiz/statscompiler/precompile.php');
-$coveragecompilerurl = new moodle_url('/mod/userquiz/statscompiler/precompile_coverages.php');
-
+$compilerstatsurl = new moodle_url('/report/examtraining/statscompiler/clear_userstats.php');
+$precompileuserstatsurl = new moodle_url('/report/examtraining/statscompiler/precompile_userstats.php');
+$precompileunityurl = new moodle_url('/report/examtraining/statscompiler/precompile_unity.php');
+$precompileurl = new moodle_url('/report/examtraining/statscompiler/precompile.php');
+$coveragecompilerurl = new moodle_url('/report/examtraining/statscompiler/precompile_coverages.php');
+$clearstateurl = new moodle_url('/report/examtraining/statscompiler/clear_stats.php');
 // Print tools.
 
 ?>
@@ -159,7 +159,7 @@ $coveragecompilerurl = new moodle_url('/mod/userquiz/statscompiler/precompile_co
             <input type="text" name="ids" value="" />
             <input type="submit" value="Compile some states" />
         </form>
-        <form name="simplecompileclear" action="<?php echo $CFG->wwwroot.'/mod/userquiz/statscompiler/clear_stats.php' ?>">
+        <form name="simplecompileclear" action="<?php echo $clearstateurl ?>">
             <input type="hidden" name="id" value="<?php p($id) ?>" />
             <p><input type="submit" value="Clear stats data" /></p>
         </form>

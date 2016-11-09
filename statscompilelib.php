@@ -38,8 +38,8 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
     $fromidclause = ($fromid) ? " ua.id >= $fromid AND " : '';
 
     $sql = "
-        COUNT
-            (*)
+        SELECT
+            COUNT(*)
         FROM
             {quiz_attempts} qa,
             {report_examtraining} ua
@@ -106,12 +106,12 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
             WHERE
                 ua.uniqueid = qa.uniqueid AND
                 qca.attemptid = qa.uniqueid AND
-                qa.quiz = qca.quizid
+                qa.quiz = qca.quizid AND
                 $fromidclause
                 $rangeclause
                 qa.timefinish != 0
         ";
-        $attempts = $DB->get_records_select($sql, array(), 'id');
+        $attempts = $DB->get_records_sql($sql, array());
     }
 
     // Only process finished attempts.
@@ -699,11 +699,12 @@ function userquiz_precompile_userstats_worker(&$attempt, &$rootcats, &$block, $v
 function userquiz_precompile_coverage_ratios() {
     global $DB;
 
-    $blocks = $DB->get_records('block_instances', 'blockname', 'userquiz_monitor');
+    $blocks = $DB->get_records('block_instances', array('blockname' => 'userquiz_monitor'));
+
     foreach ($blocks as $ablock) {
         $theblock = block_instance('userquiz_monitor', $ablock);
 
-        $testquizzes = implode(',', $theblock->config->trainingquizzes);
+        list($insql, $params) = $DB->get_in_or_equal($theblock->config->trainingquizzes);
 
         $sql = "
             SELECT DISTINCT
@@ -712,9 +713,9 @@ function userquiz_precompile_coverage_ratios() {
             FROM
                 {quiz_attempts}
             WHERE
-                quiz IN ('$testquizzes')
+                quiz $insql
         ";
-        if ($users = $DB->get_records_sql($sql)) {
+        if ($users = $DB->get_records_sql($sql, $params)) {
             foreach ($users as $user) {
                 userquiz_precompile_question_coverage_worker($user->userid, $theblock);
             }
@@ -827,8 +828,8 @@ function userquiz_get_weekly_globals($userid, $quizzeslist, $from, $to) {
     }
     $quizzesclause = (!empty($quizzesidlist)) ? " quiz IN ('$quizzesidlist') AND " : '';
 
-    $fromclause = ($from) ? " ua.timefinish > $from AND " : '';
-    $toclause = ($to) ? " ua.timefinish < $to AND " : '';
+    $fromclause = ($from) ? " qa.timefinish > $from AND " : '';
+    $toclause = ($to) ? " qa.timefinish < $to AND " : '';
 
     $sql = "
         SELECT
@@ -849,8 +850,8 @@ function userquiz_get_weekly_globals($userid, $quizzeslist, $from, $to) {
             {report_examtraining} ua,
             {user} u
         WHERE
-            qa.id = ua.quizattemptid AND
-            u.id = ua.userid AND
+            qa.id = ua.uniqueid AND
+            u.id = qa.userid AND
             userid = ? AND
             $quizzesclause
             $fromclause
@@ -939,6 +940,7 @@ function userquiz_get_user_globals($userid, $quizzeslist, $from, $to) {
  *
  */
 function userquiz_get_attempts_subcats($userid, $quizzeslist, $from, $to) {
+    global $DB;
 
     $toclause = ($to != 0) ? " AND qa.timefinish <= $to " : '';
     $fromclause = ($from != 0) ? " AND qa.timefinish >= $from " : '';
@@ -948,7 +950,7 @@ function userquiz_get_attempts_subcats($userid, $quizzeslist, $from, $to) {
     } else {
         $quizzesidlist = str_replace(',', "','", $quizzeslist);
     }
-    $quizzesclause = (!empty($quizzesidlist)) ? " cs.quiz IN ('$quizzesidlist') AND " : '';
+    $quizzesclause = (!empty($quizzesidlist)) ? " cs.quizid IN ('$quizzesidlist') AND " : '';
 
     $sql = "
         SELECT
@@ -989,7 +991,7 @@ function userquiz_get_user_subcats($userid, $quizzeslist, $from = 0, $to = 0) {
     } else {
         $quizzesidlist = str_replace(',', "','", $quizzeslist);
     }
-    $quizzesclause = (!empty($quizzesidlist)) ? " cs.userquiz IN ('$quizzesidlist') " : '';
+    $quizzesclause = (!empty($quizzesidlist)) ? " cs.quizid IN ('$quizzesidlist') " : '';
 
     $sql = "
         SELECT
@@ -1012,7 +1014,7 @@ function userquiz_get_user_subcats($userid, $quizzeslist, $from = 0, $to = 0) {
             cs.categoryid
     ";
 
-    $stats = get_records_sql($sql, array($userid));
+    $stats = $DB->get_records_sql($sql, array($userid));
 
     return $stats;
 }

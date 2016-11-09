@@ -96,10 +96,12 @@ function count_questions_in_categories_rec($rootcatid, &$cats) {
                 $cats->count_c += $subs->count_c;
                 $cats->subs[$subcat->id] = $subs;
             }
-            $countcache[$level]->count = $cats->count;
-            $countcache[$level]->count_a = $cats->count_a;
-            $countcache[$level]->count_c = $cats->count_c;
-            $countcache[$level]->subs = $cats->subs;
+            $rec = new Stdclass();
+            $rec->count = $cats->count;
+            $rec->count_a = $cats->count_a;
+            $rec->count_c = $cats->count_c;
+            $rec->subs = $cats->subs;
+            $countcache[$level] = $rec;
         }
     } else {
         $cats->count = $countcache[$level]->count;
@@ -107,19 +109,6 @@ function count_questions_in_categories_rec($rootcatid, &$cats) {
         $cats->count_c = $countcache[$level]->count_c;
         $cats->subs = &$countcache[$level]->subs;
     }
-}
-
-// RASTERS FOR OUTPUT ***************************************************************.
-
-/**
- * a raster for printing training results in an XLS sheet.
- */
-function examtraining_reports_print_trainings_xls(&$xlsdoc, $startrow, $xlsformats, $userid, $courseid, &$results) {
-    global $CFG;
-
-    include_once($CFG->dirroot.'/report/examtraining/xlsrenderer.php');
-    $renderer = new report_examtraining_xls_renderer($xlsdoc, $startrow, $xlsformats, $userid, $courseid, $results);
-    return $renderer->trainings();
 }
 
 /**
@@ -223,57 +212,6 @@ function examtraining_reports_get_questions_rec($catid, &$questionids) {
  * Overloads weblib.php function to get it more usable
  *
  */
-
-/**
- * Prints form items with the names $day, $month and $year
- *
- * @param string $day   fieldname
- * @param string $month  fieldname
- * @param string $year  fieldname
- * @param int $currenttime A default timestamp in GMT
- * @param boolean $return
- */
-function examtraining_print_date_selector($day, $month, $year, $currenttime = 0, $return = false, $from = 1970, $to = 2020) {
-
-    if (!$currenttime) {
-        $currenttime = time();
-    }
-    $currentdate = usergetdate($currenttime);
-
-    for ($i = 1; $i <= 31; $i++) {
-        $days[$i] = $i;
-    }
-    for ($i = 1; $i <= 12; $i++) {
-        $months[$i] = userdate(gmmktime(12, 0, 0, $i, 15, 2000), "%B");
-    }
-    for ($i = $from; $i <= $to; $i++) {
-        $years[$i] = $i;
-    }
-
-    // Build or print result.
-
-    $result = '';
-
-    /*
-     * Note: There should probably be a fieldset around these fields as they are
-     * clearly grouped. However this causes problems with display. See Mozilla
-     * bug 474415
-     */
-    $result .= '<label class="accesshide" for="menu'.$day.'">'.get_string('day', 'form').'</label>';
-    $result .= html_writer::select($days,   $day,   $currentdate['mday']);
-    $result .= '<label class="accesshide" for="menu'.$month.'">'.get_string('month', 'form').'</label>';
-    $result .= html_writer::select($months, $month, $currentdate['mon']);
-    $result .= '<label class="accesshide" for="menu'.$year.'">'.get_string('year', 'form').'</label>';
-    $result .= html_writer::select($years,  $year,  $currentdate['year']);
-
-    if ($return) {
-        return $result;
-    } else {
-        echo $result;
-    }
-}
-
-
 function examtraining_get_module_count($userid, $from, $to) {
     global $DB;
 

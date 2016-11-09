@@ -96,8 +96,11 @@ echo '</form>';
 
 if (!empty($targetusers)) {
 
-    $targetuserlist = implode("','", array_keys($targetusers));
+    list($insql, $params) = $DB->get_in_or_equal(array_keys($targetusers));
     $examcontext = examtraining_get_context();
+
+    $params1 = $params;
+    $params1[] = $examcontext->examquiz;
 
     $sql = "
         SELECT
@@ -108,26 +111,30 @@ if (!empty($targetusers)) {
             {report_examtraining} ua
         WHERE
             qa.uniqueid = ua.uniqueid AND
-            userid IN ('$targetuserlist') AND
-            qa.quiz = {$examcontext->examquiz} AND
+            qa.userid $insql AND
+            qa.quiz = ? AND
             qa.timefinish != 0
         GROUP BY
-            ua.userid
+            qa.userid
         ORDER BY
             attempts $orderby
         LIMIT
             0,$num
     ";
 
-    $topexams = $DB->get_records_sql($sql);
+    $topexams = $DB->get_records_sql($sql, $params1);
 
-    $testquizzes = implode("','", array_keys($examcontext->trainingquizzes));
+    list($qinsql, $qparams) = $DB->get_in_or_equal(array_keys($examcontext->trainingquizzes));
 
-    echo '<center><table width="100%"><tr valign="top"><td width="100%" align="center">';
+    echo '<center>';
+    echo '<div class="container-fluid">';
+    echo '<div class="row-fluid">';
+    echo '<div class="span12">';
 
     $attemptsstr = get_string('attempts', 'report_examtraining');
     $userstr = get_string('user');
 
+    echo $OUTPUT->heading(get_string('topexams', 'report_examtraining'));
     if ($topexams) {
         $table = new html_table();
         $table->head = array("<b>$attemptsstr</b>", "<b>$userstr</b>");
@@ -141,13 +148,16 @@ if (!empty($targetusers)) {
             $userline = '<a href="'.$userurl.'">'.fullname($targetusers[$top->userid]).' '.$groupclause.'</a>';
             $table->data[] = array($top->attempts, $userline);
         }
-        echo $OUTPUT->heading(get_string('topexams', 'report_examtraining'));
         echo html_writer::table($table);
         unset($table);
+    } else {
+        echo $OUTPUT->notification(get_string('notrainingactivity', 'report_examtraining'));
     }
-    echo '</tr></table></center>';
+    echo '</div>';
+    echo '</div>'; // Row.
 
     // Toplist by questions and by coverage.
+    $params2 = array_merge($params, $qparams);
 
     $sql = "
         SELECT
@@ -158,8 +168,8 @@ if (!empty($targetusers)) {
             {report_examtraining} ua
         WHERE
             qa.uniqueid = ua.uniqueid AND
-            userid IN ('$targetuserlist') AND
-            qa.quiz IN('$testquizzes') AND
+            userid $insql AND
+            qa.quiz $qinsql AND
             qa.timefinish != 0
         GROUP BY
             qa.userid
@@ -169,7 +179,10 @@ if (!empty($targetusers)) {
             0,$num
     ";
 
-    $topquestions = $DB->get_records_sql($sql);
+    $topquestions = $DB->get_records_sql($sql, $params2);
+
+    $params3 = $params;
+    $params3[] = $examcontext->instanceid;
 
     $sql = "
         SELECT
@@ -178,25 +191,26 @@ if (!empty($targetusers)) {
         FROM
             {userquiz_monitor_user_stats} us
         WHERE
-            userid IN ('$targetuserlist') AND
-            blockid = $examcontext->instanceid
+            userid $insql AND
+            blockid = ?
         ORDER BY
             coveragematched $orderby
         LIMIT
             0,$num
     ";
 
-    $topmatchedcoverage = $DB->get_records_sql($sql);
+    $topmatchedcoverage = $DB->get_records_sql($sql, $params3);
 
     $questionsstr = get_string('questions', 'report_examtraining');
     $coveragestr = get_string('coverageshort', 'report_examtraining');
 
-    echo '<center><table width="100%"><tr valign="top"><td width="50%" align="center">';
+    echo '<div class="row-fluid">';
+    echo '<div class="span6">';
 
     echo $OUTPUT->heading(get_string('topquestions', 'report_examtraining'));
     $attemptsstr = get_string('questions', 'report_examtraining');
     $userstr = get_string('user');
-    if ($topexams) {
+    if ($topquestions) {
         $table = new html_table();
         $table->head = array("<b>$questionsstr</b>", "<b>$userstr</b>");
         $table->align = array('left', 'left');
@@ -211,9 +225,12 @@ if (!empty($targetusers)) {
         }
         echo html_writer::table($table);
         unset($table);
+    } else {
+        echo $OUTPUT->notification(get_string('notrainingactivity', 'report_examtraining'));
     }
 
-    echo '</td><td width="50%" align="center">';
+    echo '</div>';
+    echo '<div class="span6">';
 
     echo $OUTPUT->heading(get_string('topcoveragematched', 'report_examtraining'));
 
@@ -232,7 +249,14 @@ if (!empty($targetusers)) {
         }
         echo html_writer::table($table);
         unset($table);
+    } else {
+        echo $OUTPUT->notification(get_string('notrainingactivity', 'report_examtraining'));
     }
 
-    echo '</td></tr></table></center>';
+    echo '</div>';
+    echo '</div>'; // Row.
+    echo '</div>'; // Table.
+    echo '</center>';
+} else {
+    echo $OUTPUT->notification('notrainingactivity', 'report_examtraining');
 }

@@ -15,6 +15,15 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * @package     report_examtraining
+ * @category    report
+ * @author      Valery Fremaux <valery.fremaux@club-internet.fr>
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL
+ * @copyright   (C) 2016 onwards Valery Fremaux
+ */
+defined('MOODLE_INTERNAL') || die();
+
+/**
  * performs a generic batch process using HTTP bounces
  * @uses $CFG->backgroundrunsenabled to control dumb loop
  */
@@ -33,7 +42,9 @@ function batch($prework = '', $work = '', $postwork = '', $source, $where = ' 1 
         if ($output) {
              echo 'resetting runs config <br/>';
         } else {
-            debug_trace('resetting runs config ');
+            if (function_exists('debug_trace')) {
+                debug_trace('resetting runs config ');
+            }
         }
         set_config('runs', 0);
     } else {
@@ -84,7 +95,9 @@ function batch($prework = '', $work = '', $postwork = '', $source, $where = ' 1 
             if ($output) {
                  echo "no prework<br/>";
             } else {
-                debug_trace("no prework");
+                if (function_exists('debug_trace')) {
+                    debug_trace("no prework");
+                }
             }
         }
 
@@ -132,7 +145,9 @@ function batch($prework = '', $work = '', $postwork = '', $source, $where = ' 1 
                     if ($output) {
                         echo "postworking<br/>";
                     } else {
-                        debug_trace('postworking');
+                        if (function_exists('debug_trace')) {
+                            debug_trace('postworking');
+                        }
                     }
                     $postwork($workcontext);
                 } else {
@@ -178,7 +193,7 @@ function batch_task($baseurl, $params) {
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, false);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Barchen Batch');
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Examtraning Report Batch');
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: text/xml charset=UTF-8"));
         curl_setopt($ch, CURLOPT_HEADER, false);
         curl_setopt($ch, CURLOPT_PROXY, $CFG->proxyhost);
