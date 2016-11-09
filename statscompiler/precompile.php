@@ -48,7 +48,7 @@ $PAGE->set_pagelayout('admin');
 
 echo $OUTPUT->header();
 
-if (!userquiz_precompile_results($id, 'userquiz_precompile_results_worker', $cats, $new, $fromid)){
+if (!userquiz_precompile_results($id, 'userquiz_precompile_results_worker', $cats, $new, $fromid)) {
     echo $OUTPUT->notification("No more results to compile");
 } else {
     echo $OUTPUT->notification("Still results to compile");
