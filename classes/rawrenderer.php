@@ -22,6 +22,7 @@
  * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 defined('MOODLE_INTERNAL') || die();
 
 class report_examtraining_raw_renderer extends plugin_renderer_base {
@@ -120,7 +121,7 @@ class report_examtraining_raw_renderer extends plugin_renderer_base {
         $resultset[] = raw_format_duration(@$data->elapsed); // Elapsed time.
         $resultset[] = raw_format_duration(@$data->weekelapsed); // Elapsed time this week.
 
-        $trainingstats = userquiz_get_user_globals($userid, $examcontext->trainingquiz, $from, $to);
+        $trainingstats = userquiz_get_user_globals($userid, $examcontext->trainingquizzes, $from, $to);
         $weektrainingstats = userquiz_get_user_globals($userid, $examcontext->trainingquizzes, $to - DAYSECS * 7, $to);
 
         $resultset[] = 0 + @$trainingstats[$userid]->aanswered; // Answered A questions on training.

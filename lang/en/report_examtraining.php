@@ -163,5 +163,8 @@ $string['questionsetscores'] = 'Scores per question type';
 $string['dateofbirth'] = 'Date of birth';
 $string['placeofbirth'] = 'Place of birth';
 $string['c3'] = 'C3';
+$string['hitratio'] = 'Hit ratio';
+$string['question'] = 'Question';
+$string['matched'] = 'Matched';
 
 $string['extrafields_desc'] = 'Additional profile fields to add to reports';
