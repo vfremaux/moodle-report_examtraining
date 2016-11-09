@@ -35,14 +35,16 @@ defined('MOODLE_INTERNAL') || die;
 function report_examtraining_extend_navigation_course($navigation, $course, $context) {
     global $DB;
 
-    // do NOT give access to this report unless you are using a course as examtraining system
+    // Do NOT give access to this report unless you are using a course as examtraining system.
     if (!$DB->get_records('block_instances', array('blockname' => 'userquiz_monitor', 'parentcontextid' => $context->id))) {
         return;
     }
 
     if (has_capability('report/examtraining:view', $context)) {
         $url = new moodle_url('/report/examtraining/index.php', array('id' => $course->id));
-        $navigation->add(get_string('pluginname', 'report_examtraining'), $url, navigation_node::TYPE_SETTING, null, null, new pix_icon('i/report', ''));
+        $label = get_string('pluginname', 'report_examtraining');
+        $pixicon = new pix_icon('i/report', '');
+        $navigation->add($label, $url, navigation_node::TYPE_SETTING, null, null, $pixicon);
     }
 }
 
@@ -73,7 +75,7 @@ function report_examtraining_can_access_user_report($user, $course) {
 
     if (has_capability('report/examtraining:view', $coursecontext)) {
         return true;
-    } elseif ($user->id == $USER->id) {
+    } else if ($user->id == $USER->id) {
         if ($course->showreports && (is_viewing($coursecontext, $USER) or is_enrolled($coursecontext, $USER))) {
             return true;
         }
@@ -84,7 +86,6 @@ function report_examtraining_can_access_user_report($user, $course) {
 
 /**
  * Called by the storage subsystem to give back a raw report
- *
  */
 function report_examtraining_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
     require_course_login($course);
@@ -98,14 +99,15 @@ function report_examtraining_pluginfile($course, $cm, $context, $filearea, $args
     $filename = array_pop($args);
     $filepath = $args ? '/'.implode('/', $args).'/' : '/';
 
-    if (!$file = $fs->get_file($context->id, 'report_examtraining', 'rawreports', $course->id, $filepath, $filename) or $file->is_directory()) {
+    if (!$file = $fs->get_file($context->id, 'report_examtraining', 'rawreports', $course->id, $filepath, $filename) ||
+            $file->is_directory()) {
         send_file_not_found();
     }
 
     $forcedownload = true;
 
     session_get_instance()->write_close();
-    send_stored_file($file, 60*60, 0, $forcedownload);
+    send_stored_file($file, 60 * 60, 0, $forcedownload);
 }
 
 /**

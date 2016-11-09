@@ -15,21 +15,25 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details.
  *
- * @package    report_examtraining
- * @category   report
- * @author     valery fremaux <valery.fremaux@gmail.com>
- * @copyright  2016 onwards valery fremaux (valery.fremaux@gmail.com)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package     report_examtraining
+ * @subpackage  report
+ * @author      Valery Fremaux <valery.fremaux@club-internet.fr>
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL
+ * @copyright   (C) 2016 onwards Valery Fremaux
  */
-defined('MOODLE_INTERNAL') || die();
 
-$plugin->version  = 2016070503;
-$plugin->requires = 2014050800;
-$plugin->component = 'report_examtraining';
-$plugin->release = '2.7.0 (Build 2016070501)';
-$plugin->maturity = MATURITY_BETA;
+require('../../../config.php');
 
-// Non moodle attributes.
-$plugin->codeincrement = '2.7.0001';
+require_once($CFG->dirroot.'/report/examtraining/statscompilelib.php');
+
+@raise_memory_limit('512M');
+@set_time_limit(1800);
+
+$CFG->trace = $CFG->dataroot.'/userquiz_cron_compile.log';
+
+$attempts = userquiz_cron_results();
+
+$admin = get_admin();
+
+email_to_user($admin, $admin, $SITE->fullname." : Userquiz Statcompilation : $attempts attempts compiled", 'Done.', 'Done.');	
