@@ -15,20 +15,25 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains functions used by the examtraining report
  *
  * @package     report_examtraining
- * @category    report
- * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @subpackage  report
+ * @author      Valery Fremaux <valery.fremaux@club-internet.fr>
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL
+ * @copyright   (C) 2016 onwards Valery Fremaux
  */
 
-defined('MOODLE_INTERNAL') ||  die();
+require('../../../config.php');
 
-if (has_capability('report/examtraining:view', $context)) {
-    echo '<p>';
-    $report = get_string('examtrainingreport', 'report_examtraining');
-    $reporturl = new moodle_url('/report/examtraining/index.php', array('id' => $course->id));
-    echo '<a href="'.$reporturl.'">'.$report.'</a>';
-    echo '</p>';
-}
+require_once($CFG->dirroot.'/report/examtraining/statscompilelib.php');
+
+@raise_memory_limit('512M');
+@set_time_limit(1800);
+
+$CFG->trace = $CFG->dataroot.'/userquiz_cron_compile.log';
+
+$attempts = userquiz_cron_results();
+
+$admin = get_admin();
+
+email_to_user($admin, $admin, $SITE->fullname." : Userquiz Statcompilation : $attempts attempts compiled", 'Done.', 'Done.');

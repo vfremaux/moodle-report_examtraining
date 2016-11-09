@@ -1,37 +1,59 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * This file contains functions used by the examtraining report
+ *
+ * @package    report
+ * @subpackage examtraining
+ * @copyright  2012 Valery Fremaux (valery.fremaux@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 defined('MOODLE_INTERNAL') || die();
 
-/**
+/*
  * direct log construction implementation
- *
  */
 
-require_once $CFG->dirroot.'/blocks/use_stats/locallib.php';
-require_once $CFG->dirroot.'/course/report/barchenamf3/locallib.php';
+require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
+require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
 $attemptid = required_param('attemptid', PARAM_INT);
 
 ini_set('memory_limit', '256M');
 
-// TODO : Secure userid access depending on proper capabilities
+// TODO : Secure userid access depending on proper capabilities.
 
-// don't give access to any unless coaches
+// Don't give access to any unless coaches.
 require_capability('report/examtraining:viewall', $context);
 
-// calculate start time
+// Calculate start time.
 
-// get data
+// Get data.
 
-// Barchen case
-$attempt = get_record('userquiz_attempts', 'uniqueid', $attemptid);
-$quiz = get_record('userquiz', 'id', $attempt->userquiz);
+$attempt = get_record('quiz_attempts', 'uniqueid', $attemptid);
+$quiz = get_record('userquiz', 'id', $attempt->quiz);
 
 $user = get_record('user', 'id', $attempt->userid);
 
 $questionset = explode(',', $attempt->layout);
 $realquestions = array();
-foreach($questionset as $qid) {
+
+foreach ($questionset as $qid) {
     if ($qid == 0 || $qid == '') {
         continue;
     }
@@ -39,24 +61,25 @@ foreach($questionset as $qid) {
 
     $q = $DB->get_record('question', 'id', $qid);
 
-        // if randomized, need fetch the effective question
-        if (preg_match('/^random/', $q->qtype)){
-            if ($state = get_record('question_states', 'attempt', $attemptid, 'question', $q->id, 'event', 0)){
-                if (preg_match("/^{$q->qtype}(\\d+)-/", $state->answer, $matches)){
-                    $effectiveqid = $matches[1];
-                }
+    // If randomized, need fetch the effective question.
+    // TODO / Redraw, question_states not exists anymore.
+    if (preg_match('/^random/', $q->qtype)) {
+        if ($state = get_record('question_states', 'attempt', $attemptid, 'question', $q->id, 'event', 0)) {
+            if (preg_match("/^{$q->qtype}(\\d+)-/", $state->answer, $matches)) {
+                $effectiveqid = $matches[1];
             }
-        } else {
-            $effectiveqid = $qid;
         }
-
-        $questions[$qid] = $q;
-        $questions[$effectiveqid] = get_record('question', 'id', $effectiveqid);
-        $questionforwards[$qid] = $effectiveqid;
-
+    } else {
+        $effectiveqid = $qid;
     }
 
-// print result
+    $questions[$qid] = $q;
+    $questions[$effectiveqid] = get_record('question', 'id', $effectiveqid);
+    $questionforwards[$qid] = $effectiveqid;
+
+}
+
+// Print result.
 
 $i = 1;
 
@@ -65,16 +88,16 @@ $ctype = 0;
 $ascore = 0;
 $cscore = 0;
 
-global $QCAT;
+global $qcategories;
 
-$QCAT = array();
-$EFFQS = array();
+$qcategories = array();
+$effqs = array();
 
-// compute question and prepare some data for output (html or xls)
-foreach($realquestions as $qid) {
+// Compute question and prepare some data for output (html or xls).
+foreach ($realquestions as $qid) {
 
-    // get effective question for answers, check it is a straight forward question        
-    if (array_key_exists($qid, $questionforwards)){
+    // Get effective question for answers, check it is a straight forward question.
+    if (array_key_exists($qid, $questionforwards)) {
         $effectiveqid = $questionforwards[$qid];
     } else {
         $effectiveqid = $qid;
@@ -82,8 +105,8 @@ foreach($realquestions as $qid) {
 
     $effq = $DB->get_record('question', array('id' => $effectiveqid));
 
-    if (!array_key_exists($effq->category, $QCAT)) {
-        $QCAT[$effq->category] = $DB->get_record('question_categories', array('id' => $effq->category));
+    if (!array_key_exists($effq->category, $qcategories)) {
+        $qcategories[$effq->category] = $DB->get_record('question_categories', array('id' => $effq->category));
     }
 
     $effg = clone($effq);
@@ -98,8 +121,8 @@ foreach($realquestions as $qid) {
     }
 
     $effg->answeredtext = get_string('unanswered', 'report_examtraining');
-    foreach ($effg->answers as $aid => $a){
-        if ($a->id == $answerid){
+    foreach ($effg->answers as $aid => $a) {
+        if ($a->id == $answerid) {
             $effg->answeredtext = "<div>$a->answer</div>";
         }
         $answerclass = ($a->fraction) ? 'qcorrect' : 'qfailed';
@@ -108,7 +131,7 @@ foreach($realquestions as $qid) {
 
     $effg->sortorder = $i;
 
-    $effg->htmloutput = "<table width=\"$tablewidth\" class=\"generaltable\">";    
+    $effg->htmloutput = "<table width=\"$tablewidth\" class=\"generaltable\">";
     $effg->htmloutput .= '<tr valign="top" class="header r0">';
     $effg->htmloutput .= '<td width="10%" class=="header c0">Question :</td>';
     $effg->htmloutput .= '<td class="questioninfo">';
@@ -120,33 +143,36 @@ foreach($realquestions as $qid) {
     }
     $effg->htmloutput .= '</ul><br/>';
     $givenanswerclass = ($effg->score) ? 'qcorrect' : 'qfailed';
-    $effg->type = ($effq->defaultgrade == 1000) ? 'C' : 'A' ;
-    $effg->typeoutput = ($effq->defaultgrade == 1000) ? '<img width="14" height="15" src="'.$CFG->wwwroot.'/blocks/userquiz_monitor/pix/c.png" />' : '<img width="14" height="15" src="'.$CFG->wwwroot.'/blocks/userquiz_monitor/pix/a.png" />' ;
-    $effg->htmloutput .= get_string('givenanswer', 'report_examtraining', '<div class="'.$givenanswerclass.'">'.$effg->answeredtext.'</div>');
-    $effg->htmloutput .= "Categorie : <span class=\"qcategory\">".$QCAT[$effq->category]->name.'</span><br/>';
+    $effg->type = ($effq->defaultgrade == 1000) ? 'C' : 'A';
+    $pix1 = '<img width="14" height="15" src="'.$CFG->wwwroot.'/blocks/userquiz_monitor/pix/c.png" />';
+    $pix2 = '<img width="14" height="15" src="'.$CFG->wwwroot.'/blocks/userquiz_monitor/pix/a.png" />';
+    $effg->typeoutput = ($effq->defaultgrade == 1000) ? $pix1 : $pix2;
+    $e = '<div class="'.$givenanswerclass.'">'.$effg->answeredtext.'</div>';
+    $effg->htmloutput .= get_string('givenanswer', 'report_examtraining', $e);
+    $effg->htmloutput .= "Categorie : <span class=\"qcategory\">".$qcategories[$effq->category]->name.'</span><br/>';
     $effg->htmloutput .= "Type : <span class=\"qtype\">".$effg->typeoutput.'</span><br/>';
     $effg->htmloutput .= "Score : <span class=\"qscore\">".$effg->score.'</span><br/>';
     $effg->htmloutput .= '</td></tr>';
-    $effg->htmloutput .= "</table>";    
+    $effg->htmloutput .= "</table>";
 
-    $QCAT[$effq->category]->qs = @$QCAT[$effq->category]->qs + 1;
+    $qcategories[$effq->category]->qs = @$qcategories[$effq->category]->qs + 1;
     if ($effq->defaultgrade == 1000) {
-        $QCAT[$effq->category]->ctype = @$QCAT[$effq->category]->ctype + 1;
+        $qcategories[$effq->category]->ctype = @$qcategories[$effq->category]->ctype + 1;
         $ctype++;
         if ($effg->score) {
             $cscore++;
-            $QCAT[$effq->category]->cscore = @$QCAT[$effq->category]->cscore + 1;
+            $qcategories[$effq->category]->cscore = @$qcategories[$effq->category]->cscore + 1;
         }
     } else {
-        $QCAT[$effq->category]->atype = @$QCAT[$effq->category]->atype + 1;
+        $qcategories[$effq->category]->atype = @$qcategories[$effq->category]->atype + 1;
         $atype++;
         if ($effg->score) {
             $ascore++;
-            $QCAT[$effq->category]->ascore = @$QCAT[$effq->category]->ascore + 1;
+            $qcategories[$effq->category]->ascore = @$qcategories[$effq->category]->ascore + 1;
         }
     }
 
-    $EFFQS[$qid] = $effg;
+    $effqs[$qid] = $effg;
 
     $i++;
 }
@@ -159,30 +185,34 @@ function sortcatsbyname($a, $b) {
         $amajor = 1000;
         $aminor = 0;
     }
-    if (preg_match('/^([0-9]+)\.([0-9]+)\s/', $b->name, $matches)){
+    if (preg_match('/^([0-9]+)\.([0-9]+)\s/', $b->name, $matches)) {
         $bmajor = $matches[1];
         $bminor = $matches[2];
     } else {
         $bmajor = 1000;
         $bminor = 0;
     }
-    if ($amajor * 100 + $aminor > $bmajor * 100 + $bminor) return 1;
-    if ($amajor * 100 + $aminor < $bmajor * 100 + $bminor) return -1;
+    if ($amajor * 100 + $aminor > $bmajor * 100 + $bminor) {
+        return 1;
+    }
+    if ($amajor * 100 + $aminor < $bmajor * 100 + $bminor) {
+        return -1;
+    }
     return 0;
 }
 
-uasort($QCAT, 'sortcatsbyname');
+uasort($qcategories, 'sortcatsbyname');
 
 $total = $atype + $ctype;
-$aratio = ($atype) ? $ascore / $atype * 100 : 0 ;
-$cratio = ($ctype) ? $cscore / $ctype * 100 : 0 ;
+$aratio = ($atype) ? $ascore / $atype * 100 : 0;
+$cratio = ($ctype) ? $cscore / $ctype * 100 : 0;
 
-//
-// Rastering output document
-//
+/*
+ * Rastering output document
+ */
 
 if ($output == 'html' || $output == 'pdf') {
-    // time period form
+    // Time period form.
 
     $html .= '<h2>'.get_string('userinfo', 'report_examtraining').'</h2>';
 
@@ -192,21 +222,20 @@ if ($output == 'html' || $output == 'pdf') {
     } else {
         $usergroups = groups_get_all_groups($COURSE->id, $user->id, 0, 'g.id, g.name');
         $groupsinfo = '';
-        // print group status
+        // Print group status.
         if (!empty($usergroups)) {
-            foreach($usergroups as $group) {
+            foreach ($usergroups as $group) {
                 $str = $group->name;
-                if ($group->id == get_current_group($COURSE->id)){
+                if ($group->id == get_current_group($COURSE->id)) {
                     $str = "<b>$str</b>";
                 }
                 $groupnames[] = $str;
             }
-            $groupsinfo = implode(', ', $groupnames);                        
+            $groupsinfo = implode(', ', $groupnames);
         }
 
         $html .= "<table width=\"$tablewidth\" class=\"generaltable\"><tr>";
         $html .= '<td width="20%">'.print_user_picture($user, $COURSE->id, null, 0, true, false).'</td>';
-        // $html .= '<td width="35%"><img src="'.$CFG->wwwroot.'/pix/u/f1.png" width="98" height="98" /></td>';
         $html .= '<td width="65%"><span  class="username">'.fullname($user).'</span><br/>';
         $html .= '['.$user->email.']</td>';
         $html .= '</tr><tr>';
@@ -223,8 +252,6 @@ if ($output == 'html' || $output == 'pdf') {
         $html .= '<td width="65%">'.$groupsinfo.'</td>';
         $html .= '</tr></table>';
     }
-
-    // echo htmlentities($html);
 
     $html .= '<h2>'.get_string('attemptinfo', 'report_examtraining').'</h2>';
 
@@ -254,42 +281,63 @@ if ($output == 'html' || $output == 'pdf') {
 
     $html .= '<h2>'.get_string('questionanswersdetail', 'report_examtraining').'</h2>';
 
-    foreach ($EFFQS as $effq) {
+    foreach ($effqs as $effq) {
         $html .= $effq->htmloutput;
     }
 
     $html .= '<h2>'.get_string('questionsetscores', 'report_examtraining').'</h2>';
 
-    // now we can output category and type sums
+    // Now we can output category and type sums.
     $html .= "<p><table width=\"$tablewidth\" class=\"generaltable\">";
     $html .= '<tr>
                 <th></th>
                 <th align="center" class="header c1">%</th>
                 <th align="center" class="header c2">#</th>
               </tr>';
-    $html .= '<tr><td>Type A</td><td align="center">'.sprintf('%0.2f', $aratio).'</td><td align="center">'.$ascore.'/'.$atype.'</td></tr>';
-    $html .= '<tr><td>Type C</td><td align="center">'.sprintf('%0.2f', $cratio).'</td><td align="center">'.$cscore.'/'.$ctype.'</td></tr>';
+
+    $html .= '<tr>';
+    $html .= '<td>Type A</td>';
+    $html .= '<td align="center">'.sprintf('%0.2f', $aratio).'</td>';
+    $html .= '<td align="center">'.$ascore.'/'.$atype.'</td>';
+    $html .= '</tr>';
+
+    $html .= '<tr>';
+    $html .= '<td>Type C</td>';
+    $html .= '<td align="center">'.sprintf('%0.2f', $cratio).'</td>';
+    $html .= '<td align="center">'.$cscore.'/'.$ctype.'</td>';
+    $html .= '</tr>';
+
     $html .= '</table></p>';
 
     $html .= '<h2>'.get_string('categoryscores', 'report_examtraining').'</h2>';
 
-    // print category scores
-    foreach ($QCAT as $catid => $scores) {
+    // Print category scores.
+    foreach ($qcategories as $catid => $scores) {
         $total = 0 + @$scores->atype + @$scores->ctype;
         $aratio = (@$scores->atype) ? @$scores->ascore / @$scores->atype * 100 : 0;
         $cratio = (@$scores->ctype) ? @$scores->cscore / @$scores->ctype * 100 : 0;
-        $catstyle = (@$scores->atype) ? 'atype' : 'ctype' ;
+        $catstyle = (@$scores->atype) ? 'atype' : 'ctype';
         $html .= '<p><table width="'.$tablewidth.'" class="generaltable">';
+
         $html .= '<tr>';
-        $html .= "<th width=\"50%\" class=\"qcategory $catstyle\">".$scores->name.'</th>';
-        $html .= "<th align=\"center\" class=\"header c1 $catstyle\" width=\"25%\">%</th>";
-        $html .= "<th align=\"center\" class=\"header c2 $catstyle\" width=\"25%\">#</th>";
+        $html .= '<th width="50%" class="qcategory '.$catstyle.'">'.$scores->name.'</th>';
+        $html .= '<th align="center" class="header c1 '.$catstyle.'" width="25%">%</th>';
+        $html .= '<th align="center" class="header c2 '.$catstyle.'" width="25%">#</th>';
         $html .= '</tr>';
+
         if (!empty($scores->atype)) {
-            $html .= '<tr><td>Type A</td><td align="center">'.sprintf('%0.2f', $aratio).'</td><td align="center">'.@$scores->ascore.'/'.@$scores->atype.'</td></tr>';
+            $html .= '<tr>';
+            $html .= '<td>Type A</td>';
+            $html .= '<td align="center">'.sprintf('%0.2f', $aratio).'</td>';
+            $html .= '<td align="center">'.@$scores->ascore.'/'.@$scores->atype.'</td>';
+            $html .= '</tr>';
         }
         if (!empty($scores->ctype)) {
-            $html .= '<tr><td>Type C</td><td align="center">'.sprintf('%0.2f', $cratio).'</td><td align="center">'.@$scores->cscore.'/'.@$scores->ctype.'</td></tr>';
+            $html .= '<tr>';
+            $html .= '<td>Type C</td>';
+            $html .= '<td align="center">'.sprintf('%0.2f', $cratio).'</td>';
+            $html .= '<td align="center">'.@$scores->cscore.'/'.@$scores->ctype.'</td>';
+            $html .= '</tr>';
         }
         $html .= '</table></p>';
     }
@@ -299,51 +347,53 @@ if ($output == 'html' || $output == 'pdf') {
         echo '<center>';
         $options['id'] = $course->id;
         $options['userid'] = $user->id;
-        $options['output'] = 'xls'; // ask for XLS
-        $options['view'] = 'userattempt'; //
-        $options['attemptid'] = $attemptid; //
-        echo $OUTPUT->single_button(new moodle_url('/course/report/examtraining/index.php', $options), get_string('generateXLS', 'report_examtraining'), 'get');
+        $options['output'] = 'xls'; // Ask for XLS.
+        $options['view'] = 'userattempt';
+        $options['attemptid'] = $attemptid;
+        $buttonurl = new moodle_url('/course/report/examtraining/index.php', $options);
+        echo $OUTPUT->single_button($buttonurl, get_string('generateXLS', 'report_examtraining'), 'get');
         echo '</center>';
 
         if ($pdfinstalled) {
             echo '<center>';
             $options['id'] = $course->id;
             $options['userid'] = $user->id;
-            $options['output'] = 'pdf'; // ask for PDF
-            $options['view'] = 'userattempt'; //
-            $options['attemptid'] = $attemptid; //
-            $OUTPUT->single_button(new moodle_url('/report/examtraining/index.php', $options), get_string('generatePDF', 'report_examtraining'), 'get');
+            $options['output'] = 'pdf'; // Ask for PDF.
+            $options['view'] = 'userattempt';
+            $options['attemptid'] = $attemptid;
+            $buttonurl = new moodle_url('/report/examtraining/index.php', $options);
+            $OUTPUT->single_button($buttonurl, get_string('generatePDF', 'report_examtraining'), 'get');
             echo '</center>';
         }
-    } elseif ($output == 'pdf') {
+    } else if ($output == 'pdf') {
         $pdffooter = str_replace('[[leftfooterinfo]]', fullname($user).' / '.$COURSE->fullname, $pdffooter);
     }
 
 } else {
     $filename = 'examtraining_sessions_report_'.date('d-M-Y', time()).'.xls';
     $workbook = new MoodleExcelWorkbook("-");
-    // Sending HTTP headers
+    // Sending HTTP headers.
     $workbook->send($filename);
 
     $globalresults->from = 0;
     $globalresults->to = 0;
     $globalresults->elapsed = 0;
     $globalresults->events = 0;
-    
-    // preparing some formats
-    $xls_formats = examtraining_reports_xls_formats($workbook);
-    $worksheet = examtraining_reports_init_worksheet($user->id, $xls_formats, $workbook, array(0,3,70));
-    $startrow = examtraining_reports_print_header_xls($worksheet, $user->id, $course->id, $globalresults, $xls_formats);
-    
-    foreach($EFFQS as $effg) {
-        $startrow = examtraining_reports_print_questiondetail_xls($worksheet, $startrow, $effg, $xls_formats);
+
+    // Preparing some formats.
+    $xlsformats = examtraining_reports_xls_formats($workbook);
+    $worksheet = examtraining_reports_init_worksheet($user->id, $xlsformats, $workbook, array(0, 3, 70));
+    $startrow = examtraining_reports_print_header_xls($worksheet, $user->id, $course->id, $globalresults, $xlsformats);
+
+    foreach ($effqs as $effg) {
+        $startrow = examtraining_reports_print_questiondetail_xls($worksheet, $startrow, $effg, $xlsformats);
     }
 
-    foreach ($QCAT as $catid => $scores) {
+    foreach ($qcategories as $catid => $scores) {
         $scores->total = 0 + @$scores->atype + @$scores->ctype;
-        $scores->aratio = (@$scores->atype) ? @$scores->ascore / @$scores->atype * 100 : 0 ;
-        $scores->cratio = (@$scores->ctype) ? @$scores->cscore / @$scores->ctype * 100 : 0 ;
-        $startrow = examtraining_reports_print_catscores_xls($worksheet, $startrow, $scores, $xls_formats);
+        $scores->aratio = (@$scores->atype) ? @$scores->ascore / @$scores->atype * 100 : 0;
+        $scores->cratio = (@$scores->ctype) ? @$scores->cscore / @$scores->ctype * 100 : 0;
+        $startrow = examtraining_reports_print_catscores_xls($worksheet, $startrow, $scores, $xlsformats);
     }
 
     ob_end_clean();
