@@ -1,18 +1,4 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 $string['examtraining:isteacher'] = 'A un rôle d\'enseignant';
 $string['examtraining:view'] = 'Peut voir les résultats';
@@ -27,6 +13,7 @@ $string['allgroups'] = 'Tous les groupes';
 $string['answered'] = 'Répondues';
 $string['ascending'] = 'Bottom ';
 $string['ashtml'] = 'Format HTML';
+// $string['assiduity'] = 'Assiduité entre le <span style=\"font-weight:normal\">$a->from</span> et le <span style=\"font-weight:normal\">$a->to</span>';
 $string['assiduity'] = 'Assiduité';
 $string['assiduityblank'] = 'Assiduité';
 $string['asxls'] = 'Télécharger au format Excel';
@@ -74,7 +61,6 @@ $string['exams'] = 'Examens';
 $string['examsuccess'] = 'Examens réussis';
 $string['examtries'] = 'Examens blancs';
 $string['executing'] = 'Formation';
-$string['extrafields'] = 'Extra fields';
 $string['firstaccess'] = 'Premier accès';
 $string['firstconnection'] = 'Première connexion';
 $string['firstenrolldate'] = 'Premier enrollement';
@@ -165,9 +151,3 @@ $string['userattempt-userattempt'] = 'Rapport de tentative de test';
 $string['dateofbirth'] = 'Date de naissance';
 $string['placeofbirth'] = 'Lieu de naissance';
 $string['c3'] = 'C3';
-$string['hitratio'] = 'Taux de réussite';
-$string['question'] = 'Question';
-$string['matched'] = 'Réussies';
-
-$string['extrafields_desc'] = 'champs supplémentaires de profil à ajouter aux rapports.';
-
