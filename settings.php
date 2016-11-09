@@ -15,21 +15,16 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details.
+ * Settings and links
  *
  * @package    report_examtraining
  * @category   report
- * @author     valery fremaux <valery.fremaux@gmail.com>
- * @copyright  2016 onwards valery fremaux (valery.fremaux@gmail.com)
+ * @copyright  2014 Valery Fremaux
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') || die;
 
-$plugin->version  = 2016070503;
-$plugin->requires = 2014050800;
-$plugin->component = 'report_examtraining';
-$plugin->release = '2.7.0 (Build 2016070501)';
-$plugin->maturity = MATURITY_BETA;
-
-// Non moodle attributes.
-$plugin->codeincrement = '2.7.0001';
+$key = 'report_examtraining/extrafields';
+$label = get_string('extrafields', 'report_examtraining');
+$desc = get_string('extrafields_desc', 'report_examtraining');
+$settings->add(new admin_setting_configselect($key, $label, $desc, 48 * HOURSECS, $options));
