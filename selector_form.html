@@ -12,11 +12,11 @@ $context = context_course::instance($course->id);
 <?php
 print_string('from');
 echo ' : ';
-examtraining_print_date_selector('startday', 'startmonth', 'startyear', $from, false, 2009, 2020);
+examtraining_print_date_selector('startday', 'startmonth', 'startyear', $input->from, false, 2009, 2020);
 echo '<br/>';
 print_string('to');
 echo ' : ';
-examtraining_print_date_selector('endday', 'endmonth', 'endyear', $to, false, 2009, 2020);
+examtraining_print_date_selector('endday', 'endmonth', 'endyear', $input->to, false, 2009, 2020);
 ?>
     </td>
     <td>
@@ -53,13 +53,13 @@ if (has_capability('report/examtraining:viewall', $context)) {
             $useroptions[$user->id] .= " ($activity)";
         }
     }
-    choose_from_menu($useroptions, 'userid', $userid);
+    echo html_writer::select($useroptions, 'userid', $userid);
 }
 ?>
     </td>
     <td>
         <input type="submit" name="go_btn" value="<?php print_string('update') ?>" />
-        &nbsp;<input type="button" name="gostart_btn" value="<?php print_string('updatefromcoursestart', 'report_examtrainings') ?>" onclick="document.forms['selector'].fromstart.value = 1;document.forms['selector'].submit();" />
+        &nbsp;<input type="button" name="gostart_btn" value="<?php print_string('updatefromcoursestart', 'report_examtraining') ?>" onclick="document.forms['selector'].fromstart.value = 1;document.forms['selector'].submit();" />
     </td>
 </tr>
 </table>

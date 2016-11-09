@@ -165,6 +165,9 @@ $string['userattempt-userattempt'] = 'Rapport de tentative de test';
 $string['dateofbirth'] = 'Date de naissance';
 $string['placeofbirth'] = 'Lieu de naissance';
 $string['c3'] = 'C3';
+$string['hitratio'] = 'Taux de réussite';
+$string['question'] = 'Question';
+$string['matched'] = 'Réussies';
 
 $string['extrafields_desc'] = 'champs supplémentaires de profil à ajouter aux rapports.';
 

@@ -32,6 +32,7 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/reportasyncprecompilelib.php');
+require_once($CFG->dirroot.'/report/examtraining/classes/rawrenderer.php');
 
 $input = examtraining_reports_input($course);
 
@@ -45,6 +46,8 @@ $page = 20;
  * time and group period form
  */
 require_once($CFG->dirroot.'/report/examtraining/courseraw_selector_form.html');
+
+$rawrenderer = $PAGE->get_renderer('report_examtraining', 'raw');
 
 // Compute target group.
 
@@ -77,10 +80,9 @@ foreach ($targetusers as $uid => $user) {
 
 if (!empty($targetusers)) {
 
-    echo 'compiling for '.count($targetusers).' users<br/>';
+    echo 'Compiling for '.count($targetusers).' users<br/>';
 
     $timestamp = time();
-    $rawfile = fopen($CFG->dataroot.'/'.$COURSE->id."/examtraining_raw_{$timestamp}.csv", 'wb');
 
     report_compile_init_columns($resultset);
 
@@ -96,7 +98,7 @@ if (!empty($targetusers)) {
     $resultset[] = get_string('placeofbirth', 'report_examtraining'); // POB.
     $resultset[] = get_string('c3', 'report_examtraining'); // C3.
 
-    fputs($rawfile, mb_convert_encoding(implode(';', $resultset)."\n", 'ISO-8859-1', 'UTF-8'));
+    $rawfile = implode(';', $resultset)."\n";
 
     $examtrainingcontext = examtraining_get_context();
 
@@ -143,14 +145,14 @@ if (!empty($targetusers)) {
     $filerec->component = 'report_examtraining';
     $filerec->filearea = 'instantreport';
     $filerec->itemid = 0;
-    $filerec->path = '/';
+    $filerec->filepath = '/';
     $filerec->filename = 'examtraining_raw_'.$timestamp.'.csv';
 
     $fs->create_file_from_string($filerec, $rawfile);
 
     $strupload = get_string('uploadresult', 'report_examtraining');
-    $reporturl = moodle_url::make_file_url('/pluginfile.php', array($context->id, 'report_examtraining', 'instantreport',
-                                           '0', '/', $filename));
+    $reporturl = moodle_url::make_pluginfile_url($context->id, 'report_examtraining', 'instantreport',
+                                           '0', '/', $filerec->filename);
     echo '<a href="'.$reporturl.'">'.$strupload.'</a>';
 } else {
     print_string('nothing', 'report_examtraining');

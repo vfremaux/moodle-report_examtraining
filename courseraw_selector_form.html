@@ -36,9 +36,9 @@
 <?php
 print_string('from');
 echo ' : ';
-examtraining_print_date_selector('startday', 'startmonth', 'startyear', $from, false, 2009, 2020);
+examtraining_print_date_selector('startday', 'startmonth', 'startyear', $input->from, false, 2009, 2020);
 echo '<br/>';
-examtraining_print_date_selector('endday', 'endmonth', 'endyear', $to, false, 2009, 2020);
+examtraining_print_date_selector('endday', 'endmonth', 'endyear', $input->to, false, 2009, 2020);
 ?>
     </td>
 </tr>
@@ -54,7 +54,8 @@ print_string('chooseagroup', 'report_examtraining');
 // First clear all groups if only group allowed.
 $defaultgroup = 0;
 if (!has_any_capability(array('block/use_stats:seecoursedetails', 'block/use_stats:seesitedetails'), $context)) {
-    if (!has_capability('block/use_stats:seegroupdetails', $context)) { // Checked in course context.
+    if (!has_capability('block/use_stats:seegroupdetails', $context)) {
+        // Checked in course context.
         print_error('accessdenied', 'block_use_stats');
     }
     $mygroupings = groups_get_user_groups($course->id);

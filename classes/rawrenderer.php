@@ -121,7 +121,7 @@ class report_examtraining_raw_renderer extends plugin_renderer_base {
         $resultset[] = raw_format_duration(@$data->elapsed); // Elapsed time.
         $resultset[] = raw_format_duration(@$data->weekelapsed); // Elapsed time this week.
 
-        $trainingstats = userquiz_get_user_globals($userid, $examcontext->trainingquiz, $from, $to);
+        $trainingstats = userquiz_get_user_globals($userid, $examcontext->trainingquizzes, $from, $to);
         $weektrainingstats = userquiz_get_user_globals($userid, $examcontext->trainingquizzes, $to - DAYSECS * 7, $to);
 
         $resultset[] = 0 + @$trainingstats[$userid]->aanswered; // Answered A questions on training.

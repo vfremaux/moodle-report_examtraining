@@ -32,9 +32,12 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
+require_once($CFG->dirroot.'/report/examtraining/classes/htmlrenderer.php');
+require_once($CFG->dirroot.'/report/examtraining/classes/xlsrenderer.php');
+require_once($CFG->dirroot.'/local/vflibs/jqplotlib.php');
 
 $input = examtraining_reports_input($course);
-$input->userid = optional_param('userid', $USER->id, PARAM_INT); // Admits special values : -1 current group, -2 course users.
+$userid = optional_param('userid', $USER->id, PARAM_INT); // Admits special values : -1 current group, -2 course users.
 
 ini_set('memory_limit', '1024M');
 
@@ -47,7 +50,7 @@ if (!has_capability('report/examtraining:viewall', $context)) {
 
 // Get data.
 
-$logs = use_stats_extract_logs($input->from, $input->to, $input->userid, $COURSE->id);
+$logs = use_stats_extract_logs($input->from, $input->to, $userid, $COURSE->id);
 $aggregate = use_stats_aggregate_logs($logs, 'module', $input->from, $input->to);
 
 // Print result.
@@ -70,19 +73,18 @@ if ($output == 'html') {
 
     require($CFG->dirroot.'/report/examtraining/selector_form.html');
 
-    $renderer = $PAGE->get_renderer('report_examtraining');
+    $htmlrenderer = $PAGE->get_renderer('report_examtraining', 'html');
 
-    examtrainings_reports_print_header_html($input->userid, $course->id, $globalresults);
+    echo $htmlrenderer->header($userid, $course->id, $globalresults);
     $stats = null;
-    examtrainings_reports_print_trainings_globals_html($input->userid, $input->from, $input->to, 'large', $stats);
-    examtrainings_reports_print_times_html($input->userid, $globalresults);
-    examtrainings_reports_print_trainings_html($input->userid, $input->from, $input->to);
-    examtrainings_reports_print_trainings_subcats_html($input->userid, $input->from, $input->to);
-    examtrainings_reports_print_exams_html($input->userid, $input->from, $input->to);
-    examtrainings_reports_print_assiduity2_html($input->userid, $input->from, $input->to);
-    examtrainings_reports_print_modules_html($input->userid, $input->from, $input->to);
-
-    examtrainings_reports_print_radar_html($input->userid, $input->from, $input->to);
+    echo $htmlrenderer->trainings_globals($userid, $input->from, $input->to, 'large', $stats);
+    echo $htmlrenderer->times($userid, $globalresults);
+    echo $htmlrenderer->trainings($userid, $input->from, $input->to);
+    echo $htmlrenderer->trainings_subcats($userid, $input->from, $input->to);
+    echo $htmlrenderer->exams($userid, $input->from, $input->to);
+    echo $htmlrenderer->assiduity2($userid, $input->from, $input->to);
+    echo $htmlrenderer->modules($userid, $input->from, $input->to);
+    echo $htmlrenderer->radar($userid, $input->from, $input->to);
 
 } else {
     $filename = 'examtraining_sessions_report_'.date('d-M-Y', time()).'.xls';
@@ -91,14 +93,14 @@ if ($output == 'html') {
     $workbook->send($filename);
 
     // Preparing some formats.
-    $xlsformats = examtrainings_reports_xls_formats($workbook);
-    $worksheet = examtrainings_reports_init_worksheet($input->userid, $xlsformats, $workbook);
-    $startrow = examtrainings_reports_print_header_xls($worksheet, $input->userid, $course->id, $globalresults, $xlsformats);
-    $startrow = examtrainings_reports_print_trainings_xls($worksheet, $startrow, $xlsformats, $input->userid, $course->id, $questionresults);
-    $startrow = examtrainings_reports_print_exams_xls($worksheet, $startrow, $xlsformats, $input->userid, $course->id, $examresults);
-    $startrow = examtrainings_reports_print_assiduity_xls($worksheet, $startrow, $xlsformats, $input->userid, $course->id,
+    $xlsformats = examtraining_reports_xls_formats($workbook);
+    $worksheet = examtraining_reports_init_worksheet($userid, $xlsformats, $workbook);
+    $startrow = $xlsrenderer->header($worksheet, $userid, $course->id, $globalresults, $xlsformats);
+    $startrow = $xlsrenderer->trainings($worksheet, $startrow, $xlsformats, $userid, $course->id, $questionresults);
+    $startrow = $xlsrenderer->exams($worksheet, $startrow, $xlsformats, $userid, $course->id, $examresults);
+    $startrow = $xlsrenderer->assiduity($worksheet, $startrow, $xlsformats, $userid, $course->id,
                                                           $questionresults, $examresults, $input->from, $input->to);
-    $startrow = examtrainings_reports_print_modules_xls($worksheet, $startrow, $xlsformats, $input->userid, $course->id, $questionresults);
+    $startrow = $xlsrenderer->modules($worksheet, $startrow, $xlsformats, $userid, $course->id, $questionresults);
 
     ob_end_clean();
     $workbook->close();

@@ -118,7 +118,7 @@ function batch($prework = '', $work = '', $postwork = '', $source, $where = ' 1 
             if (!$maxruns || @$CFG->runs < $maxruns) {
                 set_config('runs', 1 + @$CFG->runs);
                 $redirecturl = $_SERVER['PHP_SELF']."?course={$workcontext->course->id}&auto=$auto&limit=$limit&maxruns=$maxruns&running=1&fromid=$fromid&from={$workcontext->from}&to={$workcontext->to}&filename={$workcontext->filename}";
-                if ($output){
+                if ($output) {
                     flush();
                     redirect($redirecturl);
                 } else {
@@ -127,25 +127,27 @@ function batch($prework = '', $work = '', $postwork = '', $source, $where = ' 1 
             } else {
                 set_config('runs', 0);
 
-                // when everything is finished, terminate the job with whatever postwork task.
-                if (!empty($postwork) && function_exists($postwork)){
-                    if ($output){
+                // When everything is finished, terminate the job with whatever postwork task.
+                if (!empty($postwork) && function_exists($postwork)) {
+                    if ($output) {
                         echo "postworking<br/>";
                     } else {
                         debug_trace('postworking');
                     }
                     $postwork($workcontext);
                 } else {
-                    if ($output){
+                    if ($output) {
                         echo "no postwork<br/>";
                     } else {
-                        debug_trace('no postwork');
+                        if (function_exists('debug_trace')) {
+                            debug_trace('no postwork');
+                        }
                     }
                 }
 
                 $admin = get_admin();
-                
-                email_to_user($admin, $admin, $SITE->fullname." : Userquiz Report Compilation : ", 'Done.', 'Done.');    
+
+                email_to_user($admin, $admin, $SITE->fullname." : Userquiz Report Compilation : ", 'Done.', 'Done.');
             }
         }
         return true;
@@ -154,23 +156,25 @@ function batch($prework = '', $work = '', $postwork = '', $source, $where = ' 1 
 }
 
 /**
-* launches a taskset using a batch URL and some parameter arrays
-* for variability. Acts as controller of CURL launched subprocesses.
-* @uses $CFG->backgroundrunsenabled to control dumb loop
-*/
-function batch_task($baseurl, $params){    
+ * launches a taskset using a batch URL and some parameter arrays
+ * for variability. Acts as controller of CURL launched subprocesses.
+ * @uses $CFG->backgroundrunsenabled to control dumb loop
+ */
+function batch_task($baseurl, $params) {
     global $CFG;
-    
-    // Avoids misusing for external attacks
-    if (!preg_match("/{$CFG->wwwroot}/", $baseurl)) die("Required Url not in domain");
-    
-    foreach($params as $param){
+
+    // Avoids misusing for external attacks.
+    if (!preg_match("/{$CFG->wwwroot}/", $baseurl)) {
+        die("Required Url not in domain");
+    }
+
+    foreach ($params as $param) {
         $url = $baseurl.$param;
-        
+
         $ch = curl_init($url);
-        
+
         $timeout = 5000;
-        
+
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, false);
@@ -180,13 +184,10 @@ function batch_task($baseurl, $params){
         curl_setopt($ch, CURLOPT_PROXY, $CFG->proxyhost);
         curl_setopt($ch, CURLOPT_PROXYPORT, $CFG->proxyport);
         curl_setopt($ch, CURLOPT_PROXYTYPE, $CFG->proxytype);
-        if (!empty($CFG->proxyuser)){
+        if (!empty($CFG->proxyuser)) {
             curl_setopt($ch, CURLOPT_PROXYUSERPWD, $CFG->proxyuser.':'.$CFG->proxypassword);
         }
-    
-        $timestamp_send    = time();
+
         $rawresponse = curl_exec($ch);
-        $timestamp_receive = time();        
     }
-    
 }
