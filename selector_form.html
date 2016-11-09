@@ -1,5 +1,5 @@
 <?php
-$context = context_course::instance($course->id);
+    $context = context_course::instance($course->id);
 ?>
 <center>
 <form action="#" name="selector" method="get">
@@ -9,57 +9,55 @@ $context = context_course::instance($course->id);
 <table width="100%">
 <tr>
     <td>
-<?php
-print_string('from');
-echo ' : ';
-examtraining_print_date_selector('startday', 'startmonth', 'startyear', $input->from, false, 2009, 2020);
-echo '<br/>';
-print_string('to');
-echo ' : ';
-examtraining_print_date_selector('endday', 'endmonth', 'endyear', $input->to, false, 2009, 2020);
-?>
+        <?php
+            print_string('from');
+            echo ' : ';
+            examtraining_print_date_selector('startday', 'startmonth', 'startyear', $from, false, 2009, 2020);
+            echo '<br/>';
+            print_string('to');
+            echo ' : ';
+            examtraining_print_date_selector('endday', 'endmonth', 'endyear', $to, false, 2009, 2020);
+        ?>
     </td>
     <td>
-<?php
-if (has_capability('report/examtraining:viewall', $context)) {
-    print_string('user');
-    echo ' : ';
+        <?php
+        if (has_capability('report/examtraining:viewall', $context)) {
+            print_string('user');
+            echo ' : ';
+            
+            $mygroupings = groups_get_user_groups($COURSE->id);
+            if (!empty($mygroupings) && !has_capability('moodle/site:accessallgroups', $context)) {
 
-    $mygroupings = groups_get_user_groups($COURSE->id);
-    if (!empty($mygroupings) && !has_capability('moodle/site:accessallgroups', $context)) {
+                $mygroups = array();
+                foreach($mygroupings as $grouping) {
+                    $mygroups = $mygroups + $grouping;
+                }
 
-        $mygroups = array();
-        foreach ($mygroupings as $grouping) {
-            $mygroups = $mygroups + $grouping;
-        }
-
-        $users = array();
-        // Get all users in my groups.
-        foreach ($mygroups as $mygroupid) {
-            $members = groups_get_members($mygroupid, 'u.id, firstname, lastname');
-            if ($members) {
-                $users = $users + $members;
+                $users = array();
+                // get all users in my groups
+                foreach($mygroups as $mygroupid) {
+                    $members = groups_get_members($mygroupid, 'u.id, firstname, lastname');
+                    if ($members){
+                        $users = $users + $members;
+                    }
+                }
+            } else {
+                $users = get_users_by_capability($context, 'moodle/course:view', 'u.id, '.get_all_user_name_fields(true, 'u'), 'lastname');
             }
-        }
-    } else {
-        $fields = 'u.id, '.get_all_user_name_fields(true, 'u');
-        $users = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname');
-    }
 
-    foreach ($users as $user) {
-        $activity = $DB->count_records('quiz_attempts', array('userid' => $user->id));
-        $useroptions[$user->id] = fullname($user);
-        if ($activity) {
-            $useroptions[$user->id] .= " ($activity)";
+            foreach($users as $user) {
+                $activity = $DB->count_records('quiz_attempts', array('userid' => $user->id));
+                $useroptions[$user->id] = fullname($user);
+                if ($activity)
+                    $useroptions[$user->id] .= " ($activity)";
+            }
+            choose_from_menu($useroptions, 'userid', $userid);
         }
-    }
-    echo html_writer::select($useroptions, 'userid', $userid);
-}
-?>
+        ?>
     </td>
     <td>
         <input type="submit" name="go_btn" value="<?php print_string('update') ?>" />
-        &nbsp;<input type="button" name="gostart_btn" value="<?php print_string('updatefromcoursestart', 'report_examtraining') ?>" onclick="document.forms['selector'].fromstart.value = 1;document.forms['selector'].submit();" />
+        &nbsp;<input type="button" name="gostart_btn" value="<?php print_string('updatefromcoursestart', 'report_examtrainings') ?>" onclick="document.forms['selector'].fromstart.value = 1;document.forms['selector'].submit();" />
     </td>
 </tr>
 </table>
