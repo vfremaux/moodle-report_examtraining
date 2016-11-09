@@ -1,11 +1,24 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 $string['examtraining:isteacher'] = 'A un rôle d\'enseignant';
 $string['examtraining:view'] = 'Peut voir les résultats';
 $string['examtraining:viewall'] = 'Peut voir les résultats de tous';
 $string['examtraining:viewsensibleresults'] = 'Peut voir des résultats confidentiels';
 
-$string['pluginname'] = 'Rapport de préparation d\'examen';
 $string['aansweredquestions'] = 'Questions A';
 $string['aansweredquestionscurweek'] = 'Questions A semaine';
 $string['advancement'] = 'Avancement';
@@ -13,22 +26,24 @@ $string['allgroups'] = 'Tous les groupes';
 $string['answered'] = 'Répondues';
 $string['ascending'] = 'Bottom ';
 $string['ashtml'] = 'Format HTML';
-// $string['assiduity'] = 'Assiduité entre le <span style=\"font-weight:normal\">$a->from</span> et le <span style=\"font-weight:normal\">$a->to</span>';
 $string['assiduity'] = 'Assiduité';
 $string['assiduityblank'] = 'Assiduité';
 $string['asxls'] = 'Télécharger au format Excel';
 $string['athreshold'] = 'Seuil A';
+$string['attemptinfo'] = 'Informations sur la tentative';
 $string['attemptquantity'] = 'Nombre de tentatives (examens et révisions)';
 $string['attempts'] = 'Tentatives';
-$string['barchenamfreport'] = 'Rappots AMF (V" - JQplot)';
 $string['barchenamf'] = 'Rapports de progression AMF (2eme version)';
 $string['barchenamf:view'] = 'Consulter les rapports de formation AMF';
 $string['barchenamfreport'] = 'Rapports de progression de formation AMF (3eme version - jqplot)';
+$string['barchenamfreport'] = 'Rappots AMF (V" - JQplot)';
+$string['c3'] = 'C3';
 $string['cansweredquestions'] = 'Questions C';
 $string['cansweredquestionscurweek'] = 'Questions C semaine';
 $string['categoryA'] = 'Catégorie A';
 $string['categoryC'] = 'Catégorie C';
 $string['categoryname'] = 'Catégories';
+$string['categoryscores'] = 'Scores par catégorie';
 $string['chooseagroup'] = 'Choisir un groupe';
 $string['chooseaninstitution'] = 'Choisir une institution';
 $string['compilationtools'] = 'Pré Compilateurs';
@@ -46,6 +61,7 @@ $string['coverage'] = 'Taux de maîtrise';
 $string['coverageshort'] = 'Taux de maîtrise';
 $string['cthreshold'] = 'Seuil C';
 $string['date'] = 'Date de tentative';
+$string['dateofbirth'] = 'Date de naissance';
 $string['descending'] = 'Top ';
 $string['done'] = 'Réalisé : ';
 $string['elapsed'] = 'Temps total';
@@ -61,15 +77,18 @@ $string['exams'] = 'Examens';
 $string['examsuccess'] = 'Examens réussis';
 $string['examtries'] = 'Examens blancs';
 $string['executing'] = 'Formation';
+$string['extrafields'] = 'Extra fields';
 $string['firstaccess'] = 'Premier accès';
 $string['firstconnection'] = 'Première connexion';
 $string['firstenrolldate'] = 'Premier enrollement';
 $string['firstname'] = 'Prénom';
-$string['generateXLS'] = 'Générer en XLS';
 $string['generatePDF'] = 'Générer en PDF';
+$string['generateXLS'] = 'Générer en XLS';
 $string['generatereports'] = 'Générer les rapports';
+$string['givenanswer'] = 'Réponse donnée : $a';
 $string['globalprogress'] = 'Progression générale';
 $string['grouplocation'] = 'Positionnement du groupe';
+$string['hitratio'] = 'Taux de réussite';
 $string['hitratio'] = 'Taux de réussite';
 $string['hits'] = 'Hits';
 $string['hours'] = 'heure(s)';
@@ -85,6 +104,7 @@ $string['lastname'] = 'Nom';
 $string['mastering'] = 'Taux de maîtrise par catégorie';
 $string['masteringrate'] = 'Niveau de maîtrise';
 $string['matched'] = 'Réponses correctes';
+$string['matched'] = 'Réussies';
 $string['module'] = 'Entrainement';
 $string['modulefrequencyintraining'] = 'Fréquence d\'usage des entrainements';
 $string['nodata'] = 'Aucune donnée disponible';
@@ -93,15 +113,21 @@ $string['nomoduleinformation'] = 'Aucune information sur les modules';
 $string['nothing'] = 'Aucune compilation (pas d\'utilisateurs).';
 $string['notrainingactivity'] = 'Pas d\'activité d\'entrainement';
 $string['notstudenthere'] = 'Vous n\'êtes pas étudiant ici.';
+$string['noquestionsusage'] = 'Pas d\'usage des questions';
 $string['over'] = 'sur';
 $string['overalhitstraining'] = 'Résultats globaux d\'entrainement';
 $string['permodule'] = 'Par module de test';
+$string['placeofbirth'] = 'Lieu de naissance';
+$string['pluginname'] = 'Rapport de préparation d\'examen';
 $string['progressionreport'] = 'Rapport de progression';
 $string['proposed'] = 'Proposées';
 $string['qname'] = 'Question';
 $string['quantity'] = 'Quantité';
+$string['question'] = 'Question';
+$string['questionanswersdetail'] = 'Détail des réponses';
 $string['questionbank'] = 'Banque de questions';
 $string['questions'] = 'Questions';
+$string['questionsetscores'] = 'Scores par type de question';
 $string['questionspercategories'] = 'Taux de réussite par catégories (entraînements)';
 $string['questionusage'] = 'Utilisation des questions';
 $string['ratio'] = 'Taux de réussite';
@@ -135,19 +161,15 @@ $string['totaluse'] = 'Tirages';
 $string['traininghits'] = 'Entrainements par catégorie';
 $string['trainingreports'] = 'Rapports de Formation';
 $string['tryindex'] = 'n°';
+$string['unanswered'] = '<span class=\"qunanswered\">Non répondu</span>';
 $string['updatefromcoursestart'] = 'A partir du début de la formation';
 $string['uploadresult'] = 'Télécharger les résultats bruts';
-$string['unanswered'] = '<span class=\"qunanswered\">Non répondu</span>';
-$string['givenanswer'] = 'Réponse donnée : $a';
+$string['used'] = 'Utilisée';
 $string['user'] = 'Par participant';
+$string['userattempt-userattempt'] = 'Rapport de tentative de test';
+$string['userinfo'] = 'Informations candidat';
 $string['visited'] = 'Aucune visite';
 $string['weekstartdate'] = 'Début de semaine';
-$string['questionanswersdetail'] = 'Détail des réponses';
-$string['categoryscores'] = 'Scores par catégorie';
-$string['questionsetscores'] = 'Scores par type de question';
-$string['userinfo'] = 'Informations candidat';
-$string['attemptinfo'] = 'Informations sur la tentative';
-$string['userattempt-userattempt'] = 'Rapport de tentative de test';
-$string['dateofbirth'] = 'Date de naissance';
-$string['placeofbirth'] = 'Lieu de naissance';
-$string['c3'] = 'C3';
+
+$string['extrafields_desc'] = 'champs supplémentaires de profil à ajouter aux rapports.';
+

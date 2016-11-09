@@ -23,16 +23,16 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require("../../../../config.php");
+require("../../../config.php");
 
 ob_start();
 
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
 $radar = explode(',', required_param('radar', PARAM_RAW));
-$headers = explode(',', optional_param('headers', PARAM_RAW));
+$headers = explode(',', optional_param('headers', '',  PARAM_RAW));
 
-// operates a quarter rotation
+// Operates a quarter rotation.
 array_push($radar, array_shift($radar));
 array_push($radar, array_shift($radar));
 array_push($radar, array_shift($radar));
@@ -40,13 +40,12 @@ array_push($headers, array_shift($headers));
 array_push($headers, array_shift($headers));
 array_push($headers, array_shift($headers));
 
-// output special situations messages 
+// Output special situations messages.
 
-$imageWidth = 500;
-$imageHeight = 500;
+$imagewidth = 500;
+$imageheight = 500;
 
-$im = imagecreate($imageWidth, $imageHeight);
-// imageantialias($im, FALSE);
+$im = imagecreate($imagewidth, $imageheight);
 
 $colors['white'] = imagecolorallocate($im, 255, 255, 255);
 $colors['black'] = imagecolorallocate($im, 0, 0, 0);
@@ -60,10 +59,10 @@ imagefill($im, 0, 0, $colors['white']);
 $c->x = 250;
 $c->y = 250;
 
-$font = $CFG->dirroot.'/course/report/barchenamf3/gdgenerators/arial.ttf';
+$font = $CFG->dirroot.'/report/examtraining/gdgenerators/arial.ttf';
 
-for ($j = 5 ; $j < 200 ; ) {
-    for ($i = 0 ; $i < 12 ; $i++) {
+for ($j = 5; $j < 200;) {
+    for ($i = 0; $i < 12; $i++) {
         $r1->x = $c->x + $j * cos($i * 2 * pi() / 12);
         $r1->y = $c->y + $j * sin($i * 2 * pi() / 12);
         $r2->x = $c->x + $j * cos(($i + 1) * 2 * pi() / 12);
@@ -74,7 +73,7 @@ for ($j = 5 ; $j < 200 ; ) {
 }
 
 $points = array();
-for($i = 0; $i < 12; $i++) {
+for ($i = 0; $i < 12; $i++) {
     $points[] = $c->x + 2 * @$radar[$i] * cos($i * 2 * pi() / 12);
     $points[] = $c->y + 2 * @$radar[$i] * sin($i * 2 * pi() / 12);
     $boxes[] = $c->x + (2 * @$radar[$i] + 15) * cos($i * 2 * pi() / 12);
@@ -84,16 +83,16 @@ for($i = 0; $i < 12; $i++) {
 imagefilledpolygon($im, $points, 12, $colors['green']);
 imagepolygon($im, $points, 12, $colors['darkgreen']);
 
-// draw percent boxes
-for($i = 0; $i < 12; $i++) {
+// Draw percent boxes.
+for ($i = 0; $i < 12; $i++) {
     $b->x = $boxes[2 * $i];
     $b->y = $boxes[2 * $i + 1];
     imagefilledrectangle($im, $b->x, $b->y, $b->x + 40, $b->y + 18, $colors['green']);
     imagerectangle($im, $b->x, $b->y, $b->x + 40, $b->y + 18, $colors['darkgreen']);
-    imagefttext($im, 10, 0, $b->x + 2, $b->y + 14, $colors['white'], $font, sprintf('%0.2d', @$radar[$i]) . ' %');
+    imagefttext($im, 10, 0, $b->x + 2, $b->y + 14, $colors['white'], $font, sprintf('%0.2d', @$radar[$i]).' %');
 }
 
-for ($i = 0 ; $i < 12 ; $i++) {
+for ($i = 0; $i < 12; $i++) {
     $r->x = $c->x + 200 * cos($i * 2 * pi() / 12);
     $r->y = $c->y + 200 * sin($i * 2 * pi() / 12);
     $t->x = $c->x + 210 * cos($i * 2 * pi() / 12) - 10;
@@ -112,12 +111,9 @@ for ($i = 0 ; $i < 12 ; $i++) {
     }
 }
 
-// delivering image
+// Delivering image.
 ob_end_clean();
-// print_object($amf_context);
-// print_object($matched);
-//  print_object($questionids);
 header("Content-type: image/png");
 imagepng($im);
 imagedestroy($im);
-exit;
+die;
