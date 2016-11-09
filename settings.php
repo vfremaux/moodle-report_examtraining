@@ -15,20 +15,16 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains functions used by the examtraining report
+ * Settings and links
  *
- * @package     report_examtraining
- * @category    report
- * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    report_examtraining
+ * @category   report
+ * @copyright  2014 Valery Fremaux
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die;
 
-defined('MOODLE_INTERNAL') ||  die();
-
-if (has_capability('report/examtraining:view', $context)) {
-    echo '<p>';
-    $report = get_string('examtrainingreport', 'report_examtraining');
-    $reporturl = new moodle_url('/report/examtraining/index.php', array('id' => $course->id));
-    echo '<a href="'.$reporturl.'">'.$report.'</a>';
-    echo '</p>';
-}
+$key = 'report_examtraining/extrafields';
+$label = get_string('extrafields', 'report_examtraining');
+$desc = get_string('extrafields_desc', 'report_examtraining');
+$settings->add(new admin_setting_configselect($key, $label, $desc, 48 * HOURSECS, $options));
