@@ -54,7 +54,8 @@ if (!userquiz_precompile_results($id, 'userquiz_precompile_results_worker', $cat
     echo $OUTPUT->notification("Still results to compile");
 }
 if ($id) {
-    echo $OUTPUT->continue_button(new moodle_url('/report/examtraining/index.php', array('view' => 'compilationtools', 'id' => $id)));
+    $params = new moodle_url('/report/examtraining/index.php', array('view' => 'compilationtools', 'id' => $id));
+    echo $OUTPUT->continue_button($params);
 }
 
 echo $OUTPUT->footer();

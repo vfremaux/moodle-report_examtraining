@@ -59,7 +59,8 @@ $result = $DB->execute($sql);
 $result = $DB->delete_records('userquiz_monitor_cat_stats', array());
 
 if ($id) {
-    echo $OUTPUT->continue_button(new moodle_url('/report/examtraining/index.php', array('view' => 'compilationtools', 'id' => $id)));
+    $returnurl = new moodle_url('/report/examtraining/index.php', array('view' => 'compilationtools', 'id' => $id));
+    echo $OUTPUT->continue_button($returnurl);
 }
 
 echo $OUTPUT->footer();

@@ -376,7 +376,8 @@ function userquiz_cron_results() {
 
             if ($rootcategory && !isset($rootcats[$rootcategory])) {
                 // Get rootcats.
-                if (!$cats = $DB->get_records('question_categories', array('parent' => $rootcategory), 'sortorder, id', 'id,name')) {
+                $params = array('parent' => $rootcategory);
+                if (!$cats = $DB->get_records('question_categories', $params, 'sortorder, id', 'id,name')) {
                     // This may be a bad case.... lost cat or something similar.
                     continue;
                 }
@@ -419,7 +420,8 @@ function userquiz_bloc_from_attempt($quizattempt) {
 
     $attemptcourse = $DB->get_field('quiz', 'course', array('id' => $attempt->quiz));
     $coursecontext = context_course::instance($attemptcourse->id);
-    $blockinstance = $DB->get_record('block_instances', array('parentcontextid' => $coursecontext->id, 'blockname', 'userquiz_monitor'));
+    $params = array('parentcontextid' => $coursecontext->id, 'blockname' => 'userquiz_monitor');
+    $blockinstance = $DB->get_record('block_instances', $params);
     $theblock = block_instance('userquiz_monitor', $blockinstance);
 
     return $theblock;
