@@ -36,7 +36,7 @@ require_once($CFG->dirroot.'/report/examtraining/excelformats.php');
 function examtraining_get_log_reader_info() {
 
     $logmanager = get_log_manager();
-    $readers = $logmanager->get_readers('\core\log\sql_select_reader');
+    $readers = $logmanager->get_readers('\core\log\sql_reader');
     $reader = reset($readers);
 
     if (empty($reader)) {

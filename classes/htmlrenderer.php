@@ -332,7 +332,7 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
 
         $examcontext = examtraining_get_context();
         $params = array('parent' => $examcontext->rootcategory);
-        $subcats = $DB->get_records('question_categories', $params, 'id, name', 'sortorder');
+        $subcats = $DB->get_records('question_categories', $params, 'sortorder', 'id, name');
 
         $str = '';
 
