@@ -952,7 +952,7 @@ function userquiz_get_attempts_subcats($userid, $quizzeslist, $from, $to) {
     } else {
         $quizzesidlist = str_replace(',', "','", $quizzeslist);
     }
-    $quizzesclause = (!empty($quizzesidlist)) ? " cs.quizid IN ('$quizzesidlist') AND " : '';
+    $quizzesclause = (!empty($quizzesidlist)) ? " qa.quiz IN ('$quizzesidlist') AND " : '';
 
     $sql = "
         SELECT
@@ -993,7 +993,7 @@ function userquiz_get_user_subcats($userid, $quizzeslist, $from = 0, $to = 0) {
     } else {
         $quizzesidlist = str_replace(',', "','", $quizzeslist);
     }
-    $quizzesclause = (!empty($quizzesidlist)) ? " cs.quizid IN ('$quizzesidlist') " : '';
+    $quizzesclause = (!empty($quizzesidlist)) ? " qa.quiz IN ('$quizzesidlist') " : '';
 
     $sql = "
         SELECT

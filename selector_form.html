@@ -46,6 +46,7 @@ if (has_capability('report/examtraining:viewall', $context)) {
         $users = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname');
     }
 
+    $useroptions = array();
     foreach ($users as $user) {
         $activity = $DB->count_records('quiz_attempts', array('userid' => $user->id));
         $useroptions[$user->id] = fullname($user);
