@@ -1,0 +1,89 @@
+table,
+table * td {
+   border-collapse:separate;
+   padding:0;
+}
+
+.sessionlevel1 td {
+   border: solid 1px #888888;
+   font-size:1.2em;
+}
+
+.sessionlevel2 td {
+   border-bottom: solid 1px #EEEEEE;
+   font-size:1.1em;
+}
+
+.sessionlevel3 td {
+   font-size:1em;
+}
+
+.sessionlevel4 td {
+   font-size:0.9em;
+}
+
+.donebar {
+    background-color : #579F4A;
+    height:18px;
+}
+
+.remainingbar {
+    background-color : #4B41A9;
+    height:18px;
+}
+
+.completionbar {
+    margin-top:5px;
+}
+
+.reportdetails {
+    font-size:0.85em;
+}
+
+table.generaltable {
+    border:1px solid #A0A0A0;
+    border-collapse: separate;
+    border-spacing: 3px;
+}
+
+table.generaltable td {
+    border-collapse: separate;
+    border-spacing: 3px;
+    padding:2px;
+}
+
+table.generaltable th {
+    background-color:#414385;
+    color:white;
+    font-weight:bold;
+}
+
+table.generaltable th.atype {
+    background-color:#B1241D;
+    color:white;
+    font-weight:bold;
+}
+
+table.generaltable th.ctype {
+    background-color:#414385;
+    color:white;
+    font-weight:bold;
+}
+
+.qcorrect {
+    background-color:#AAF88F;
+    width:80%;
+    word-wrap:break-word;	 
+}
+
+.qfailed {
+    background-color:#F9998E;
+    width:80%;
+    word-wrap:break-word;
+}
+
+.questioninfo {
+    max-width:90%;
+    min-width:90%;
+    width:90%;
+}

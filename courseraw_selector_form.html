@@ -1,0 +1,104 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * This file contains functions used by the examtraining report
+ *
+ * @package    report
+ * @subpackage examtraining
+ * @copyright  2012 Valery Fremaux (valery.fremaux@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+?>
+<center>
+<form action="#" name="courseselector" method="get">
+<input type="hidden" name="id" value="<?php p($course->id) ?>" />
+<input type="hidden" name="fromstart" value="" />
+<input type="hidden" name="output" value="html" />
+<input type="hidden" name="asxls" value="" />
+<input type="hidden" name="view" value="courseraw" />
+<table width="90%">
+<tr valign="top">
+    <td align="center" colspan="2">
+<?php
+print_string('from');
+echo ' : ';
+echo $renderer->date_selector('startday', 'startmonth', 'startyear', $input->from, false, 2014, 2020);
+echo '<br/>';
+echo $renderer->date_selector('endday', 'endmonth', 'endyear', $input->to, false, 2014, 2020);
+?>
+    </td>
+</tr>
+<tr valign="top">
+    <td align="right">
+        <b><?php
+print_string('chooseagroup', 'report_examtraining');
+?> :</b>
+    </td>
+    <td>
+<?php
+
+// First clear all groups if only group allowed.
+$defaultgroup = 0;
+if (!has_any_capability(array('block/use_stats:seecoursedetails', 'block/use_stats:seesitedetails'), $context)) {
+    if (!has_capability('block/use_stats:seegroupdetails', $context)) {
+        // Checked in course context.
+        print_error('accessdenied', 'block_use_stats');
+    }
+    $mygroupings = groups_get_user_groups($course->id);
+    $mygroups = array();
+    foreach ($mygroupings as $grouping) {
+        $mygroups = $mygroups + $grouping;
+    }
+} else {
+    $groupoptions[0] = get_string('allgroups', 'report_examtraining');
+    $mygroups = groups_get_all_groups($course->id);
+}
+
+if (!empty($mygroups)) {
+    $groupkeys = array_keys($mygroups);
+    $defaultgroup = $groupkeys[0];
+    foreach ($mygroups as $group) {
+        if (is_numeric($group)) {
+            if ($groupid === false) {
+                $groupid = $group;
+                // Forces a group if not mentionned.
+            }
+            $members = groups_get_members($group, 'u.id, u.username');
+            $groupoptions[$group] = get_field('groups', 'name', 'id', $group). ' ('.count($members).')';
+        } else {
+            if ($groupid === false) {
+                // Forces a group if not mentionned.
+                $groupid = $group->id;
+            }
+            $members = groups_get_members($group->id, 'u.id, u.username');
+            $groupoptions[$group->id] = $group->name. ' ('.count($members).')';
+        }
+    }
+}
+echo html_writer::select($groupoptions, 'groupid', $groupid);
+?>
+    </td>
+</tr>
+<tr>
+    <td colspan="2" align="center">
+        <input type="submit" name="go_btn" value="<?php print_string('update') ?>" />
+        &nbsp;<input type="button" name="gostart_btn" value="<?php print_string('updatefromcoursestart', 'report_examtraining') ?>" onclick="document.forms['selector'].fromstart.value = 1;document.forms['selector'].submit();" />
+    </td>
+</tr>
+</table>
+</form>
+</center>
