@@ -215,10 +215,10 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
         $label = get_string('overalhitstraining', 'report_examtraining');
         $str .= $jqplotter->horiz_bar_headgraph($stats[$userid], $label, 'overalhitstraining', $height);
 
-        $aratiostr = get_string('ratioA', 'report_examtraining');
-        $cratiostr = get_string('ratioC', 'report_examtraining');
-        $acountstr = get_string('countA', 'report_examtraining');
-        $ccountstr = get_string('countC', 'report_examtraining');
+        $aratiostr = get_string('ratioa', 'report_examtraining');
+        $cratiostr = get_string('ratioc', 'report_examtraining');
+        $acountstr = get_string('counta', 'report_examtraining');
+        $ccountstr = get_string('countc', 'report_examtraining');
         $table = new html_table();
         $table->head = array("<b>$aratiostr</b>", "<b>$cratiostr</b>", "<b>$acountstr</b>", "<b>$ccountstr</b>");
         $table->size = array('25%', '25%', '25%', '25%');
