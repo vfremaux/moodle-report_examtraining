@@ -27,4 +27,4 @@ defined('MOODLE_INTERNAL') || die;
 $key = 'report_examtraining/extrafields';
 $label = get_string('extrafields', 'report_examtraining');
 $desc = get_string('extrafields_desc', 'report_examtraining');
-$settings->add(new admin_setting_configselect($key, $label, $desc, 48 * HOURSECS, $options));
+$settings->add(new admin_setting_configtext($key, $label, $desc, ''));

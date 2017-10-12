@@ -140,7 +140,7 @@ if ($output == 'html') {
     $options['view'] = 'course_group'; // Force course view.
     echo '<center>';
     $buttonurl = new moodle_url('/report/examtraining/index.php');
-    echo $OUTPUT->single_button($buttonurl, get_string('generateXLS', 'report_examtraining'), 'post', $options);
+    echo $OUTPUT->single_button($buttonurl, get_string('generatexls', 'report_examtraining'), 'post', $options);
     echo '</center>';
 
 } else {

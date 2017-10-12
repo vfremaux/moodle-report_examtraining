@@ -351,7 +351,7 @@ if ($output == 'html' || $output == 'pdf') {
         $options['view'] = 'userattempt';
         $options['attemptid'] = $attemptid;
         $buttonurl = new moodle_url('/course/report/examtraining/index.php', $options);
-        echo $OUTPUT->single_button($buttonurl, get_string('generateXLS', 'report_examtraining'), 'get');
+        echo $OUTPUT->single_button($buttonurl, get_string('generatexls', 'report_examtraining'), 'get');
         echo '</center>';
 
         if ($pdfinstalled) {
@@ -362,7 +362,7 @@ if ($output == 'html' || $output == 'pdf') {
             $options['view'] = 'userattempt';
             $options['attemptid'] = $attemptid;
             $buttonurl = new moodle_url('/report/examtraining/index.php', $options);
-            $OUTPUT->single_button($buttonurl, get_string('generatePDF', 'report_examtraining'), 'get');
+            $OUTPUT->single_button($buttonurl, get_string('generatepdf', 'report_examtraining'), 'get');
             echo '</center>';
         }
     } else if ($output == 'pdf') {
