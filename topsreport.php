@@ -91,7 +91,11 @@ $template->lengthselect = html_writer::select($lengthoptions, 'num', $input->num
 
 echo $OUTPUT->render_from_template('report_examtraining/topoptionsform', $template);
 
+$template = new StdClass;
+
 if (!empty($targetusers)) {
+
+    $template->hasusers = true;
 
     list($insql, $params) = $DB->get_in_or_equal(array_keys($targetusers));
     $examcontext = examtraining_get_context();
@@ -123,16 +127,15 @@ if (!empty($targetusers)) {
 
     list($qinsql, $qparams) = $DB->get_in_or_equal(array_keys($examcontext->trainingquizzes));
 
-    echo '<center>';
-    echo '<div class="container-fluid">';
-    echo '<div class="row-fluid">';
-    echo '<div class="span12">';
-
     $attemptsstr = get_string('attempts', 'report_examtraining');
     $userstr = get_string('user');
 
-    echo $OUTPUT->heading(get_string('topexams', 'report_examtraining'));
+    $template->topexamshdr = get_string('topexams', 'report_examtraining');
+    $template->notrainingactivity = $OUTPUT->notification(get_string('notrainingactivity', 'report_examtraining'));
+
     if ($topexams) {
+        $template->hasexams = true;
+
         $table = new html_table();
         $table->head = array("<b>$attemptsstr</b>", "<b>$userstr</b>");
         $table->align = array('left', 'left');
@@ -145,13 +148,8 @@ if (!empty($targetusers)) {
             $userline = '<a href="'.$userurl.'">'.fullname($targetusers[$top->userid]).' '.$groupclause.'</a>';
             $table->data[] = array($top->attempts, $userline);
         }
-        echo html_writer::table($table);
-        unset($table);
-    } else {
-        echo $OUTPUT->notification(get_string('notrainingactivity', 'report_examtraining'));
+        $template->topexamstable = html_writer::table($table);
     }
-    echo '</div>';
-    echo '</div>'; // Row.
 
     // Toplist by questions and by coverage.
     $params2 = array_merge($params, $qparams);
@@ -178,6 +176,28 @@ if (!empty($targetusers)) {
 
     $topquestions = $DB->get_records_sql($sql, $params2);
 
+    $questionsstr = get_string('questions', 'report_examtraining');
+    $coveragestr = get_string('coverageshort', 'report_examtraining');
+
+    $template->topquestionshdr = get_string('topquestions', 'report_examtraining');
+
+    if ($topquestions) {
+        $template->hasquestions = true;
+        $table = new html_table();
+        $table->head = array("<b>$questionsstr</b>", "<b>$userstr</b>");
+        $table->align = array('left', 'left');
+        $table->size = array('10%', '90%');
+        $table->width = '90%';
+        foreach ($topquestions as $top) {
+            $groups = examtraining_get_grouplist($id, $top->userid);
+            $groupclause = ($groups) ? " ($groups) " : '';
+            $userurl = new moodle_url('/user/view.php', array('id' => $top->userid));
+            $userline = '<a href="'.$userurl.'">'.fullname($targetusers[$top->userid]).' '.$groupclause.'</a>';
+            $table->data[] = array($top->qcount, $userline);
+        }
+        $template->topquestionstable = html_writer::table($table);
+    }
+
     $params3 = $params;
     $params3[] = $examcontext->instanceid;
 
@@ -198,38 +218,7 @@ if (!empty($targetusers)) {
 
     $topmatchedcoverage = $DB->get_records_sql($sql, $params3);
 
-    $questionsstr = get_string('questions', 'report_examtraining');
-    $coveragestr = get_string('coverageshort', 'report_examtraining');
-
-    echo '<div class="row-fluid">';
-    echo '<div class="span6">';
-
-    echo $OUTPUT->heading(get_string('topquestions', 'report_examtraining'));
-    $attemptsstr = get_string('questions', 'report_examtraining');
-    $userstr = get_string('user');
-    if ($topquestions) {
-        $table = new html_table();
-        $table->head = array("<b>$questionsstr</b>", "<b>$userstr</b>");
-        $table->align = array('left', 'left');
-        $table->size = array('10%', '90%');
-        $table->width = '90%';
-        foreach ($topquestions as $top) {
-            $groups = examtraining_get_grouplist($id, $top->userid);
-            $groupclause = ($groups) ? " ($groups) " : '';
-            $userurl = new moodle_url('/user/view.php', array('id' => $top->userid));
-            $userline = '<a href="'.$userurl.'">'.fullname($targetusers[$top->userid]).' '.$groupclause.'</a>';
-            $table->data[] = array($top->qcount, $userline);
-        }
-        echo html_writer::table($table);
-        unset($table);
-    } else {
-        echo $OUTPUT->notification(get_string('notrainingactivity', 'report_examtraining'));
-    }
-
-    echo '</div>';
-    echo '<div class="span6">';
-
-    echo $OUTPUT->heading(get_string('topcoveragematched', 'report_examtraining'));
+    $template->topcoveragehdr = get_string('topcoveragematched', 'report_examtraining');
 
     if ($topmatchedcoverage) {
         $table = new html_table();
@@ -244,16 +233,10 @@ if (!empty($targetusers)) {
             $userline = '<a href="'.$userurl.'">'.fullname($targetusers[$top->userid]).' '.$groupclause.'</a>';
             $table->data[] = array($top->coveragematched.' %', $userline);
         }
-        echo html_writer::table($table);
-        unset($table);
-    } else {
-        echo $OUTPUT->notification(get_string('notrainingactivity', 'report_examtraining'));
+        $template->topcoveragetable = html_writer::table($table);
     }
-
-    echo '</div>';
-    echo '</div>'; // Row.
-    echo '</div>'; // Table.
-    echo '</center>';
 } else {
-    echo $OUTPUT->notification('notrainingactivity', 'report_examtraining');
+    $template->nousersstr = $OUTPUT->notification(get_string('nousers', 'report_examtraining'));
 }
+
+echo $OUTPUT->render_from_template('report_examtraining/topreport', $template);

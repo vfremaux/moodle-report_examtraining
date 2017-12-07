@@ -98,7 +98,7 @@ class report_examtraining_renderer extends plugin_renderer_base {
         return $str;
     }
 
-    public function tabs($view, $page, $groupid) {
+    public function tabs($view, $subview, $groupid) {
         global $COURSE;
 
         $context = context_course::instance($COURSE->id);
@@ -134,7 +134,7 @@ class report_examtraining_renderer extends plugin_renderer_base {
                     $taburl = new moodle_url('/report/examtraining/index.php', $params);
                     $rows[1][] = new tabobject('course_tops', $taburl, get_string('coursetops', 'report_examtraining'));
                 }
-                return print_tabs($rows, $view, 'course', array($page), true);
+                return print_tabs($rows, 'course_'.$subview, 'course', array($view), true);
             } else {
                 return print_tabs($rows, $view, '', null, true);
             }
