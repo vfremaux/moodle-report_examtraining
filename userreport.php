@@ -32,8 +32,8 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
-require_once($CFG->dirroot.'/report/examtraining/classes/htmlrenderer.php');
-require_once($CFG->dirroot.'/report/examtraining/classes/xlsrenderer.php');
+require_once($CFG->dirroot.'/report/examtraining/classes/output/htmlrenderer.php');
+require_once($CFG->dirroot.'/report/examtraining/classes/output/xlsrenderer.php');
 require_once($CFG->dirroot.'/local/vflibs/jqplotlib.php');
 
 $input = examtraining_reports_input($course);
@@ -87,6 +87,9 @@ if ($output == 'html') {
     echo $htmlrenderer->radar($userid, $input->from, $input->to);
 
 } else {
+
+    $xlsrenderer = $PAGE->get_renderer('report_examtraining', 'xls');
+
     $filename = 'examtraining_sessions_report_'.date('d-M-Y', time()).'.xls';
     $workbook = new MoodleExcelWorkbook("-");
     // Sending HTTP headers.
