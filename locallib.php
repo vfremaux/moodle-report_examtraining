@@ -25,7 +25,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/blocks/userquiz_monitor/block_userquiz_monitor_lib.php');
 require_once($CFG->libdir.'/questionlib.php');
 require_once($CFG->dirroot.'/report/examtraining/statscompilelib.php');
 require_once($CFG->dirroot.'/report/examtraining/excelformats.php');
@@ -36,7 +35,7 @@ require_once($CFG->dirroot.'/report/examtraining/excelformats.php');
 function examtraining_get_log_reader_info() {
 
     $logmanager = get_log_manager();
-    $readers = $logmanager->get_readers('\core\log\sql_select_reader');
+    $readers = $logmanager->get_readers('\core\log\sql_reader');
     $reader = reset($readers);
 
     if (empty($reader)) {
