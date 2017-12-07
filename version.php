@@ -25,11 +25,11 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version  = 2016070503;
+$plugin->version  = 2017112200;
 $plugin->requires = 2015111000;
 $plugin->component = 'report_examtraining';
-$plugin->release = '3.0.0 (Build 2016070503)';
+$plugin->release = '3.0.0 (Build 2017112200)';
 $plugin->maturity = MATURITY_BETA;
 
 // Non moodle attributes.
-$plugin->codeincrement = '3.0.0001';
+$plugin->codeincrement = '3.0.0002';
