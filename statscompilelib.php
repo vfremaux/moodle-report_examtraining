@@ -22,7 +22,6 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/blocks/userquiz_monitor/block_userquiz_monitor_lib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
 /**
@@ -273,7 +272,7 @@ function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_preco
             }
 
             // Block id (userquiz_monitor) is deduced from attempt's course heuristic.
-            $theblock = userquiz_bloc_from_attempt($attempt);
+            $theblock = userquiz_block_from_attempt($attempt);
 
             $work($attempt, $rootcats[$rootcategory], $theblock, true);
             $j++;
@@ -415,7 +414,7 @@ function userquiz_cron_results() {
     return false;
 }
 
-function userquiz_bloc_from_attempt($quizattempt) {
+function userquiz_block_from_attempt($quizattempt) {
     global $DB;
 
     $attemptcourse = $DB->get_field('quiz', 'course', array('id' => $attempt->quiz));

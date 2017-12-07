@@ -28,12 +28,15 @@ defined('MOODLE_INTERNAL') || die;
 
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
-require_once($CFG->dirroot.'/report/examtraining/classes/htmlrenderer.php');
-require_once($CFG->dirroot.'/report/examtraining/classes/xlsrenderer.php');
+require_once($CFG->dirroot.'/report/examtraining/classes/output/htmlrenderer.php');
+require_once($CFG->dirroot.'/report/examtraining/classes/output/xlsrenderer.php');
 
 $input = examtraining_reports_input($course);
-$offset = optional_param('offset', 0, PARAM_INT);
-$page = 20;
+$input->num = optional_param('num', 0, PARAM_INT);
+$input->orderby = optional_param('orderby', '', PARAM_TEXT);
+$input->subview = optional_param('subview', '', PARAM_TEXT);
+$input->offset = optional_param('offset', 0, PARAM_INT);
+$pagesize = 20;
 
 // TODO : secure groupid access depending on proper capabilities.
 
@@ -46,15 +49,13 @@ if ($output == 'html') {
 // Compute target group.
 
 if ($groupid) {
-    $targetusers = groups_get_members($groupid);
+    $targetusers = get_enrolled_users($context, '', $groupid, 'u.*', 'u.lastname, u.firstname', $input->offset, $pagesize, true);
     $max = count($targetusers);
-    $page = count($targetusers);
+    $pagesize = count($targetusers);
 } else {
-    $fields = 'u.id,'.get_all_user_name_fields(true, 'u');
-    $allusers = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname');
+    $allusers = get_enrolled_users($context, '', 0, 'u.id', 'u.lastname, u.firstname', 0, 0, true);
     $max = count($allusers);
-    $fields = 'u.id, '.get_all_user_name_fields(true, 'u').', email, institution';
-    $targetusers = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname', $offset, $page);
+    $targetusers = get_enrolled_users($context, '', 0, 'u.*', 'u.lastname, u.firstname', $input->offset, $pagesize, true);
 }
 
 // Filters teachers out.
@@ -81,7 +82,7 @@ if ($output == 'html') {
                     'groupid' => $groupid,
                     'output' => 'html');
     $url = new moodle_url('/report/examtraining/index.php', $params);
-    echo $renderer->pager($max, $offset, $page, $url);
+    echo $renderer->pager($max, $input->offset, $pagesize, $url);
 
     $reportcontext = examtraining_get_context();
 
@@ -131,7 +132,7 @@ if ($output == 'html') {
         }
     }
 
-    echo $renderer->pager($max, $offset, $page, $url);
+    echo $renderer->pager($max, $input->offset, $pagesize, $url);
 
     $options['id'] = $course->id;
     $options['groupid'] = $groupid;

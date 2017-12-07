@@ -22,10 +22,11 @@
  * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+namespace report_examtraining\output;
 
 defined('MOODLE_INTERNAL') || die();
 
-class report_examtraining_raw_renderer extends plugin_renderer_base {
+class raw_renderer extends \plugin_renderer_base {
 
     /**
      * a raster for printing in raw format

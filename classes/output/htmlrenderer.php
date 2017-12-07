@@ -22,10 +22,19 @@
  * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+namespace report_examtraining\output;
+
+use \moodle_url;
+use \StdClass;
+use \html_writer;
+use \jqplot_renderer;
+use \html_table;
+use \context_course;
+
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/report/examtraining/classes/jqplotter.php');
 
-class report_examtraining_html_renderer extends plugin_renderer_base {
+class html_renderer extends \plugin_renderer_base {
 
     /**
      * a raster for html printing of a report structure.
@@ -156,17 +165,15 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
         $user = $DB->get_record('user', array('id' => $userid));
         $course = $DB->get_record('course', array('id' => $courseid));
 
-        $str = '';
+        $template = new StdClass;
 
-        $str .= '<table width="100%" style="border:1px solid #A0A0A0">';
-        $str .= '<tr><td align="left" width="20%">';
-        $str .= fullname($user);
-        $str .= '</td><td align="center" width="20%">';
+        $template->fullname = fullname($user);
 
         // Get group.
         $usergroups = groups_get_all_groups($courseid, $userid, 0, 'g.id, g.name');
         // Print group status.
 
+        $template->usergroups = '';
         if (!empty($usergroups)) {
             foreach ($usergroups as $group) {
                 $str = $group->name;
@@ -175,23 +182,19 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
                 }
                 $groupnames[] = $str;
             }
-            $str .= implode(', ', $groupnames);
+            $template->usergroups = implode(', ', $groupnames);
         }
 
-        $str .= '</td><td align="center" width="20%">';
-        $str .= "<a href=\"mailto:{$user->email}\">$user->email</a>";
-        $str .= '</td><td align="center" width="20%">';
-        $str .= $user->city;
-        $str .= '</td><td align="right" width="20%">';
+        $template->email = $user->email;
+        $template->city = $user->city;
+        $template->isshort = $isshort;
         if ($isshort) {
             $params = array('view' => 'user', 'id' => $courseid, 'userid' => $userid);
-            $url = new moodle_url('/report/examtraining/index.php', $params);
-            $str .= '<a href="'.$url.'">'.get_string('seedetails', 'report_examtraining').'</a>';
+            $template->detailsurl = new moodle_url('/report/examtraining/index.php', $params);
+            $template->detailsstr = get_string('seedetails', 'report_examtraining');
         }
-        $str .= '</td></tr>';
-        $str .= '</table>';
 
-        return $str;
+        return $this->output->render_from_template('report_examtraining/userheading', $template);
     }
 
     /**
@@ -242,17 +245,15 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
      */
     public function knowledge_covering($userid, $courseid, $from, $to) {
 
-        $str = '';
+        $template = new StdClass;
 
-        $str .= $this->output->heading(get_string('knowledgecovering', 'report_examtraining'));
-        $str .= '<center>';
-        $params = array('userid' => $userid, 'course' => $courseid, 'from' => $from, 'to' => $to);
-        $generatorurl = new moodle_url('/report/examtraining/gdgenerators/knowledgetag.php', $params);
-        $str .= '<img src="'.$generatorurl.'" width="300" height="300" />';
-        $str .= $this->output->box(get_string('knowledgecoveringlegend', 'report_examtraining'));
-        $str .= '</center>';
+        $template->heading = $this->output->heading(get_string('knowledgecovering', 'report_examtraining'));
+        $template->generatorurl = new moodle_url('/report/examtraining/gdgenerators/knowledgetag.php', $params);
+        $template->width = '500px';
+        $template->height = '500px';
+        $template->legendstr = $this->output->box(get_string('knowledgecoveringlegend', 'report_examtraining'));
 
-        return $str;
+        return $this->output->render_from_template('report_examtraining/reportgraphicitem', $template);
     }
 
     /**
@@ -306,19 +307,19 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
             }
         }
 
-        $str = '';
+        $template = new StdClass;
 
-        $str .= $this->output->heading(get_string('mastering', 'report_examtraining'));
-        $str .= '<center>';
+        $template->heading = $this->output->heading(get_string('mastering', 'report_examtraining'));
 
         $radararg = implode(',', $radardata);
         $headersarg = implode(',', $radarheaders);
         $params = array('radar' => $radararg, 'headers' => $headersarg);
-        $generatorurl = new moodle_url('/report/examtraining/gdgenerators/radargraph.php', $params);
-        $str .= '<img src="'.$generatorurl.'" width="500" height="500" />';
-        $str .= '</center>';
+        $template->generatorurl = new moodle_url('/report/examtraining/gdgenerators/radargraph.php', $params);
+        $template->width = '500px';
+        $template->height = '500px';
+        $template->legendstr = '';
 
-        return $str;
+        return $this->output->render_from_template('report_examtraining/reportgraphicitem', $template);
     }
 
     /**
@@ -495,7 +496,7 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
      * @param object $structure a course structure object.
      */
     public function exams($userid, $from, $to) {
-        global $COURSE, $OUTPUT;
+        global $COURSE;
 
         $examcontext = examtraining_get_context();
         $context = context_course::instance($COURSE->id);
@@ -504,49 +505,38 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
             return;
         }
 
-        $str = $OUTPUT->heading(get_string('examtries', 'report_examtraining'));
-        $str .= '<table width="100%" style="border:1px solid #A0A0A0;padding:3px">';
-        $str .= '<tr><td width="150" align="left"><b>';
-        $str .= get_string('examtries', 'report_examtraining');
-        $str .= '</b></td><td align="left">';
+        $template = new StdClass;
+
+        $template->heading = $this->output->heading(get_string('examtries', 'report_examtraining'));
+        $template->examtriesstr = get_string('examtries', 'report_examtraining');
+
+        $badurl = $this->output->pix_url('bad', 'report_examtraining');
+        $goodurl = $this->output->pix_url('good', 'report_examtraining');
 
         ksort($stats);
         $i = 1;
         $previous = null;
-        echo '<table class="examresults"><tr>';
         foreach ($stats as $attemptid => $attemptres) {
-            $finishdate = date("d/m/y", $attemptres->timefinish);
+            $examtrytpl = new StdClass;
+            $examtrytpl->finishdate = date('d/m/y', $attemptres->timefinish);
             $params = array('id' => $COURSE->id, 'attemptid' => $attemptid, 'view' => 'userattempt');
-            $examurl = new moodle_url('/report/examtraining/index.php', $params);
+            $examtrytpl->examurl = new moodle_url('/report/examtraining/index.php', $params);
+            $examtry->ahitratio = round($attemptres->ahitratio * 100);
+            $examtry->chitratio = round(0 + @$attemptres->chitratio * 100);
             if ($attemptres->ahitratio < 0.85 || $attemptres->chitratio < 0.75) {
-                if (has_capability('report/examtraining:viewall', $context)) {
-                    $link = '<a href="'.$examurl.'">';
-                    $link .= '<img src="'.$OUTPUT->pix_url('bad', 'report_examtraining').'" style="margin-right:15px" /><br/>';
-                    $link .= '(A : '.($attemptres->ahitratio * 100).'%, C: '.($attemptres->chitratio * 100).'%)</a>';
-                    $str .= '<td class="examresults" align="center">'.$finishdate.'<br/>'.$link.'</td>';
-                } else {
-                    $img = '<img src="'.$OUTPUT->pix_url('bad', 'report_examtraining').'" style="margin-right:15px" /><br/>';
-                    $img .= '(A : '.($attemptres->ahitratio * 100).'%, C: '.($attemptres->chitratio * 100).'%)';
-                    $str .= '<td class="examresults" align="center">'.$finishdate.'<br/>'.$img.'</td>';
-                }
+                $examtry->resulticonurl = $badurl;
             } else {
-                if (has_capability('report/examtraining:viewall', $context)) {
-                    $pixurl = $OUTPUT->pix_url('good', 'report_examtraining');
-                    $link = '<a href="'.$examurl.'"><img src="'.$pixurl.'" style="margin-right:15px" /><br/>';
-                    $link .= '(A : '.($attemptres->ahitratio * 100).'%, C: '.($attemptres->chitratio * 100).'%)</a>';
-                    $str .= '<td class="examresults" align="center">'.$finishdate.'<br/>'.$link.'</td>';
-                } else {
-                    $img = '<img src="'.$OUTPUT->pix_url('good', 'report_examtraining').'" style="margin-right:15px" /><br/>';
-                    $img .= '(A : '.($attemptres->ahitratio * 100).'%, C: '.($attemptres->chitratio * 100).'%)';
-                    $str .= '<td class="examresults" align="center">'.$finishdate.'<br/>'.$img.'</td>';
-                }
+                $examtry->resulticonurl = $goodurl;
             }
+            $examtrytpl->islink = false;
+            if (has_capability('report/examtraining:viewall', $context)) {
+                $examtrytpl->islink = true;
+            }
+
+            $template->examtries[] = $examtrytpl;
         }
-        $str .= '</tr></table>';
 
-        $str .= '</td></tr></table><br/>';
-
-        return $str;
+        return $this->output->render_from_template('report_examtraining/examtries', $template);
     }
 
     /**
@@ -563,19 +553,17 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
             $course = &$COURSE;
         }
 
-        $str = '';
+        $template = new StdClass;
 
-        $str .= $this->output->user_picture($user);
+        $template->userpicture = $this->output->user_picture($user);
 
         $usergroups = groups_get_all_groups($courseid, $userid, 0, 'g.id, g.name');
 
-        $str .= '<center>';
-        $str .= '<div style="width:80%;text-align:left;padding:3px;" class="userinfobox">';
-
         // Print group status.
         if (!empty($usergroups)) {
-            $str .= get_string('groups');
-            $str .= ' : ';
+            $template->hasgroups = true;
+            $template->usergroupsstr = get_string('groups');
+
             foreach ($usergroups as $group) {
                 $str = $group->name;
                 if ($group->id == groups_get_course_group($courseid)) {
@@ -583,28 +571,21 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
                 }
                 $groupnames[] = $str;
             }
-            $str .= implode(', ', $groupnames);
+
+            $template->usergroups = implode(', ', $groupnames);
         }
-        $str .= '<br/>';
-        $str .= get_string('roles');
-        $str .= ' : ';
-        $str .= get_user_roles_in_course($userid, $courseid);
+        $template->rolesstr = get_string('roles');
+
+        $template->userroles = get_user_roles_in_course($userid, $courseid);
 
         $params = array('view' => 'user', 'id' => $courseid, 'userid' => $userid);
-        $examreporturl = new moodle_url('/report/examtraining/index.php', $params);
-        $str .= '<br/><a href="'.$examreporturl.'">'.get_string('seedetails', 'report_examtraining').'</a>';
+        $template->examreporturl = new moodle_url('/report/examtraining/index.php', $params);
+        $template->seedetailsstr = get_string('seedetails', 'report_examtraining');
 
-        // Start printing the overall times.
+        $template->equlearningtimestr = get_string('equlearningtime', 'report_examtraining');
+        $template->elapsed = examtraining_reports_format_time(0 + @$data->elapsed, 'html');
 
-        $str .= '<br/>';
-        $str .= get_string('equlearningtime', 'report_examtraining');
-        $str .= examtraining_reports_format_time(0 + @$data->elapsed, 'html');
-
-        // Plug here specific details.
-
-        $str .= '</p></div></center>';
-
-        return $str;
+        return $this->output->render_from_template('report_examtraining/globalheading', $template);
     }
 
     /**
@@ -636,33 +617,23 @@ class report_examtraining_html_renderer extends plugin_renderer_base {
         return local_vflibs_jqplot_print_labelled_graph($data, $label, 'examtries', $options);
     }
 
-    public function time_selector_form() {
+    /**
+     *
+     */
+    public function time_selector_form($from) {
+        global $COURSE;
 
-        $str = '';
+        $template = new StdClass;
 
-        $str .= '<center>';
-        $str .= '<form action="#" name="selector" method="get">';
-        $str .= '<input type="hidden" name="id" value="'.$course->id.'" />';
-        $str .= '<input type="hidden" name="fromstart" value="" />';
-        $str .= '<table width="90%">';
-        $str .= '<tr valign="top">';
-        $str .= '<td align="right">';
-        $str .= get_string('from');
-        $str .= ' : ';
-        $str .= print_date_selector('startday', 'startmonth', 'startyear', $from);
-        $str .= '</td>';
-        $str .= '<td align="left">';
-        $str .= '<input type="submit" name="go_btn" value="'.get_string('update').'" />';
-        $jshandler = 'document.forms[\'selector\'].fromstart.value = 1;document.forms[\'selector\'].submit();';
-        $buttonlabel = get_string('updatefromcoursestart', 'report_trainingsessions');
-        $str .= '&nbsp;<input type="button" name="gostart_btn" value="'.$buttonlabel.'" onclick="'.$jshandler.'" />';
-        $str .= '</td>';
-        $str .= '</tr>';
-        $str .= '</table>';
-        $str .= '</form>';
-        $str .= '</center>';
+        $template->courseid = $COURSE->id;
+        $template->fromstr = get_string('from');
 
-        return $str;
+        $template->fromdateselector = print_date_selector('startday', 'startmonth', 'startyear', $from);
+        $template->updatestr = get_string('update');
+        $template->jshandler = 'document.forms[\'selector\'].fromstart.value = 1;document.forms[\'selector\'].submit();';
+        $template->buttonlabel = get_string('updatefromcoursestart', 'report_trainingsessions');
+
+        return $this->output->render_from_template('report_examtraining/timeselectorform', $template);
     }
 
     /**
