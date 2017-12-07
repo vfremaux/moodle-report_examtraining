@@ -25,7 +25,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/blocks/userquiz_monitor/block_userquiz_monitor_lib.php');
 require_once($CFG->libdir.'/questionlib.php');
 require_once($CFG->dirroot.'/report/examtraining/statscompilelib.php');
 require_once($CFG->dirroot.'/report/examtraining/excelformats.php');

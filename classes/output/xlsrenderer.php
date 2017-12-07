@@ -22,17 +22,18 @@
  * @copyright  2012 Valery Fremaux (valery.fremaux@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+namespace report_examtraining\output;
 
 defined('MOODLE_INTERNAL') || die();
 
-class report_examtraining_xls_renderer extends plugin_renderer_base {
+class xls_renderer extends \plugin_renderer_base {
 
     /**
      * a raster for printing training results in an XLS sheet.
      *
      */
-    public function trainings(&$outputdoc, $startrow, $xlsformats, $userid, $courseid, &$results) {
-        global $CFG;
+    public function trainings(&$xlsdoc, $startrow, $xlsformats, $userid, $courseid, &$results) {
+        global $CFG, $DB;
 
         $examcontext = examtraining_get_context();
 
@@ -43,22 +44,22 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
         $ccountstr = get_string('countc', 'report_examtraining');
 
         // Global result.
-        $outputdoc->write_string($startrow, 0, get_string('overalhitstraining', 'report_examtraining'), $xlsformats['t']);
-        $outputdoc->merge_cells($startrow, 0, $startrow, 4);
+        $xlsdoc->write_string($startrow, 0, get_string('overalhitstraining', 'report_examtraining'), $xlsformats['t']);
+        $xlsdoc->merge_cells($startrow, 0, $startrow, 4);
         $startrow++;
 
-        $outputdoc->write_string($startrow, 0, $ratiostr, $xlsformats['tt']);
-        $outputdoc->write_string($startrow, 1, $aratiostr, $xlsformats['tt']);
-        $outputdoc->write_string($startrow, 2, $cratiostr, $xlsformats['tt']);
-        $outputdoc->write_string($startrow, 3, $acountstr, $xlsformats['tt']);
-        $outputdoc->write_string($startrow, 4, $ccountstr, $xlsformats['tt']);
+        $xlsdoc->write_string($startrow, 0, $ratiostr, $xlsformats['tt']);
+        $xlsdoc->write_string($startrow, 1, $aratiostr, $xlsformats['tt']);
+        $xlsdoc->write_string($startrow, 2, $cratiostr, $xlsformats['tt']);
+        $xlsdoc->write_string($startrow, 3, $acountstr, $xlsformats['tt']);
+        $xlsdoc->write_string($startrow, 4, $ccountstr, $xlsformats['tt']);
         $startrow++;
 
-        $outputdoc->write_string($startrow, 0, (@$results->hitratio + 0).'%', $xlsformats['p']);
-        $outputdoc->write_string($startrow, 1, (@$results->ahitratio + 0).'%', $xlsformats['p']);
-        $outputdoc->write_string($startrow, 1, (@$results->chitratio + 0).'%', $xlsformats['p']);
-        $outputdoc->write_string($startrow, 1, (@$results->aanswered + 0), $xlsformats['p']);
-        $outputdoc->write_string($startrow, 1, (@$results->canswered + 0), $xlsformats['p']);
+        $xlsdoc->write_string($startrow, 0, (@$results->hitratio + 0).'%', $xlsformats['p']);
+        $xlsdoc->write_string($startrow, 1, (@$results->ahitratio + 0).'%', $xlsformats['p']);
+        $xlsdoc->write_string($startrow, 1, (@$results->chitratio + 0).'%', $xlsformats['p']);
+        $xlsdoc->write_string($startrow, 1, (@$results->aanswered + 0), $xlsformats['p']);
+        $xlsdoc->write_string($startrow, 1, (@$results->canswered + 0), $xlsformats['p']);
         $startrow++;
 
         // Jump line.
@@ -66,7 +67,7 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
 
         // Get main categories.
         if (!empty($results->categories)) {
-            $cats = get_records('question_categories', 'parent', $examcontext->rootcategory, 'sortorder,id');
+            $cats = $DB->get_records('question_categories', 'parent', $examcontext->rootcategory, 'sortorder,id');
 
             $categorystr = get_string('categoryname', 'report_examtraining');
             $proposedstr = get_string('proposed', 'report_examtraining');
@@ -74,31 +75,31 @@ class report_examtraining_xls_renderer extends plugin_renderer_base {
             $matchedstr = get_string('matched', 'report_examtraining');
             $ratiostr = get_string('ratio', 'report_examtraining');
 
-            $outputdoc->write_string($startrow, 0, get_string('traininghits', 'report_examtraining'), $xlsformats['t']);
-            $outputdoc->merge_cells($startrow, 0, $startrow, 4);
+            $xlsdoc->write_string($startrow, 0, get_string('traininghits', 'report_examtraining'), $xlsformats['t']);
+            $xlsdoc->merge_cells($startrow, 0, $startrow, 4);
             $startrow++;
 
-            $outputdoc->write_string($startrow, 0, $categorystr, $xlsformats['tt']);
-            $outputdoc->write_string($startrow, 1, $proposedstr, $xlsformats['tt']);
-            $outputdoc->write_string($startrow, 2, $answeredstr, $xlsformats['tt']);
-            $outputdoc->write_string($startrow, 3, $matchedstr, $xlsformats['tt']);
-            $outputdoc->write_string($startrow, 4, $ratiostr, $xlsformats['tt']);
+            $xlsdoc->write_string($startrow, 0, $categorystr, $xlsformats['tt']);
+            $xlsdoc->write_string($startrow, 1, $proposedstr, $xlsformats['tt']);
+            $xlsdoc->write_string($startrow, 2, $answeredstr, $xlsformats['tt']);
+            $xlsdoc->write_string($startrow, 3, $matchedstr, $xlsformats['tt']);
+            $xlsdoc->write_string($startrow, 4, $ratiostr, $xlsformats['tt']);
             $startrow++;
 
             // Per category result.
             foreach ($cats as $cat) {
-                $outputdoc->write_string($startrow, 0, format_string($cat->name), $xlsformats['ctl']);
-                $outputdoc->write_string($startrow, 1, @$results->categories[$cat->id]->count_proposed + 0, $xlsformats['p']);
-                $outputdoc->write_string($startrow, 2, @$results->categories[$cat->id]->count_answered + 0, $xlsformats['p']);
-                $outputdoc->write_string($startrow, 3, @$results->categories[$cat->id]->count_matched + 0, $xlsformats['p']);
-                $outputdoc->write_string($startrow, 4, (@$results->categories[$cat->id]->ratio + 0).' %', $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 0, format_string($cat->name), $xlsformats['ctl']);
+                $xlsdoc->write_string($startrow, 1, @$results->categories[$cat->id]->count_proposed + 0, $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 2, @$results->categories[$cat->id]->count_answered + 0, $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 3, @$results->categories[$cat->id]->count_matched + 0, $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 4, (@$results->categories[$cat->id]->ratio + 0).' %', $xlsformats['p']);
                 $startrow++;
             }
 
         } else {
-            $outputdoc->write_string($startrow, 0, get_string('traininghits', 'report_examtraining'), $xlsformats['t']);
+            $xlsdoc->write_string($startrow, 0, get_string('traininghits', 'report_examtraining'), $xlsformats['t']);
             $startrow++;
-            $outputdoc->write_string($startrow, 0, get_string('notrainingactivity', 'report_examtraining'), $xlsformats['tt']);
+            $xlsdoc->write_string($startrow, 0, get_string('notrainingactivity', 'report_examtraining'), $xlsformats['tt']);
             $startrow++;
         }
 

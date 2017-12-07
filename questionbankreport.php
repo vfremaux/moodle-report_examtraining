@@ -30,7 +30,7 @@ defined('MOODLE_INTERNAL') || die;
  */
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
-require_once($CFG->dirroot.'/report/examtraining/classes/htmlrenderer.php');
+require_once($CFG->dirroot.'/report/examtraining/classes/output/htmlrenderer.php');
 require_once($CFG->dirroot.'/local/vflibs/jqplotlib.php');
 
 $orderby = optional_param('orderby', 'DESC', PARAM_ALPHA); // Ordering of the result ASC or DESC.
@@ -42,21 +42,17 @@ ini_set('memory_limit', '2048M');
 // Print result.
 if ($output == 'html') {
 
-    echo '<form action="" method="get" name="paramform">';
-    echo '<input type="hidden" name="id" value="'.$id.'" />';
-    echo '<input type="hidden" name="view" value="'.$view.'" />';
-    echo '<table width="800">';
-    echo '<tr valign="top">';
-    echo '<td width="50%">';
-    print_string('toporder', 'report_examtraining');
+    $template = new StdClass;
+
+    $template->formurl = new moodle_url('/report/examtraining/index.php');
+    $template->id = $id;
+    $template->view = $view;
+    $template->toporderstr = get_string('toporder', 'report_examtraining');
     $orderoptions = array('ASC' => get_string('ascending', 'report_examtraining'),
                           'DESC' => get_string('descending', 'report_examtraining'));
-    echo html_writer::select($orderoptions, 'orderby', $orderby, array('onchange' => "document.forms['paramform'].submit()"));
+    $template->select = html_writer::select($orderoptions, 'orderby', $orderby, '', array('onchange' => "document.forms['paramform'].submit()"));
 
-    echo '</td>';
-    echo '</tr>';
-    echo '</table>';
-    echo '</form>';
+    echo $OUTPUT->render_from_template('report_examtraining/questionbankform', $template);
 
     $htmlrenderer = $PAGE->get_renderer('report_examtraining', 'html');
     echo $htmlrenderer->questionstats($orderby);

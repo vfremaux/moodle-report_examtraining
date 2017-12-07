@@ -32,10 +32,11 @@ defined('MOODLE_INTERNAL') || die;
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
-$id = required_param('id', PARAM_INT); // The course id.
-$orderby = optional_param('orderby', 'DESC', PARAM_ALPHA); // Ordering of the result ASC or DESC.
-$num = optional_param('num', 15, PARAM_INT);
 $input = examtraining_reports_input($course);
+$input->orderby = optional_param('orderby', 'DESC', PARAM_ALPHA); // Ordering of the result ASC or DESC.
+$input->num = optional_param('num', 15, PARAM_INT);
+$input->subview = optional_param('subview', '', PARAM_TEXT);
+$pagesize = 20;
 
 ini_set('memory_limit', '2048M');
 
@@ -50,18 +51,16 @@ require($CFG->dirroot.'/report/examtraining/course_selector_form.html');
 // Compute target group.
 
 if ($groupid) {
-    $targetusers = groups_get_members($groupid);
+    $targetusers = get_enrolled_users($context, '', $groupid, 'u.*', 'u.lastname, u.firstname', $input->offset, $pagesize, true);
     $max = count($targetusers);
-    $page = count($targetusers);
+    $pagesize = count($targetusers);
 } else {
-    $fields = 'u.id, '.get_all_user_name_fields(true, 'u');
-    $allusers = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname');
+    $allusers = get_enrolled_users($context, '', 0, 'u.id', 'u.lastname, u.firstname', 0, 0, true);
     $max = count($allusers);
-    $fields = 'u.id, '.get_all_user_name_fields(true, 'u').', email, institution';
-    $targetusers = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname');
+    $targetusers = get_enrolled_users($context, '', 0, 'u.*', 'u.lastname, u.firstname', $input->offset, $pagesize, true);
 }
 
-// Fitlers teachers out.
+// Filters teachers out.
 
 if (!empty($targetusers)) {
     foreach ($targetusers as $uid => $user) {
@@ -73,26 +72,24 @@ if (!empty($targetusers)) {
 
 // Print result.
 
-echo '<br/>';
-
-echo '<form action="" method="get" name="paramform">';
-echo '<input type="hidden" name="id" value="'.$id.'" />';
-echo '<input type="hidden" name="from" value="'.$input->from.'" />';
-echo '<input type="hidden" name="to" value="'.$input->to.'" />';
-echo '<input type="hidden" name="groupid" value="'.$groupid.'" />';
-echo '<input type="hidden" name="view" value="course_'.$page.'" />';
-echo '<table width="100%"><tr valign="top"><td width="50%">';
-print_string('toporder', 'report_examtraining');
+$template = new StdClass;
+$template->formurl = new moodle_url('/report/examtraining/index.php');
+$template->id = $id;
+$template->from = $input->from;
+$template->to = $input->to;
+$template->groupid = $groupid;
+$template->id = $input->subview;
+$template->toporderstr = get_string('toporder', 'report_examtraining');
 $orderoptions = array('ASC' => get_string('ascending', 'report_examtraining'),
                       'DESC' => get_string('descending', 'report_examtraining'));
                       $attrs = array('onchange' => "document.forms['paramform'].submit()");
-echo html_writer::select($orderoptions, 'orderby', $orderby, '', $attrs);
-echo '</td><td width="50%">';
-print_string('toplength', 'report_examtraining');
+$template->orderselect = html_writer::select($orderoptions, 'orderby', $input->orderby, '', $attrs);
+
+$template->toplengthstr = get_string('toplength', 'report_examtraining');
 $lengthoptions = array('5' => '5', '10' => '10', '15' => '15', '20' => '20', '30' => '30', '40' => '40', '50' => '50');
-echo html_writer::select($lengthoptions, 'num', $num, '', array('onchange' => "document.forms['paramform'].submit()"));
-echo '</td></tr></table>';
-echo '</form>';
+$template->lengthselect = html_writer::select($lengthoptions, 'num', $input->num, '', array('onchange' => "document.forms['paramform'].submit()"));
+
+echo $OUTPUT->render_from_template('report_examtraining/topoptionsform', $template);
 
 if (!empty($targetusers)) {
 
@@ -117,9 +114,9 @@ if (!empty($targetusers)) {
         GROUP BY
             qa.userid
         ORDER BY
-            attempts $orderby
+            attempts {$input->orderby}
         LIMIT
-            0,$num
+            0, {$input->num}
     ";
 
     $topexams = $DB->get_records_sql($sql, $params1);
@@ -174,9 +171,9 @@ if (!empty($targetusers)) {
         GROUP BY
             qa.userid
         ORDER BY
-            qcount $orderby
+            qcount {$input->orderby}
         LIMIT
-            0,$num
+            0, {$input->num}
     ";
 
     $topquestions = $DB->get_records_sql($sql, $params2);
@@ -194,9 +191,9 @@ if (!empty($targetusers)) {
             userid $insql AND
             blockid = ?
         ORDER BY
-            coveragematched $orderby
+            coveragematched {$input->orderby}
         LIMIT
-            0,$num
+            0, {$input->num}
     ";
 
     $topmatchedcoverage = $DB->get_records_sql($sql, $params3);

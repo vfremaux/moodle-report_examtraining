@@ -42,8 +42,7 @@ if (has_capability('report/examtraining:viewall', $context)) {
             }
         }
     } else {
-        $fields = 'u.id, '.get_all_user_name_fields(true, 'u');
-        $users = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname');
+        $users = get_enrolled_users($context);
     }
 
     $useroptions = array();
