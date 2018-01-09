@@ -30,12 +30,15 @@ defined('MOODLE_INTERNAL') || die();
  */
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
-require_once($CFG->dirroot.'/report/examtraining/classes/htmlrenderer.php');
+require_once($CFG->dirroot.'/report/examtraining/classes/output/htmlrenderer.php');
 require_once($CFG->dirroot.'/local/vflibs/jqplotlib.php');
 
 
 $input = examtraining_reports_input($course);
-$offset = optional_param('offset', 0, PARAM_INT);
+$input->num = optional_param('num', 0, PARAM_INT);
+$input->orderby = optional_param('orderby', '', PARAM_TEXT);
+$input->subview = optional_param('subview', '', PARAM_TEXT);
+$input->offset = optional_param('offset', 0, PARAM_INT);
 $page = 20;
 
 ini_set('memory_limit', '2048M');
@@ -59,7 +62,7 @@ if ($groupid) {
     $allusers = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname');
     $max = count($allusers);
     $fields = 'u.id, '.get_all_user_name_fields(true, 'u').', email, institution';
-    $targetusers = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname', $offset, $page);
+    $targetusers = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname', $input->offset, $page);
 }
 
 // Filters teachers out.

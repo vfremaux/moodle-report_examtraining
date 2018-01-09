@@ -32,7 +32,7 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/reportasyncprecompilelib.php');
-require_once($CFG->dirroot.'/report/examtraining/classes/rawrenderer.php');
+require_once($CFG->dirroot.'/report/examtraining/classes/output/rawrenderer.php');
 
 $input = examtraining_reports_input($course);
 

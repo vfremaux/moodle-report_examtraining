@@ -25,74 +25,35 @@ defined('MOODLE_INTERNAL') || die();
 class jqplot_renderer {
 
     public function horiz_bar_headgraph(&$data, $title, $htmlid, $height = 'large') {
-        global $plotid;
+        global $plotid, $OUTPUT;
         static $instance = 0;
-
-        $htmlid = $htmlid.'_'.$instance;
-        $instance++;
-
-        $graphheight = ($height == 'thin') ? 300 : 400;
 
         if (empty($data)) {
             return;
         }
 
-        $str = '';
+        $template = new StdClass;
 
-        $str .= '<center>';
-        $str .= '<div id="'.$htmlid.'"
-                      style="width:700px; height:'.$graphheight.'px;"></div>';
-        $str .= '</center>';
+        $template->htmlid = $htmlid.'_'.$instance;
+        $template->plotid = $plotid;
+        $template->graphheight = ($height == 'thin') ? 300 : 400;
 
-        $str .= '<script type="text/javascript" language="javascript">';
-
-        $str .= '
-            $.jqplot.config.enablePlugins = true;
-        ';
-
-        $title = addslashes($title);
+        $template->title = addslashes($title);
 
         $answeredarr = array($data->aanswered, $data->canswered);
         $hitratioarr = array($data->ahitratio, $data->chitratio);
 
-        $matchedstr = get_string('matched', 'report_examtraining');
-        $questionstr = get_string('question', 'report_examtraining');
-        $hitratiostr = get_string('hitratio', 'report_examtraining');
+        $template->matchedstr = get_string('matched', 'report_examtraining');
+        $template->questionstr = get_string('question', 'report_examtraining');
+        $template->hitratiostr = get_string('hitratio', 'report_examtraining');
 
-        $str .= local_vflibs_jqplot_barline('answered', $answeredarr);
-        $str .= local_vflibs_jqplot_barline('hitratio', $hitratioarr);
-        $str .= "
-            plot{$plotid} = \$.jqplot(
-                '$htmlid',
-                [answered, hitratio],
-                { legend:{show:true, location:'e', placement:'outsideGrid'},
-                title:'$title',
-                seriesDefaults:{ renderer:\$.jqplot.BarRenderer,
-                                   rendererOptions:{barDirection:'horizontal',
-                                                    barPadding: 6,
-                                                    barMargin:15},
-                                   shadowAngle:135
-                },
-                series:[
-                    {label:'Questions', color:'#C54F27'},
-                    {label:'{$hitratiostr}', xaxis:'x2axis', color:'#A5A9DA'}
-                ],
-                highlighter: {
-                    show: false,
-                },
-                axesDefaults:{useSeriesColor: false, syncTicks:true},
-                axes:{ xaxis:{label:'Questions', min:0, tickOptions:{textColor:'#D67B16', formatString:'%d'}},
-                       x2axis:{label:'{$hitratiostr}', min:0, max:100, tickOptions:{formatString:'%d\%', textColor:'#A5A9DA'}},
-                          yaxis:{renderer:\$.jqplot.CategoryAxisRenderer, ticks:['A', 'C']}
-                }
-            });
-        ";
-
-        $str .= "</script>";
+        $template->answereddata = local_vflibs_jqplot_barline('answered', $answeredarr);
+        $template->hitratiodata = local_vflibs_jqplot_barline('hitratio', $hitratioarr);
 
         $plotid++;
+        $instance++;
 
-        return $str;
+        return $OUTPUT->render_from_template('report_examtraining/jqplot_horizbarheadgraph', $template);
     }
 
     /**
@@ -100,71 +61,24 @@ class jqplot_renderer {
      *
      */
     public function assiduity_bargraph(&$data, $ticks, $title, $htmlid) {
-        global $plotid;
+        global $plotid, $OUTPUT;
         static $instance = 0;
 
-        $htmlid = $htmlid.'_'.$instance;
+        $template = new StdClass();
+
+        $template->xticks = implode(",", $ticks);
+        $template->htmlid = $htmlid.'_'.$instance;
+
+        $template->title = addslashes($title);
+        $template->qstr = addslashes(get_string('assiduity', 'report_examtraining'));
+        $template->numberstr = addslashes(get_string('attempts', 'report_examtraining'));
+
+        $template->graphdata = local_vflibs_jqplot_simplebarline('data_'.$htmlid.'_'.$instance, $data);
+
+        $plotid++;
         $instance++;
 
-        $xticks = "'".implode("','", $ticks)."'";
-
-        $str = '';
-
-        $str .= '<center>';
-        $str .= '<div id="'.$htmlid.'"
-                      class=""
-                      style="width:880px; height:320px;"></div>';
-        $str .= '</center>';
-
-        $str .= '<script type="text/javascript" language="javascript">';
-        $str .= '
-            $.jqplot.config.enablePlugins = true;
-        ';
-
-        $title = addslashes($title);
-        $qstr = addslashes(get_string('assiduity', 'report_examtraining'));
-        $numberstr = addslashes(get_string('attempts', 'report_examtraining'));
-
-        $str .= local_vflibs_jqplot_simplebarline('data_'.$htmlid, $data);
-
-        $str .= "
-            xticks = [{$xticks}];
-
-            plot{$plotid} = $.jqplot(
-                '$htmlid',
-                [data_{$htmlid}],
-                {
-                title:'$title',
-                seriesDefaults:{
-                    renderer: \$.jqplot.BarRenderer,
-                    rendererOptions:{barPadding: 6, barMargin:4}
-                },
-                series:[
-                    {color:'#FF0000'}
-                ],
-                highlighter: {
-                    show: false,
-                },
-                axes:{
-                    xaxis:{
-                        renderer: \$.jqplot.CategoryAxisRenderer,
-                        tickRenderer: \$.jqplot.CanvasAxisTickRenderer,
-                        tickOptions:{angle: -45, fontSize: '8pt'},
-                        label:'{$qstr}',
-                        ticks:xticks
-                    },
-                    yaxis:{
-                        autoscale:true,
-                        label:'{$numberstr}'
-                    }
-                },
-            });
-        ";
-
-        $str .= '</script>';
-        $plotid++;
-
-        return $str;
+        return $OUTPUT->render_from_template('report_examtraining/jqplot_assiduitygraph', $template);
     }
 
     /**
@@ -190,9 +104,9 @@ class jqplot_renderer {
         $str .= '<div id="'.$htmlid.'" style="width:500px; height:320px;"></div>';
         $str .= '</center>';
 
-        echo '<script type="text/javascript" language="javascript">';
-        echo '
-            \$.jqplot.config.enablePlugins = true;
+        $str .= '<script type="text/javascript" language="javascript">';
+        $str .= '
+            $.jqplot.config.enablePlugins = true;
         ';
 
         $title = addslashes($title);

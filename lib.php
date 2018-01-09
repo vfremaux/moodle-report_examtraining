@@ -90,23 +90,28 @@ function report_examtraining_can_access_user_report($user, $course) {
 function report_examtraining_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
     require_course_login($course);
 
-    if ($filearea !== 'rawreports') {
+    if (!in_array($filearea, array('rawreports', 'instantreport'))) {
         send_file_not_found();
     }
 
     $fs = get_file_storage();
 
-    $filename = array_pop($args);
-    $filepath = $args ? '/'.implode('/', $args).'/' : '/';
+    $itemid = array_shift($args);
+    $filename = array_shift($args);
+    $filepath = dirname($filename);
+    $filename = basename($filename);
 
-    if (!$file = $fs->get_file($context->id, 'report_examtraining', 'rawreports', $course->id, $filepath, $filename) ||
+    if (empty($filepath) || $filepath == '.') {
+        $filepath = '/';
+    }
+
+    if ((!$file = $fs->get_file($context->id, 'report_examtraining', $filearea, $itemid, $filepath, $filename)) ||
             $file->is_directory()) {
         send_file_not_found();
     }
 
     $forcedownload = true;
 
-    session_get_instance()->write_close();
     send_stored_file($file, 60 * 60, 0, $forcedownload);
 }
 

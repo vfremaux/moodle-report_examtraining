@@ -22,7 +22,6 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/blocks/userquiz_monitor/block_userquiz_monitor_lib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
 /**
@@ -59,17 +58,24 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
     $output = optional_param('output', 0, PARAM_INT);
 
     if (!$running) {
-        $out = "reseting runs config ";
+    
+        "reseting runs config ";
         if ($output) {
             echo $out.'<br/>';
         } else {
             debug_trace($out);
         }
-        set_config('runs', 0);
+        set_config('runs', 0, 'report_examtraining');
     }
 
     if ($limit) {
-        $out = "processing $limit out of $attemptscount records ({$CFG->runs} out of runlimit = $maxruns)\n$rangeclause";
+        $e = new StdClass;
+        $e->limit = $limit;
+        $e->attemptscount = $attemptscount;
+        $e->runs = $CFG->runs;
+        $e->maxruns = $maxruns;
+        $e->rangeclause = $rangeclause;
+        $out = get_string('processingmessage', 'report_examtraining', $e);
         if ($output) {
             mtrace($out.'<br/>');
         } else {
@@ -98,7 +104,8 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
         }
         $sql = "
             SELECT
-                *
+                qa.*,
+                ua.id as uaid
             FROM
                 {quiz_attempts} qa,
                 {report_examtraining} ua,
@@ -141,10 +148,12 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
                 }
             }
 
-            // Only mark compilation time if complete complation is done.
+            // Only mark compilation time if complete compilation is done.
             if (!$nocats) {
-                $attempt->datecompiled = time();
-                $DB->update_record('quiz_attempts', $attempt);
+                $reportattempt = new StdClass;
+                $reportattempt->datecompiled = time();
+                $reportattempt->id = $attempt->uaid;
+                $DB->update_record('report_examtraining', $attempt);
             }
 
             if ($rootcategory && !isset($rootcats[$rootcategory])) {
@@ -187,12 +196,7 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
                 if ($maxruns) {
                     set_config('runs', 1 + @$CFG->runs);
                 }
-                if ($output) {
-                    redirect($url);
-                } else {
-                    header("Location: $url");
-                    die;
-                }
+                redirect($url);
             } else {
                 set_config('runs', 0);
             }
@@ -208,7 +212,7 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
 function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_precompile_results_worker') {
     global $DB;
 
-    list($insql, $inparams) = $DB->in_or_equal('id', $ids);
+    list($insql, $inparams) = $DB->get_in_or_equal($ids);
 
     $sql = "
         SELECT
@@ -224,7 +228,7 @@ function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_preco
             ua.id $insql
     ";
 
-    $attempts = $DB->get_records_sql('quiz_attempts', $inparams, 'id', $ids);
+    $attempts = $DB->get_records_sql($sql, $inparams);
 
     $output = optional_param('output', 0, PARAM_INT);
 
@@ -273,7 +277,7 @@ function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_preco
             }
 
             // Block id (userquiz_monitor) is deduced from attempt's course heuristic.
-            $theblock = userquiz_bloc_from_attempt($attempt);
+            $theblock = userquiz_block_from_attempt($attempt);
 
             $work($attempt, $rootcats[$rootcategory], $theblock, true);
             $j++;
@@ -415,7 +419,7 @@ function userquiz_cron_results() {
     return false;
 }
 
-function userquiz_bloc_from_attempt($quizattempt) {
+function userquiz_block_from_attempt($quizattempt) {
     global $DB;
 
     $attemptcourse = $DB->get_field('quiz', 'course', array('id' => $attempt->quiz));
