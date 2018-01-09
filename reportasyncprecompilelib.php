@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * This libs provides backround toolkit to precompile stats in a load controllable way.
  * @package     report_examtraining
  * @category    report
  * @copyright   2012 Valery Fremaux (valery.fremaux@gmail.com)

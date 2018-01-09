@@ -82,7 +82,7 @@ if ($output == 'html') {
     echo $htmlrenderer->trainings($userid, $input->from, $input->to);
     echo $htmlrenderer->trainings_subcats($userid, $input->from, $input->to);
     echo $htmlrenderer->exams($userid, $input->from, $input->to);
-    echo $htmlrenderer->assiduity2($userid, $input->from, $input->to);
+    echo $htmlrenderer->assiduity2($userid, $input->from, $input->to, $view);
     echo $htmlrenderer->modules($userid, $input->from, $input->to);
     echo $htmlrenderer->radar($userid, $input->from, $input->to);
 

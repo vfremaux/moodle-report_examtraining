@@ -1,0 +1,213 @@
+
+
+
+<table width="90%">
+
+<tr valign="top">
+    <td><b>{{backgroundercontrolstr}}</b><br/>
+        <p>{{backgroundercontroldescstr}}</p>
+    </td>
+    <td>
+        <form name="backgroundenable" action="#">
+            <input type="hidden" name="view" value="compilationtools" />
+            <input type="hidden" name="id" value="{{id}}" />
+            <table width="100%">
+                <tr>
+                    <td colspan="2">
+                        <input name="backgroundenabled" type="checkbox" value="1" {{{backgroundenabledchecked}}} />
+                        <input name="go_btn" type="submit" value="{{updatestr}}"  />
+                    </td>
+            </table>
+        </form>
+    </td>
+</tr>
+
+<tr valign="top">
+    <td><b>{{attemptstocatscompilationstr}}</b></td>
+    <td>
+        <form name="simplecompile" action="{{{precompileurl}}}">
+            <input type="hidden" name="id" value="{{id}}" />
+            <table width="100%">
+                    <tr valign="top">
+                    <td>{{recordsrangestr}}</td>
+                    <td>
+                        <select name="range">
+                            <option value="1" selected="selected">{{onlynewstr}}</option>
+                            <option value="0">{{allrecordsstr}}</option>
+                        </select><br/>
+                        {{{fromifall}}}
+                        <input type="text" size="5" name="fromid" value="" />
+                    </td>
+                </tr>
+                    <tr valign="top">
+                    <td>{{catsstr}}</td>
+                    <td>
+                        <select name="withcats">
+                            <option value="0">{{withoutcatsstr}}</option>
+                            <option value="1" selected="selected">{{withcatsstr}}</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td>{{bulksizestr}}: {{{bulksizehelpicon}}}</td>
+                    <td>
+                        <select name="limit">
+                            <option value="0">{{nolimitstr}}</option>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                            <option value="500">500</option>
+                            <option value="1000">1000</option>
+                            <option value="2000">2000</option>
+                            <option value="5000">5000</option>
+                        </select>
+                    </td>
+                </tr><tr valign="top">
+                    <td>{{timelimitstr}}</td>
+                    <td>
+                        <select name="auto">
+                            <option value="0">{{manualstr}}</option>
+                            <option value="1">1 {{secondstr}}</option>
+                            <option value="2">2 {{secondpluralstr}}</option>
+                            <option value="5">5 {{secondpluralstr}}</option>
+                            <option value="8">8 {{secondpluralstr}}</option>
+                            <option value="10">10 {{secondpluralstr}}</option>
+                            <option value="15">15 {{secondpluralstr}}</option>
+                            <option value="30">30 {{secondpluralstr}}</option>
+                        </select>
+                    </td>
+                </tr><tr valign="top">
+                    <td>{{maxbulksstr}}</td>
+                    <td>
+                        <select name="maxruns">
+                            <option value="0">{{nolimitstr}}</option>
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="80">80</option>
+                            <option value="100">100</option>
+                            <option value="150">150</option>
+                            <option value="200">200</option>
+                            <option value="500">500</option>
+                            <option value="1000">1000</option>
+                            <option value="2000">2000</option>
+                            <option value="5000">5000</option>
+                            <option value="10000">10000</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <input type="submit" value="{{compilestatstocatsstr}}" />
+                    </td>
+            </table>
+        </form>
+        <form name="simplecompileunit" action="{{{precompileunityurl}}}">
+            <input type="hidden" name="id" value="{{id}}" />
+            <input type="text" name="ids" value="" />
+            <input type="submit" value="{{compilesomestr}}" />
+        </form>
+        <form name="simplecompileclear" action="{{{clearstateurl}}}">
+            <input type="hidden" name="id" value="{{id}}" />
+            <p><input type="submit" value="{{clearstatsdatastr}}" /></p>
+        </form>
+    </td>
+</tr>
+
+<tr valign="top">
+    <td><b>{{userstatsandcoveragestr}}</b></td>
+    <td>
+        <form name="simplecompilecover" action="{{{precompileuserstatsurl}}}">
+            <input type="hidden" name="id" value="{{id}}" />
+            <table width="100%">
+                    <tr valign="top">
+                        <td>{{recordsrangestr}}</td>
+                        <td>
+                            <select name="range">
+                                <option value="1" selected="selected">{{onlynewstr}}</option>
+                                <option value="0">{{allrecordstr}}</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                    <td>{{limitsstr}}</td>
+                    <td>
+                        <select name="limit">
+                            <option value="0">{{nolimitstr}}</option>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                            <option value="500">500</option>
+                            <option value="1000">1000</option>
+                            <option value="2000">2000</option>
+                            <option value="5000">5000</option>
+                        </select>
+                    </td>
+                </tr><tr valign="top">
+                    <td>{{timelimitstr}}</td>
+                    <td>
+                        <select name="auto">
+                            <option value="0">{{manualstr}}</option>
+                            <option value="2">2 {{secondstr}}</option>
+                            <option value="5">5 {{secondpluralstr}}</option>
+                            <option value="8">8 {{secondpluralstr}}</option>
+                            <option value="10">10 {{secondpluralstr}}</option>
+                            <option value="15">15 {{secondpluralstr}}</option>
+                            <option value="30">30 {{secondpluralstr}}</option>
+                        </select>
+                    </td>
+                </tr><tr valign="top">
+                    <td>{{maxbulksstr}}</td>
+                    <td>
+                        <select name="maxruns">
+                            <option value="0">{{nolimitstr}}</option>
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="80">80</option>
+                            <option value="100">100</option>
+                            <option value="150">150</option>
+                            <option value="200">200</option>
+                            <option value="500">500</option>
+                            <option value="1000">1000</option>
+                            <option value="2000">2000</option>
+                            <option value="5000">5000</option>
+                            <option value="10000">10000</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <input type="submit" value="{{compileuserstr}}" />
+                    </td>
+            </table>
+        </form>
+        <form name="simplecompilecoverclear" action="{{{compilerstatsurl}}}">
+            <input type="hidden" name="id" value="{{id}}" />
+            <p><input type="submit" value="{{clearuserstatsstr}}" /></p>
+        </form>
+    </td>
+</tr>
+
+<tr valign="top">
+    <td><b>{{usercoverageglobalstr}}</b></td>
+    <td>
+        <form name="simplecompileusercover" action="{{{coveragecompilerurl}}}">
+            <input type="hidden" name="id" value="{{id}}" />
+            <table width="100%">
+                <tr>
+                    <td colspan="2">
+                        <input type="submit" value="{{compilecoverageindexstr}}" />
+                    </td>
+            </table>
+        </form>
+    </td>
+</tr>
+
+</table>

@@ -170,5 +170,41 @@ $string['userinfo'] = 'Informations candidat';
 $string['visited'] = 'Aucune visite';
 $string['weekstartdate'] = 'Début de semaine';
 
-$string['extrafields_desc'] = 'champs supplémentaires de profil à ajouter aux rapports.';
+$string['backgroundercontrol'] = 'Contrôle des tâches de calcul';
+$string['attemptstocatscompilation'] = 'Compilation des tentatives et catégories';
+$string['fromifall'] = 'ou à partir de&nbsp; ';
+$string['recordsrange'] = 'Plage de données';
+$string['onlynew'] = 'Seulement les nouvelles données';
+$string['cats'] = 'Catégories de questions';
+$string['allrecords'] = 'Toutes les données';
+$string['withoutcats'] = 'Sans les catégories';
+$string['withcats'] = 'Avec les catégories';
+$string['nolimit'] = 'Illimité';
+$string['manual'] = 'Manuel';
+$string['timelimit'] = 'Limite de temps d\'exécution';
+$string['second'] = 'second';
+$string['secondplural'] = 'secondes';
+$string['maxbulks'] = 'Nombre max de relances';
+$string['withcats'] = 'Avec catégories';
+$string['withoutcats'] = 'Sans catégories';
+$string['compilestatstocats'] = 'Compiler les catégories';
+$string['compileusers'] = 'Compiler les données individuelles';
+$string['compilesome'] = 'Compiler une sélection';
+$string['clearstatsdata'] = 'Purger les données';
+$string['clearuserstats'] = 'Purger les statistiques individuelles';
+$string['userstatsandcoverage'] = 'Globaliseurs de statistiques individuelles et de couverture';
 
+$string['usercoverageglobal'] = 'Globaliseurs de couverture de connaissance';
+$string['compilecoverageindex'] = 'Compiler les indicateurs de couverture';
+$string['bulksize'] = 'Taille du lot de calcul';
+
+$string['backgroundercontrol_desc'] = 'En désactivant la fonction de calcul, vous pouvez arrêter un processus de calcul en cours. Décochez la case et attendez quelques 
+minutes pour que le calcul s\'arrête. Puis rétablissez la fonction de calcul pour démarrer un autre calcul.';
+$string['extrafields_desc'] = 'Champs supplémentaires de profil à ajouter aux rapports.';
+
+$string['bulksize_help'] = 'La taille maximale du lot de calcul avant qu\'un traitement puisse être interrompu. Plus cette taille est petite, plus il faudra
+de relances pour arriver au bout du calcul complet, et plus le temps global de mobilisation de charge sera 
+long, mais plus rapide sera traitée une demande d\'interruption. Si aucune limite n\'est donnée, alors toutes les données seront calculées en un seul lot.';
+
+$string['maxbulks_help'] = 'Le nombre maximum de lots que la tâche de calcul peut relancer. Le nombre de tentatives calculées sera au maximum de Taille lot max * Nombre de lots max.
+si aucune limite n\'est donnée, alors le cacul continuera lot par lot jusqu\'à épuiser toutes les données disponibles.';

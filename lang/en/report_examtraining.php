@@ -164,3 +164,41 @@ $string['visited'] = 'No visits';
 $string['weekstartdate'] = 'Week start';
 
 $string['extrafields_desc'] = 'Additional profile fields to add to reports';
+
+$string['backgroundercontrol'] = 'Background tasks control';
+$string['attemptstocatscompilation'] = 'States to attempts and categories compilation';
+$string['fromifall'] = 'From (if all records)';
+$string['recordsrange'] = 'Records range';
+$string['onlynew'] = 'Only new';
+$string['allrecords'] = 'All records';
+$string['cats'] = 'Question categories';
+$string['withcats'] = 'With categories';
+$string['withoutcats'] = 'Without categories';
+$string['allrecords'] = 'With categories';
+$string['nolimit'] = 'Unlimited';
+$string['manual'] = 'Manual';
+$string['timelimit'] = 'Execution Time Limit';
+$string['second'] = 'second';
+$string['secondplural'] = 'seconds';
+$string['maxbulks'] = 'Max bulks';
+$string['compilestatstocats'] = 'Compile states to categories';
+$string['compileusers'] = 'Compile user data';
+$string['compilesome'] = 'Compile only soem states by id';
+$string['clearstatsdata'] = 'Clear stats data';
+$string['clearuserstats'] = 'Clear user stats data';
+$string['userstatsandcoverage'] = 'User stats globalisators and coverage information';
+$string['autorelease'] = 'Auto (release time)';
+$string['processingmessage'] = 'Processing {$a->limit} out of {$a->attemptscount} records ({$a->runs} out of runlimit = {$a->maxruns})\n{$a->rangeclause}';
+
+$string['usercoverageglobal'] = 'User coverage globalisators';
+$string['compilecoverageindex'] = 'Compile coverage indexes';
+$string['bulksize'] = 'Bulk size';
+
+$string['backgroundercontrol_desc'] = 'By enabling/disabling this, you can stop a running background compilation';
+
+$string['bulksize_help'] = 'The max size of a calculation bulk before the calculation can be interrupted. The smaller it is, the higher
+number of bulks will be needed to achieve the full calculation, and longer will be the calculation, but an interruption request will be faster to be handled.
+If no limit is given, a uniqe full sized bulk will be processed in one ininterruptible shot.';
+
+$string['maxbulks_help'] = 'The maximum number of bulks the task is allowed to process. the number of attempts processed will be lower or equals maxbulks * bulksize.
+If no limit given, the calculation will pursue on a bulk per bulk way untill all data are processed.';
