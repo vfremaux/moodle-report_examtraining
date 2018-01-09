@@ -1,0 +1,43 @@
+
+
+
+<!-- jqplot_horizbarheadgraph -->
+
+<center>
+<div id="{{htmlid}}" style="width:700px; height:{{graphheight}}px;"></div>
+</center>
+
+<script type="text/javascript" language="javascript">
+
+    $.jqplot.config.enablePlugins = true;
+
+    {{{answereddata}}}
+    {{{hitratiodata}}}
+
+    plot{{{plotid}}} = $.jqplot(
+        '{{htmlid}}',
+        [answered, hitratio],
+        { legend:{show:true, location:'e', placement:'outsideGrid'},
+        title:'{{title}}',
+        seriesDefaults:{ renderer:$.jqplot.BarRenderer,
+                           rendererOptions:{barDirection:'horizontal',
+                                            barPadding: 6,
+                                            barMargin:15},
+                           shadowAngle:135
+        },
+        series:[
+            {label:'Questions', color:'#C54F27'},
+            {label:'{{{hitratiostr}}}', xaxis:'x2axis', color:'#A5A9DA'}
+        ],
+        highlighter: {
+            show: false,
+        },
+        axesDefaults:{useSeriesColor: false, syncTicks:true},
+        axes:{ xaxis:{label:'Questions', min:0, tickOptions:{textColor:'#D67B16', formatString:'%d'}},
+               x2axis:{label:'{{hitratiostr}}', min:0, max:100, tickOptions:{formatString:'%d\%', textColor:'#A5A9DA'}},
+                  yaxis:{renderer:$.jqplot.CategoryAxisRenderer, ticks:['A', 'C']}
+        }
+    });
+
+</script>
+<!-- /jqplot_horizbarheadgraph -->

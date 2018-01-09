@@ -1,0 +1,51 @@
+
+
+
+
+<!-- assiduitybargraph -->
+
+<center>
+    <div id="{{htmlid}}" class="" style="width:880px; height:320px;"></div>
+</center>
+
+<script type="text/javascript" language="javascript">
+
+    $.jqplot.config.enablePlugins = true;
+
+    {{{graphdata}}}
+
+    xticks = [{{{xticks}}}];
+
+    plot{{{plotid}}} = $.jqplot(
+        '{{htmlid}}',
+        [data_{{htmlid}}],
+        {
+        title:'{{title}}',
+        seriesDefaults:{
+            renderer: $.jqplot.BarRenderer,
+            rendererOptions:{barPadding: 6, barMargin:4}
+        },
+        series:[
+            {color:'#FF0000'}
+        ],
+        highlighter: {
+            show: false,
+        },
+        axes:{
+            xaxis:{
+                renderer: $.jqplot.CategoryAxisRenderer,
+                tickRenderer: $.jqplot.CanvasAxisTickRenderer,
+                tickOptions:{angle: -45, fontSize: '8pt'},
+                label:'{{qstr}}',
+                ticks:xticks
+            },
+            yaxis:{
+                autoscale:true,
+                label:'{{numberstr}}'
+            }
+        },
+    });
+
+</script>
+
+<!-- /assiduitybargraph -->
