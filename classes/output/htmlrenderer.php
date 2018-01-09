@@ -42,8 +42,11 @@ class html_renderer extends \plugin_renderer_base {
      * @param string ref $str a buffer for accumulating output
      * @param object $structure a course structure object.
      */
-    public function assiduity2($userid, $from, $to) {
-        global $DB;
+    public function assiduity2($userid, $from, $to, $view) {
+        global $DB, $COURSE;
+
+        $pagesize = 30;
+        $offset = optional_param('assiduityoffset', 0, PARAM_INT);
 
         $modulestr = get_string('assiduity', 'report_examtraining');
         $attemptsstr = get_string('attempts', 'report_examtraining');
@@ -71,7 +74,9 @@ class html_renderer extends \plugin_renderer_base {
                 daystamp
         ";
 
-        if ($assiduity = $DB->get_records_sql_menu($sql, array($userid))) {
+        $allrecs = $assiduity = $DB->count_records_sql($sql, array($userid));
+
+        if ($assiduity = $DB->get_records_sql_menu($sql, array($userid), $offset, $pagesize)) {
 
             $dateticks = array_keys($assiduity);
 
@@ -83,16 +88,34 @@ class html_renderer extends \plugin_renderer_base {
             $i = 0;
             $attemptstable = array();
             while ($stamp < $lastdate && ($i < 500)) {
-                $attemptstable[date('Y-m-d', $stamp)] = 0 + @$assiduity[$stamp];
-                $stamp += DAYSECS;
-                $i++;
+                $date = date('Y-m-d', $stamp);
+                if (!empty($date)) {
+                    $attemptstable[$date] = 0 + @$assiduity[$stamp];
+                    $stamp += DAYSECS;
+                    $i++;
+                }
             }
 
             $label = get_string('assiduity', 'report_examtraining');
             $jqplotter = new jqplot_renderer();
-            $str = $jqplotter->assiduity_bargraph($attemptstable, array_keys($attemptstable), $label, 'assiduity');
+            $template = new StdClass;
+            $template->title = $label;
+            if ($allrecs > $pagesize) {
+                $template->paged = true;
+                $template->previousiconurl = $this->output->pix_url('previous', 'report_examtraining');
+                $template->nexticonurl = $this->output->pix_url('next', 'report_examtraining');
+                if ($offset + $pagesize < $allrecs) {
+                    $params = array('id' => $COURSE->id, 'view' => $view, 'assiduityoffset' => $offset + $pagesize);
+                    $template->nexturl = new moodle_url('/report/examtraining/index.php', $params);
+                }
+                if ($offset > 0) {
+                    $params = array('id' => $COURSE->id, 'view' => $view, 'assiduityoffset' => $offset - $pagesize);
+                    $template->previousurl = new moodle_url('/report/examtraining/index.php', $params);
+                }
+            }
+            $template->plot = $jqplotter->assiduity_bargraph($attemptstable, array_keys($attemptstable), $label, 'assiduity');
 
-            return $str;
+            return $this->output->render_from_template('report_examtraining/assiduitygraph', $template);
         }
     }
 

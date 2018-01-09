@@ -72,25 +72,25 @@ if (has_capability('report/examtraining:viewall', $context)) {
         $view = 'courseraw';
     }
     if ($view == 'course') {
-        $page = 'map'; // Set a default.
+        $subview = 'map'; // Set a default.
     } else {
         if (preg_match('/^course_/', $view)) {
-            $page = str_replace('course_', '', $view);
+            $subview = str_replace('course_', '', $view);
             $view = 'course';
         } else {
-            $page = $view;
+            $subview = $view;
         }
     }
 } else {
     $view = 'user';
-    $page = $view;
+    $subview = $view;
 }
 
 // Check availability of the view.
-if (file_exists($CFG->dirroot."/report/examtraining/{$page}report.php")) {
-    $reportview = $CFG->dirroot."/report/examtraining/{$page}report.php";
+if (file_exists($CFG->dirroot."/report/examtraining/{$subview}report.php")) {
+    $reportview = $CFG->dirroot."/report/examtraining/{$subview}report.php";
 } else {
-    print_error('non existing report view : '.$page);
+    print_error('non existing report view : '.$subview);
     die;
 }
 
@@ -103,7 +103,7 @@ if ($output == 'html') {
 
     echo $OUTPUT->header();
 
-    echo $renderer->tabs($view, $page, $groupid);
+    echo $renderer->tabs($view, $subview, $groupid);
 
     $html = '';
     $tablewidth = "100%";
@@ -132,7 +132,7 @@ if ($output == 'html') {
     echo $OUTPUT->footer();
 } else if ($output == 'pdf') {
 
-    $title = get_string("$view-$page", 'report_examtraining');
+    $title = get_string("$view-$subview", 'report_examtraining');
 
     $html = "<page backtop=\"50mm\" backbottom=\"10mm\" backleft=\"10mm\" backright=\"10mm\">
              <page_header>$pdfheader</page_header>
