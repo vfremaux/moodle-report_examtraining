@@ -138,6 +138,7 @@ $string['selectforreport'] = 'Include in reports';
 $string['series'] = 'Number of attempts';
 $string['seriesize'] = 'Questions per serie';
 $string['startdate'] = 'Start date';
+$string['statscompile_task'] = 'Userquiz results stats precompilation';
 $string['timeelapsed'] = 'Time spent';
 $string['timeelapsedcurweek'] = 'Time spent cur. week';
 $string['timeperpart'] = 'Temps par partie';

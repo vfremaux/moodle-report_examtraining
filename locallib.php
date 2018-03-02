@@ -644,7 +644,7 @@ function examtraining_reports_input($course) {
             $input->from = $course->startdate;
         } else {
             if ($input->startmonth != -1 && $input->startyear != -1) {
-                $input->from = mktime(0, 0, 8, $input->startmonth, $input->startday, $input->startyear);
+                $input->from = mktime(0, 0, 1, $input->startmonth, $input->startday, $input->startyear);
             } else {
                 print_error('Bad start date');
             }
@@ -657,7 +657,7 @@ function examtraining_reports_input($course) {
             $input->to = time();
         } else {
             if ($input->endmonth != -1 && $input->endyear != -1) {
-                $input->to = mktime(0, 0, 8, $input->endmonth, $input->endday, $input->endyear);
+                $input->to = mktime(23, 59, 59, $input->endmonth, $input->endday, $input->endyear);
             } else {
                 print_error('Bad end date');
             }

@@ -74,7 +74,7 @@ class html_renderer extends \plugin_renderer_base {
                 daystamp
         ";
 
-        $allrecs = $assiduity = $DB->count_records_sql($sql, array($userid));
+        $allrecs = count($DB->get_records_sql($sql, array($userid)));
 
         if ($assiduity = $DB->get_records_sql_menu($sql, array($userid), $offset, $pagesize)) {
 
@@ -102,8 +102,8 @@ class html_renderer extends \plugin_renderer_base {
             $template->title = $label;
             if ($allrecs > $pagesize) {
                 $template->paged = true;
-                $template->previousiconurl = $this->output->pix_url('previous', 'report_examtraining');
-                $template->nexticonurl = $this->output->pix_url('next', 'report_examtraining');
+                $template->previousiconurl = $this->output->image_url('previous', 'report_examtraining');
+                $template->nexticonurl = $this->output->image_url('next', 'report_examtraining');
                 if ($offset + $pagesize < $allrecs) {
                     $params = array('id' => $COURSE->id, 'view' => $view, 'assiduityoffset' => $offset + $pagesize);
                     $template->nexturl = new moodle_url('/report/examtraining/index.php', $params);
@@ -533,8 +533,8 @@ class html_renderer extends \plugin_renderer_base {
         $template->heading = $this->output->heading(get_string('examtries', 'report_examtraining'));
         $template->examtriesstr = get_string('examtries', 'report_examtraining');
 
-        $badurl = $this->output->pix_url('bad', 'report_examtraining');
-        $goodurl = $this->output->pix_url('good', 'report_examtraining');
+        $badurl = $this->output->image_url('bad', 'report_examtraining');
+        $goodurl = $this->output->image_url('good', 'report_examtraining');
 
         ksort($stats);
         $i = 1;

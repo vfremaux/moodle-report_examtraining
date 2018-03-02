@@ -143,6 +143,7 @@ $string['selectforreport'] = 'Inclure dans les rapports';
 $string['series'] = 'Nombre de séries';
 $string['seriesize'] = 'Nombre de questions par série';
 $string['startdate'] = 'Date début';
+$string['statscompile_task'] = 'Précompilation des statistiques de préparation d\'examen';
 $string['timeelapsed'] = 'Temps passé';
 $string['timeelapsedcurweek'] = 'Temps passé semaine';
 $string['timeperpart'] = 'Temps par partie';
