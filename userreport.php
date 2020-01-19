@@ -51,7 +51,7 @@ if (!has_capability('report/examtraining:viewall', $context)) {
 // Get data.
 
 $logs = use_stats_extract_logs($input->from, $input->to, $userid, $COURSE->id);
-$aggregate = use_stats_aggregate_logs($logs, 'module', $input->from, $input->to);
+$aggregate = use_stats_aggregate_logs($logs, $input->from, $input->to);
 
 // Print result.
 
@@ -71,7 +71,7 @@ foreach ($aggregate as $module => $classarray) {
 if ($output == 'html') {
     // Time period form.
 
-    require($CFG->dirroot.'/report/examtraining/selector_form.html');
+    echo $renderer->selectorform();
 
     $htmlrenderer = $PAGE->get_renderer('report_examtraining', 'html');
 

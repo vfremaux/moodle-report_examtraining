@@ -102,8 +102,8 @@ class html_renderer extends \plugin_renderer_base {
             $template->title = $label;
             if ($allrecs > $pagesize) {
                 $template->paged = true;
-                $template->previousiconurl = $this->output->image_url('previous', 'report_examtraining');
-                $template->nexticonurl = $this->output->image_url('next', 'report_examtraining');
+                $template->previousiconurl = $this->output->pix_url('previous', 'report_examtraining');
+                $template->nexticonurl = $this->output->pix_url('next', 'report_examtraining');
                 if ($offset + $pagesize < $allrecs) {
                     $params = array('id' => $COURSE->id, 'view' => $view, 'assiduityoffset' => $offset + $pagesize);
                     $template->nexturl = new moodle_url('/report/examtraining/index.php', $params);
@@ -200,7 +200,7 @@ class html_renderer extends \plugin_renderer_base {
         if (!empty($usergroups)) {
             foreach ($usergroups as $group) {
                 $str = $group->name;
-                if ($group->id == get_current_group($courseid)) {
+                if ($group->id == groups_get_course_group($courseid)) {
                     $str = "<b>$str</b>";
                 }
                 $groupnames[] = $str;
@@ -223,8 +223,11 @@ class html_renderer extends \plugin_renderer_base {
     /**
      * a raster for html printing of a report structure.
      *
-     * @param string ref $str a buffer for accumulating output
-     * @param object $structure a course structure object.
+     * @param int $userid the user for wich the report needs to be computed
+     * @param int $from the from start date
+     * @param int $to the to start date
+     * @param object $height graph height
+     * @param arrayref $stats the overal stats calcualted internally and provided for further use.
      */
     public function trainings_globals($userid, $from, $to, $height = 'large', &$stats) {
         global $CFG;
@@ -533,8 +536,8 @@ class html_renderer extends \plugin_renderer_base {
         $template->heading = $this->output->heading(get_string('examtries', 'report_examtraining'));
         $template->examtriesstr = get_string('examtries', 'report_examtraining');
 
-        $badurl = $this->output->image_url('bad', 'report_examtraining');
-        $goodurl = $this->output->image_url('good', 'report_examtraining');
+        $badurl = $this->output->pix_url('bad', 'report_examtraining');
+        $goodurl = $this->output->pix_url('good', 'report_examtraining');
 
         ksort($stats);
         $i = 1;

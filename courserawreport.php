@@ -105,12 +105,12 @@ if (!empty($targetusers)) {
     foreach ($targetusers as $uid => $auser) {
         $logs = use_stats_extract_logs($input->from, $input->to, $uid, $COURSE->id);
         echo 'Logs extracted. Mem state : '.memory_get_usage().'<br/>';
-        $aggregate = use_stats_aggregate_logs($logs, 'module', $uid);
+        $aggregate = use_stats_aggregate_logs($logs, $input->from, $input->to);
         echo 'Logs aggregated. Mem state : '.memory_get_usage().'<br/>';
 
-        $weeklogs = use_stats_extract_logs($input->to - DAYSECS * 7, time(), $uid, $COURSE->id);
+        $weeklogs = use_stats_extract_logs($input->to - DAYSECS * 7, $input->to, $uid, $COURSE->id);
         echo 'Week Logs extracted. Mem state : '.memory_get_usage().'<br/>';
-        $weekaggregate = use_stats_aggregate_logs($weeklogs, 'module', $uid);
+        $weekaggregate = use_stats_aggregate_logs($weeklogs, $input->to - DAYSECS * 7, $input->to, '', true, true);
         echo 'Week Logs aggregated. Mem state : '.memory_get_usage().'<br/>';
 
         echo "Compiling for ".fullname($auser).'<br/>';

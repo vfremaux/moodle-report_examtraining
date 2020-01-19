@@ -1,0 +1,52 @@
+
+
+<!-- report_examtraining/selectorform -->
+<center>
+<form action="#" name="examtraining-selector" method="get">
+<input type="hidden" name="id" value="{{courseid}}" />
+<input id="examtraining-selector-fromstart" type="hidden" name="fromstart" value="" />
+<input type="hidden" name="view" value="{{view}}" />
+
+<div id="examtraining-selector">
+    <div class="formitem">
+        <div class="formlabel">
+                {{#str}}from{{/str}}
+        </div>
+
+        <div class="forminput">
+            {{{startdateselector}}}
+        </div>
+    </div>
+
+    <div class="formitem">
+        <div class="formlabel">
+            {{#str}}to{{/str}}
+        <div>
+
+        <div class="forminput">
+            {{{enddateselector}}}
+        <div>
+    </div>
+
+    {{#canseeother}}
+
+    <div class="formitem">
+        <div class="formlabel">
+            {{#str}}user{{/str}}
+        <div>
+
+        <div class="forminput">
+            {{{userselect}}}
+        <div>
+    </div>
+
+    <div class="formitem">
+        <div class="forminput">
+            <input type="submit" name="go_btn" value="{{#str}}update{{/str}}" />
+            &nbsp;
+            <input type="button" name="gofromstart_btn" value="{{#str}}updatefromcoursestart, report_examtraining{{/str}}" />
+    </div>
+</div>
+</form>
+</center>
+<!-- /report_examtraining/selectorform -->

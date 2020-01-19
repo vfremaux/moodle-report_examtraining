@@ -108,7 +108,7 @@ if ($output == 'html') {
     $html = '';
     $tablewidth = "100%";
 } else if ($output == 'pdf') {
-    require_once($CFG->dirroot.'/local/lib/html2pdf/moodlehtml2pdf.php');
+    require_once($CFG->dirroot.'/local/vflibs/html2pdf/moodlehtml2pdf.php');
 
     $pdf = new HTML2PDF('P', 'A4', 'fr', true, 'UTF-8', array(10, 15, 10, 20));
     $pdf->pdf->SetDisplayMode('fullpage');

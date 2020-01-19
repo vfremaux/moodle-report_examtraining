@@ -1,13 +1,12 @@
 
-
-
+<!-- report_examtraining/precompiletools -->
+<h2>{{backgroundercontrolstr}}</h2>
 <table width="90%">
-
 <tr valign="top">
-    <td><b>{{backgroundercontrolstr}}</b><br/>
+    <td width="60%">
         <p>{{backgroundercontroldescstr}}</p>
     </td>
-    <td>
+    <td width="40%">
         <form name="backgroundenable" action="#">
             <input type="hidden" name="view" value="compilationtools" />
             <input type="hidden" name="id" value="{{id}}" />
@@ -21,10 +20,13 @@
         </form>
     </td>
 </tr>
+</table>
 
+<h2>{{attemptstocatscompilationstr}}</h2>
+<table width="98%">
 <tr valign="top">
-    <td><b>{{attemptstocatscompilationstr}}</b></td>
-    <td>
+    <td width="60%"></td>
+    <td width="40%">
         <form name="simplecompile" action="{{{precompileurl}}}">
             <input type="hidden" name="id" value="{{id}}" />
             <table width="100%">
@@ -78,7 +80,8 @@
                             <option value="30">30 {{secondpluralstr}}</option>
                         </select>
                     </td>
-                </tr><tr valign="top">
+                </tr>
+                <tr valign="top">
                     <td>{{maxbulksstr}}</td>
                     <td>
                         <select name="maxruns">
@@ -99,12 +102,21 @@
                         </select>
                     </td>
                 </tr>
+                </tr>
+                <tr valign="top">
+                    <td>{{#str}}verbose, report_examtraining{{/str}}</td>
+                    <td>
+                        <input type="checkbox" value="1" name="output" />
+                    </td>
+                </tr>
                 <tr>
                     <td colspan="2">
                         <input type="submit" value="{{compilestatstocatsstr}}" />
                     </td>
             </table>
         </form>
+        <br/>
+        <div class="examtraining-buttonset">
         <form name="simplecompileunit" action="{{{precompileunityurl}}}">
             <input type="hidden" name="id" value="{{id}}" />
             <input type="text" name="ids" value="" />
@@ -114,12 +126,16 @@
             <input type="hidden" name="id" value="{{id}}" />
             <p><input type="submit" value="{{clearstatsdatastr}}" /></p>
         </form>
+        </div>
     </td>
 </tr>
+</table>
 
+<h2>{{userstatsandcoveragestr}}</h2>
+<table width="98%">
 <tr valign="top">
-    <td><b>{{userstatsandcoveragestr}}</b></td>
-    <td>
+    <td width="60%"></td>
+    <td width="40%">
         <form name="simplecompilecover" action="{{{precompileuserstatsurl}}}">
             <input type="hidden" name="id" value="{{id}}" />
             <table width="100%">
@@ -182,6 +198,12 @@
                         </select>
                     </td>
                 </tr>
+                <tr valign="top">
+                    <td>{{#str}}verbose, report_examtraining{{/str}}</td>
+                    <td>
+                        <input type="checkbox" value="1" name="output" />
+                    </td>
+                </tr>
                 <tr>
                     <td colspan="2">
                         <input type="submit" value="{{compileuserstr}}" />
@@ -194,10 +216,14 @@
         </form>
     </td>
 </tr>
+</table>
 
+<h2>{{usercoverageglobalstr}}</h2>
+
+<table width="98%">
 <tr valign="top">
-    <td><b>{{usercoverageglobalstr}}</b></td>
-    <td>
+    <td width="60%"></td>
+    <td width="40%">
         <form name="simplecompileusercover" action="{{{coveragecompilerurl}}}">
             <input type="hidden" name="id" value="{{id}}" />
             <table width="100%">
