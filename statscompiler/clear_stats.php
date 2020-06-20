@@ -50,8 +50,7 @@ $sql = "
         serieamatched = 0,
         seriecanswered = 0,
         seriecmatched = 0,
-        datecompiled = 0,
-        extraresults = NULL
+        datecompiled = 0
 ";
 
 $result = $DB->execute($sql);

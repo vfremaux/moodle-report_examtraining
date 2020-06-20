@@ -49,7 +49,8 @@ ini_set('memory_limit', '2048M');
  * Pre print the group selector
  * time and group period form
  */
-require($CFG->dirroot.'/report/examtraining/course_selector_form.html');
+$input->nousers = true;
+echo $renderer->selectorform($course, $view, $input);
 
 // Compute target group.
 

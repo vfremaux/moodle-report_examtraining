@@ -21,24 +21,36 @@
     <div class="formitem">
         <div class="formlabel">
             {{#str}}to{{/str}}
-        <div>
+        </div>
 
         <div class="forminput">
             {{{enddateselector}}}
-        <div>
+        </div>
     </div>
 
     {{#canseeother}}
 
+    {{#nousers}}
+    <div class="formitem">
+        <div class="forminput">
+            {{{groupmenu}}}
+        </div>
+    </div>
+    {{/nousers}}
+
+    {{^nousers}}
     <div class="formitem">
         <div class="formlabel">
             {{#str}}user{{/str}}
-        <div>
+        </div>
 
         <div class="forminput">
             {{{userselect}}}
-        <div>
+        </div>
     </div>
+    {{/nousers}}
+
+    {{/canseeother}}
 
     <div class="formitem">
         <div class="forminput">

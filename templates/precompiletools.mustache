@@ -1,10 +1,12 @@
 
 <!-- report_examtraining/precompiletools -->
-<h2>{{backgroundercontrolstr}}</h2>
+
+<h2>{{#str}}backgroundercontrol, report_examtraining{{/str}}</h2>
+
 <table width="90%">
 <tr valign="top">
     <td width="60%">
-        <p>{{backgroundercontroldescstr}}</p>
+        <p>{{#str}}backgroundercontrol_desc, report_examtraining{{/str}}</p>
     </td>
     <td width="40%">
         <form name="backgroundenable" action="#">
@@ -14,7 +16,7 @@
                 <tr>
                     <td colspan="2">
                         <input name="backgroundenabled" type="checkbox" value="1" {{{backgroundenabledchecked}}} />
-                        <input name="go_btn" type="submit" value="{{updatestr}}"  />
+                        <input name="go_btn" type="submit" value="{{#str}}update{{/str}}"  />
                     </td>
             </table>
         </form>
@@ -22,7 +24,7 @@
 </tr>
 </table>
 
-<h2>{{attemptstocatscompilationstr}}</h2>
+<h2>{{#str}}attemptstocatscompilation, report_examtraining{{/str}}</h2>
 <table width="98%">
 <tr valign="top">
     <td width="60%"></td>
@@ -30,31 +32,38 @@
         <form name="simplecompile" action="{{{precompileurl}}}">
             <input type="hidden" name="id" value="{{id}}" />
             <table width="100%">
-                    <tr valign="top">
-                    <td>{{recordsrangestr}}</td>
+                <tr valign="top">
+                    <td>{{#str}}recordsrange, report_examtraining{{/str}}</td>
                     <td>
                         <select name="range">
-                            <option value="1" selected="selected">{{onlynewstr}}</option>
-                            <option value="0">{{allrecordsstr}}</option>
-                        </select><br/>
-                        {{{fromifall}}}
-                        <input type="text" size="5" name="fromid" value="" />
-                    </td>
-                </tr>
-                    <tr valign="top">
-                    <td>{{catsstr}}</td>
-                    <td>
-                        <select name="withcats">
-                            <option value="0">{{withoutcatsstr}}</option>
-                            <option value="1" selected="selected">{{withcatsstr}}</option>
+                            <option value="1" selected="selected">{{#str}}onlynew, report_examtraining{{/str}}</option>
+                            <option value="0">{{#str}}allrecords, report_examtraining{{/str}}</option>
                         </select>
                     </td>
                 </tr>
+
                 <tr valign="top">
-                    <td>{{bulksizestr}}: {{{bulksizehelpicon}}}</td>
+                    <td>{{#str}}fromifall, report_examtraining{{/str}}</td>
+                    <td>
+                        <input type="text" size="5" name="fromid" value="" />
+                    </td>
+                </tr>
+
+                <tr valign="top">
+                    <td>{{#str}}cats, report_examtraining{{/str}}</td>
+                    <td>
+                        <select name="withcats">
+                            <option value="0">{{#str}}withoutcats, report_examtraining{{/str}}</option>
+                            <option value="1" selected="selected">{{#str}}withcats, report_examtraining{{/str}}</option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr valign="top">
+                    <td>{{#str}}bulksize, report_examtraining{{/str}}: {{{bulksizehelpicon}}}</td>
                     <td>
                         <select name="limit">
-                            <option value="0">{{nolimitstr}}</option>
+                            <option value="0">{{#str}}nolimit, report_examtraining{{/str}}</option>
                             <option value="10">10</option>
                             <option value="20">20</option>
                             <option value="50">50</option>
@@ -66,26 +75,32 @@
                             <option value="5000">5000</option>
                         </select>
                     </td>
-                </tr><tr valign="top">
-                    <td>{{timelimitstr}}</td>
+                </tr>
+
+                <tr valign="top">
+                    <td>{{#str}}timelimit, report_examtraining{{/str}}</td>
                     <td>
                         <select name="auto">
-                            <option value="0">{{manualstr}}</option>
-                            <option value="1">1 {{secondstr}}</option>
-                            <option value="2">2 {{secondpluralstr}}</option>
-                            <option value="5">5 {{secondpluralstr}}</option>
-                            <option value="8">8 {{secondpluralstr}}</option>
-                            <option value="10">10 {{secondpluralstr}}</option>
-                            <option value="15">15 {{secondpluralstr}}</option>
-                            <option value="30">30 {{secondpluralstr}}</option>
+                            <option value="0">{{#str}}manual, report_examtraining{{/str}}</option>
+                            <option value="1">1 {{#str}}second, report_examtraining{{/str}}</option>
+                            <option value="2">2 {{#str}}secondplural, report_examtraining{{/str}}</option>
+                            <option value="5">5 {{#str}}secondplural, report_examtraining{{/str}}</option>
+                            <option value="8">8 {{#str}}secondplural, report_examtraining{{/str}}</option>
+                            <option value="10">10 {{#str}}secondplural, report_examtraining{{/str}}</option>
+                            <option value="15">15 {{#str}}secondplural, report_examtraining{{/str}}</option>
+                            <option value="30">30 {{#str}}secondplural, report_examtraining{{/str}}</option>
+                            <option value="60">60 {{#str}}secondplural, report_examtraining{{/str}}</option>
+                            <option value="90">90 {{#str}}secondplural, report_examtraining{{/str}}</option>
+                            <option value="120">120 {{#str}}secondplural, report_examtraining{{/str}}</option>
                         </select>
                     </td>
                 </tr>
+
                 <tr valign="top">
-                    <td>{{maxbulksstr}}</td>
+                    <td>{{#str}}maxbulks, report_examtraining{{/str}}</td>
                     <td>
                         <select name="maxruns">
-                            <option value="0">{{nolimitstr}}</option>
+                            <option value="0">{{#str}}nolimit, report_examtraining{{/str}}</option>
                             <option value="5">5</option>
                             <option value="10">10</option>
                             <option value="20">20</option>
@@ -102,17 +117,20 @@
                         </select>
                     </td>
                 </tr>
-                </tr>
+
                 <tr valign="top">
                     <td>{{#str}}verbose, report_examtraining{{/str}}</td>
                     <td>
                         <input type="checkbox" value="1" name="output" />
                     </td>
                 </tr>
+
                 <tr>
                     <td colspan="2">
-                        <input type="submit" value="{{compilestatstocatsstr}}" />
+                        <input type="submit" value="{{#str}}compilestatstocats, report_examtraining{{/str}}" />
                     </td>
+                </tr>
+
             </table>
         </form>
         <br/>
@@ -120,18 +138,18 @@
         <form name="simplecompileunit" action="{{{precompileunityurl}}}">
             <input type="hidden" name="id" value="{{id}}" />
             <input type="text" name="ids" value="" />
-            <input type="submit" value="{{compilesomestr}}" />
+            <input type="submit" value="{{#str}}compilesome, report_examtraining{{/str}}" />
         </form>
         <form name="simplecompileclear" action="{{{clearstateurl}}}">
             <input type="hidden" name="id" value="{{id}}" />
-            <p><input type="submit" value="{{clearstatsdatastr}}" /></p>
+            <p><input type="submit" value="{{#str}}clearstatsdata, report_examtraining{{/str}}" /></p>
         </form>
         </div>
     </td>
 </tr>
 </table>
 
-<h2>{{userstatsandcoveragestr}}</h2>
+<h2>{{#str}}userstatsandcoverage, report_examtraining{{/str}}</h2>
 <table width="98%">
 <tr valign="top">
     <td width="60%"></td>
@@ -140,19 +158,19 @@
             <input type="hidden" name="id" value="{{id}}" />
             <table width="100%">
                     <tr valign="top">
-                        <td>{{recordsrangestr}}</td>
+                        <td>{{#str}}recordsrange, report_examtraining{{/str}}</td>
                         <td>
                             <select name="range">
-                                <option value="1" selected="selected">{{onlynewstr}}</option>
-                                <option value="0">{{allrecordstr}}</option>
+                                <option value="1" selected="selected">{{#str}}onlynew, report_examtraining{{/str}}</option>
+                                <option value="0">{{#str}}allrecords, report_examtraining{{/str}}</option>
                             </select>
                         </td>
                     </tr>
                     <tr valign="top">
-                    <td>{{limitsstr}}</td>
+                    <td>{{#str}}bulksize, report_examtraining{{/str}}</td>
                     <td>
                         <select name="limit">
-                            <option value="0">{{nolimitstr}}</option>
+                            <option value="0">{{#str}}nolimit, report_examtraining{{/str}}</option>
                             <option value="10">10</option>
                             <option value="20">20</option>
                             <option value="50">50</option>
@@ -165,23 +183,26 @@
                         </select>
                     </td>
                 </tr><tr valign="top">
-                    <td>{{timelimitstr}}</td>
+                    <td>{{#str}}timelimit, report_examtraining{{/str}}</td>
                     <td>
                         <select name="auto">
-                            <option value="0">{{manualstr}}</option>
-                            <option value="2">2 {{secondstr}}</option>
-                            <option value="5">5 {{secondpluralstr}}</option>
-                            <option value="8">8 {{secondpluralstr}}</option>
-                            <option value="10">10 {{secondpluralstr}}</option>
-                            <option value="15">15 {{secondpluralstr}}</option>
-                            <option value="30">30 {{secondpluralstr}}</option>
+                            <option value="0">{{#str}}manual, report_examtraining{{/str}}</option>
+                            <option value="2">2 {{#str}}second, report_examtraining{{/str}}</option>
+                            <option value="5">5 {{#str}}secondplural, report_examtraining{{/str}}</option>
+                            <option value="8">8 {{#str}}secondplural, report_examtraining{{/str}}</option>
+                            <option value="10">10 {{#str}}secondplural, report_examtraining{{/str}}</option>
+                            <option value="15">15 {{#str}}secondplural, report_examtraining{{/str}}</option>
+                            <option value="30">30 {{#str}}secondplural, report_examtraining{{/str}}</option>
+                            <option value="60">60 {{#str}}secondplural, report_examtraining{{/str}}</option>
+                            <option value="90">90 {{#str}}secondplural, report_examtraining{{/str}}</option>
+                            <option value="120">120 {{#str}}secondplural, report_examtraining{{/str}}</option>
                         </select>
                     </td>
                 </tr><tr valign="top">
-                    <td>{{maxbulksstr}}</td>
+                    <td>{{#str}}maxbulks, report_examtraining{{/str}}</td>
                     <td>
                         <select name="maxruns">
-                            <option value="0">{{nolimitstr}}</option>
+                            <option value="0">{{#str}}nolimit, report_examtraining{{/str}}</option>
                             <option value="5">5</option>
                             <option value="10">10</option>
                             <option value="20">20</option>
@@ -206,19 +227,19 @@
                 </tr>
                 <tr>
                     <td colspan="2">
-                        <input type="submit" value="{{compileuserstr}}" />
+                        <input type="submit" value="{{#str}}compileuser, report_examtraining{{/str}}" />
                     </td>
             </table>
         </form>
         <form name="simplecompilecoverclear" action="{{{compilerstatsurl}}}">
             <input type="hidden" name="id" value="{{id}}" />
-            <p><input type="submit" value="{{clearuserstatsstr}}" /></p>
+            <p><input type="submit" value="{{#str}}clearuserstats, report_examtraining{{/str}}" /></p>
         </form>
     </td>
 </tr>
 </table>
 
-<h2>{{usercoverageglobalstr}}</h2>
+<h2>{{#str}}usercoverageglobal, report_examtraining{{/str}}</h2>
 
 <table width="98%">
 <tr valign="top">
@@ -227,9 +248,15 @@
         <form name="simplecompileusercover" action="{{{coveragecompilerurl}}}">
             <input type="hidden" name="id" value="{{id}}" />
             <table width="100%">
+                <tr valign="top">
+                    <td>{{#str}}verbose, report_examtraining{{/str}}</td>
+                    <td>
+                        <input type="checkbox" value="1" name="output" />
+                    </td>
+                </tr>
                 <tr>
                     <td colspan="2">
-                        <input type="submit" value="{{compilecoverageindexstr}}" />
+                        <input type="submit" value="{{#str}}compilecoverageindex, report_examtraining{{/str}}" />
                     </td>
             </table>
         </form>

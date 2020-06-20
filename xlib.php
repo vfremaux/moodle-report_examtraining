@@ -30,9 +30,18 @@ function report_examtraining_register_attempt($attempt) {
     $params = ['uniqueid' => $uniqueid];
     if (empty($DB->get_record('report_examtraining', $params))) {
 
-        $rec = new Stdclass;
+        // extract qcount from attempt layout :
+        $slots = explode(',', $attempt->layout);
+        $q = 0;
+        foreach ($slots as $s) {
+            if ($s != 0) {
+                $q++;
+            }
+        }
+
+        $rec = new StdClass;
         $rec->uniqueid = $uniqueid;
-        $rec->qcount = 0;
+        $rec->qcount = $q;
         $rec->serieaanswered = 0;
         $rec->seriecanswered = 0;
         $rec->serieamatched = 0;

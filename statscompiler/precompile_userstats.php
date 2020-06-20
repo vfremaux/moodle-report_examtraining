@@ -27,14 +27,23 @@ require('../../../config.php');
 
 require_once($CFG->dirroot.'/report/examtraining/statscompilelib.php');
 
-$id = optional_param('id', 0, PARAM_INT);
-$new = optional_param('range', 0, PARAM_INT);
+$id = required_param('id', PARAM_INT); // The current courseid
 
-$context = context_system::instance();
-$url = new moodle_url('/report/examtraining/statscompiler/precompile_userstats.php', array('id' => $id));
+$options['new'] = optional_param('range', 0, PARAM_INT); // Compile only new attempts or recompile all.
+$options['limit'] = optional_param('limit', 0, PARAM_INT); // Calculation slot size.
+$options['auto'] = optional_param('auto', 0, PARAM_INT); // Are we in autorun of compilation or manual trigger ? give max processing time.
+$options['maxruns'] = optional_param('maxruns', 0, PARAM_INT); // Max number of runs.
+$options['running'] = optional_param('running', 0, PARAM_INT); // Force continue running signal
+$options['output'] = optional_param('output', 0, PARAM_INT);
+
+$params = $options;
+$params['id'] = $id;
+$url = new moodle_url('/report/examtraining/statscompiler/precompile_userstats.php', $params);
 
 // Security.
 
+$context = context_system::instance();
+require_login();
 require_capability('moodle/site:config', $context);
 
 $PAGE->set_url($url);
@@ -43,7 +52,9 @@ $PAGE->set_pagelayout('admin');
 
 echo $OUTPUT->header();
 
-if (!userquiz_precompile_results($id, 'userquiz_precompile_userstats_worker', false, $new)) {
+echo $OUTPUT->heading(get_string('compileuserstats', 'report_examtraining'));
+
+if (!userquiz_precompile_results($id, 'userquiz_precompile_userstats_worker', $options)) {
     echo $OUTPUT->notification("No more results to compile", 'notifysuccess');
 } else {
     echo $OUTPUT->notification("Still results to compile");

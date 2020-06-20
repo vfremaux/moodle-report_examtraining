@@ -32,8 +32,14 @@ require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 @raise_memory_limit('512M');
 
 $id = required_param('id', PARAM_INT); // The course id.
+$view = optional_param('view', 'user', PARAM_TEXT); // The course id.
+$userid = optional_param('userid', '', PARAM_INT); // The course id.
 
-$url = new moodle_url('/report/examtraining/index.php', array('id' => $id));
+$params = array('id' => $id, 'view' => $view);
+if (!empty($userid)) {
+    $params['userid'] = $userid;
+}
+$url = new moodle_url('/report/examtraining/index.php', $params);
 $PAGE->set_url($url);
 
 $context = context_course::instance($id);

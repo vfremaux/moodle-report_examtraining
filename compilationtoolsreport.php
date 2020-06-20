@@ -55,38 +55,8 @@ $template->precompileurl = new moodle_url('/report/examtraining/statscompiler/pr
 $template->coveragecompilerurl = new moodle_url('/report/examtraining/statscompiler/precompile_coverages.php');
 $template->clearstateurl = new moodle_url('/report/examtraining/statscompiler/clear_stats.php');
 
-$template->backgroundercontrolstr = get_string('backgroundercontrol', 'report_examtraining');
-$template->backgroundercontroldescstr = get_string('backgroundercontrol_desc', 'report_examtraining');
-$template->updatestr = get_string('update');
-$template->fromifall = get_string('fromifall', 'report_examtraining');
-
-$template->attemptstocatscompilationstr = get_string('attemptstocatscompilation', 'report_examtraining');
-$template->recordsrangestr = get_string('recordsrange', 'report_examtraining');
-$template->onlynewstr = get_string('onlynew', 'report_examtraining');
-$template->allrecordsstr = get_string('allrecords', 'report_examtraining');
-$template->catsstr = get_string('cats', 'report_examtraining');
-$template->withcatsstr = get_string('withcats', 'report_examtraining');
-$template->withoutcatsstr = get_string('withoutcats', 'report_examtraining');
-$template->bulksizestr = get_string('bulksize', 'report_examtraining');
 $template->bulksizehelpicon = $OUTPUT->help_icon('bulksize', 'report_examtraining');
-$template->nolimitstr = get_string('nolimit', 'report_examtraining');
-$template->autoreleasestr = get_string('autorelease', 'report_examtraining');
-$template->manualstr = get_string('manual', 'report_examtraining');
-$template->secondstr = get_string('second', 'report_examtraining');
-$template->secondpluralstr = get_string('secondplural', 'report_examtraining');
-$template->maxbulksstr = get_string('maxbulks', 'report_examtraining');
 $template->maxbulkshelpicon = $OUTPUT->help_icon('maxbulks', 'report_examtraining');
-
-$template->compilestatstocatsstr = get_string('compilestatstocats', 'report_examtraining');
-$template->compilesomestr = get_string('compilesome', 'report_examtraining');
-$template->clearstatsdatastr = get_string('clearstatsdata', 'report_examtraining');
-$template->userstatsandcoveragestr = get_string('userstatsandcoverage', 'report_examtraining');
-$template->compileuserstr = get_string('compileusers', 'report_examtraining');
-$template->clearuserstatsstr = get_string('clearuserstats', 'report_examtraining');
-
-$template->usercoverageglobalstr = get_string('usercoverageglobal', 'report_examtraining');
-
-$template->compilecoverageindexstr = get_string('compilecoverageindex', 'report_examtraining');
 
 echo $OUTPUT->render_from_template('report_examtraining/precompiletools', $template);
 

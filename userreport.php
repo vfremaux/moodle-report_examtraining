@@ -71,7 +71,7 @@ foreach ($aggregate as $module => $classarray) {
 if ($output == 'html') {
     // Time period form.
 
-    echo $renderer->selectorform();
+    echo $renderer->selectorform($course, $view, $input);
 
     $htmlrenderer = $PAGE->get_renderer('report_examtraining', 'html');
 
@@ -84,7 +84,8 @@ if ($output == 'html') {
     echo $htmlrenderer->exams($userid, $input->from, $input->to);
     echo $htmlrenderer->assiduity2($userid, $input->from, $input->to, $view);
     echo $htmlrenderer->modules($userid, $input->from, $input->to);
-    echo $htmlrenderer->radar($userid, $input->from, $input->to);
+    $title = get_string('mastering', 'report_examtraining');
+    echo $htmlrenderer->radar($userid, $input->from, $input->to, $title);
 
 } else {
 

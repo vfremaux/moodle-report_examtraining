@@ -35,6 +35,7 @@ require_once($CFG->dirroot.'/report/examtraining/reportasyncprecompilelib.php');
 require_once($CFG->dirroot.'/report/examtraining/classes/output/rawrenderer.php');
 
 $input = examtraining_reports_input($course);
+$groupid = optional_param('group', false, PARAM_INT);
 
 $page = 20;
 
@@ -45,7 +46,8 @@ $page = 20;
  * Pre print the group selector
  * time and group period form
  */
-require_once($CFG->dirroot.'/report/examtraining/courseraw_selector_form.html');
+$input->nousers = true;
+echo $renderer->selectorform($course, $view, $input);
 
 $rawrenderer = $PAGE->get_renderer('report_examtraining', 'raw');
 

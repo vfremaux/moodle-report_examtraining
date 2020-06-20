@@ -66,7 +66,7 @@ class jqplot_renderer {
 
         $template = new StdClass();
 
-        $template->xticks = implode(",", $ticks);
+        $template->xticks = "'".implode("','", $ticks)."'";
         $template->htmlid = $htmlid.'_'.$instance;
 
         $template->title = addslashes($title);

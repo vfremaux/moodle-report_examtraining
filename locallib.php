@@ -160,6 +160,10 @@ function examtraining_reports_init_worksheet($userid, &$xlsformats, &$workbook, 
 /**
  * get participating objects to this training context, knowing the course.
  * We have to fetch the userquiz_monitor block configuration matching this course.
+ * There should be only one per course.
+ * @params int $courseid the course.
+ * @param bool $passthru blocking call if true and block does not exist.
+ * @return the userquiz monitor config in the course.
  */
 function examtraining_get_context($courseid = 0, $passthru = false) {
     global $COURSE, $DB;
@@ -168,7 +172,7 @@ function examtraining_get_context($courseid = 0, $passthru = false) {
         $courseid = $COURSE->id;
     }
 
-    $coursecontext = context_course::instance($COURSE->id);
+    $coursecontext = context_course::instance($courseid);
     $params = array('blockname' => 'userquiz_monitor', 'parentcontextid' => $coursecontext->id);
     if (!$instance = $DB->get_record('block_instances', $params)) {
         if (!$passthru) {
@@ -215,10 +219,24 @@ function examtraining_get_module_count($userid, $from, $to) {
     global $DB;
 
     $examcontext = examtraining_get_context();
-    $testquizzes = implode("','", $examcontext->trainingquizzes);
+    list($insql, $inparams) = $DB->get_in_or_equal($examcontext->trainingquizzes);
 
-    $fromclause = ($from) ? " AND qa.timefinish > $from " : '';
-    $toclause = ($to) ? " AND qa.timefinish < $to " : '';
+    $params = [$userid];
+    foreach ($inparams as $p) {
+        $params[] = $p;
+    }
+
+    $fromclause = '';
+    if (!empty($from)) {
+        $fromclause = ' AND qa.timefinish > ? ';
+        $params[] = $from;
+    }
+
+    $toclause = '';
+    if (empty($to)) {
+        $toclause = ' AND qa.timefinish < ? ';
+        $params[] = $to;
+    }
 
     // Compute attempts "per module size".
 
@@ -234,16 +252,16 @@ function examtraining_get_module_count($userid, $from, $to) {
             qa.uniqueid = ua.uniqueid
         WHERE
             userid = ? AND
-            quiz IN ('$testquizzes ')
-            $fromclause
-            $toclause
+            quiz {$insql}
+            {$fromclause}
+            {$toclause}
         GROUP BY
             qcount
         ORDER BY
             qcount
     ";
 
-    return $DB->get_records_sql_menu($sql, array($userid));
+    return $DB->get_records_sql_menu($sql, $params);
 }
 
 /**
@@ -281,12 +299,9 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
     }
 
     // Category cache.
-    if (empty($questions)) {
-        $questions = $DB->get_records('question', array(), 'id', 'id,defaultgrade,category');
-    }
-    if (empty($qcategories)) {
-        $qcategories = get_records('question_categories', array(), 'id', 'id,parent');
-    }
+    $datacache = \report_examtraining\datacache::instance();
+    $datacache->set_questionfields('id, defaultmark, category');
+    $datacache->set_categoryfields('id, parent');
 
     // Prefetch categories structure.
 
@@ -311,12 +326,12 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
 
     if ($attempts) {
         foreach ($attempts as $attempt) {
-            if ($statesrs = get_all_user_records($attempt->uniqueid, $userid, null, true)) {
+            if ($statesrs = block_userquiz_monitor_get_all_user_records($attempt->uniqueid, $userid, null, true)) {
                 if ($statesrs->valid()) {
                     foreach ($statesrs as $state) {
 
                         // Compute answers in states against question answers determining question type.
-                        if (!$question = &$questions[$state->question]) {
+                        if (!$question = $datacache->get_question($state->question)) {
                             continue;
                         }
                         $cattype = ($question->defaultmark == 1) ? 'A' : 'C';
@@ -329,7 +344,7 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
                         $cmt = "count_matched";
 
                         // Aggregate upper category till rootcategory.
-                        $currentcat = &$qcategories[$question->category];
+                        $currentcat = $datacache->get_category($question->category);
 
                         if ($state->grade > 0) {
                             @$results->attempts[$attempt->id]->{$cm}++;
@@ -357,7 +372,7 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
                             }
                             $results->categories[$currentcat->id]->{$cp}++;
                             $results->categories[$currentcat->id]->{$cpt}++;
-                            $currentcat = &$qcategories[$currentcat->parent];
+                            $currentcat = $datacache->get_category($currentcat->parent);
                         } while ($currentcat && ($previouscatid != $examcontext->rootcategory));
                     }
                 }
@@ -499,7 +514,7 @@ function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0
  */
 function examtraining_compute_global_results($userid, $from, $to) {
     global $USER, $CFG;
-    global $questions;
+    global $QUESTIONSCACHE;
 
     // Init structure.
 
@@ -510,8 +525,8 @@ function examtraining_compute_global_results($userid, $from, $to) {
     $examquizzeslist = str_replace(',', "','", $examcontext->examquizzes);
 
     $results = new StdClass;
-    if (!isset($questions)) {
-        $questions = $DB->get_records('question', array(), 'id,defaultgrade,category');
+    if (!isset($QUESTIONSCACHE)) {
+        $QUESTIONSCACHE = [];
     }
 
     $examselect = "

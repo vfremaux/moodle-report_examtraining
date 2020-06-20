@@ -29,7 +29,7 @@ require_once($CFG->dirroot.'/report/examtraining/statscompilelib.php');
 $id = optional_param('id', 0, PARAM_INT);
 
 $context = context_system::instance();
-$url = new moodle_url('/report/examtraining/statscompiler/precompile_userstats.php', array('id' => $id));
+$url = new moodle_url('/report/examtraining/statscompiler/precompile_coverages.php', array('id' => $id));
 
 // Security.
 
@@ -41,7 +41,9 @@ $PAGE->set_pagelayout('admin');
 
 echo $OUTPUT->header();
 
-userquiz_precompile_coverage_ratios();
+echo $OUTPUT->heading(get_string('compilecoverageindex', 'report_examtraining'));
+
+userquiz_precompile_coverage_ratios($id);
 
 if ($id) {
     $params = new moodle_url('/report/examtraining/index.php', array('view' => 'compilationtools', 'id' => $id));

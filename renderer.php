@@ -28,50 +28,67 @@ require_once($CFG->dirroot.'/blocks/userquiz_monitor/xlib.php');
 class report_examtraining_renderer extends plugin_renderer_base {
 
     public function selectorform($course, $view, $input) {
+        global $USER;
 
         $uqmanager = get_block_userquiz_monitor_manager();
 
         $context = context_course::instance($course->id);
 
         $template = new Stdclass;
+        $template->view = $view;
+        $template->courseid = $course->id;
+        $template->canseeother = false;
+        $template->nousers = $input->nousers;
 
-        $template->startfdateselector = $renderer->date_selector('startday', 'startmonth', 'startyear', $input->from, false, 2014, 2020);
-        $template->enddateselector = $renderer->date_selector('endday', 'endmonth', 'endyear', $input->to, false, 2014, 2020);
+        $template->startdateselector = $this->date_selector('startday', 'startmonth', 'startyear', $input->from, false, 2014, 2020);
+        $template->enddateselector = $this->date_selector('endday', 'endmonth', 'endyear', $input->to, false, 2014, 2020);
+
+        $userid = optional_param('userid', $USER->id, PARAM_INT);
 
         if (has_capability('report/examtraining:viewall', $context)) {
 
-            $mygroupings = groups_get_user_groups($course->id);
-            if (!empty($mygroupings) &&
-                    !has_capability('moodle/site:accessallgroups', $context)) {
+            $template->canseeother = true;
 
-                $mygroups = array();
-                foreach ($mygroupings as $grouping) {
-                    $mygroups = $mygroups + $grouping;
+            if (empty($input->nousers)) {
+                // User selector.
+                $mygroupings = groups_get_user_groups($course->id, $userid);
+                if (!empty($mygroupings) &&
+                        !has_capability('moodle/site:accessallgroups', $context)) {
+
+                    $mygroups = array();
+                    foreach ($mygroupings as $grouping) {
+                        $mygroups = $mygroups + $grouping;
+                    }
+
+                    $users = array();
+
+                    // Get all users in my groups.
+                    foreach ($mygroups as $mygroupid) {
+                        $members = groups_get_members($mygroupid, 'u.id, firstname, lastname');
+                        if ($members) {
+                            $users = $users + $members;
+                        }
+                    }
+                } else {
+                    $users = get_enrolled_users($context);
                 }
 
-                $users = array();
-
-                // Get all users in my groups.
-                foreach ($mygroups as $mygroupid) {
-                    $members = groups_get_members($mygroupid, 'u.id, firstname, lastname');
-                    if ($members) {
-                        $users = $users + $members;
+                $useroptions = array();
+                foreach ($users as $user) {
+                    $activity = $uqmanager->count_user_attempts($user->id); // Count finished attempts.
+                    $useroptions[$user->id] = fullname($user);
+                    if ($activity) {
+                        $useroptions[$user->id] .= " ($activity)";
                     }
                 }
+                $template->userselect = html_writer::select($useroptions, 'userid', $userid, ['' => 'choosedots']);
             } else {
-                $users = get_enrolled_users($context);
+                $urlroot = new moodle_url('/report/examtraining/index.php', ['view' => $view, 'id' => $course->id]);
+                $template->groupmenu = groups_print_course_menu($course, $urlroot, true);
             }
-
-            $useroptions = array();
-            foreach ($users as $user) {
-                $activity = $uqmanager->count_user_attempts($user->id); // Count finished attempts.
-                $useroptions[$user->id] = fullname($user);
-                if ($activity) {
-                    $useroptions[$user->id] .= " ($activity)";
-                }
-            }
-            $template->userselect = html_writer::select($useroptions, 'userid', $userid);
         }
+
+        return $this->output->render_from_template('report_examtraining/selectorform', $template);
     }
 
     /**

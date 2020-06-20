@@ -36,6 +36,7 @@ $input->num = optional_param('num', 0, PARAM_INT);
 $input->orderby = optional_param('orderby', '', PARAM_TEXT);
 $input->subview = optional_param('subview', '', PARAM_TEXT);
 $input->offset = optional_param('offset', 0, PARAM_INT);
+$input->groupid = optional_param('groupid', 0, PARAM_INT);
 $pagesize = 20;
 
 // TODO : secure groupid access depending on proper capabilities.
@@ -43,7 +44,8 @@ $pagesize = 20;
 // Pre print the group selector.
 if ($output == 'html') {
     // Time and group period form.
-    include($CFG->dirroot.'/report/examtraining/course_selector_form.html');
+    $input->nousers = true; // Tells its a group selector.
+    echo $renderer->selectorform($course, $view, $input);
 }
 
 // Compute target group.
