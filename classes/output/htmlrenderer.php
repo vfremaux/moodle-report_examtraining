@@ -33,90 +33,116 @@ use \context_course;
 
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/report/examtraining/classes/jqplotter.php');
+require_once($CFG->dirroot.'/local/vflibs/jqplotlib.php');
 
 class html_renderer extends \plugin_renderer_base {
 
     /**
-     * a raster for html printing of a report structure.
+     * a raster for html printing an assiduity timeline.
      *
      * @param string ref $str a buffer for accumulating output
      * @param object $structure a course structure object.
      */
     public function assiduity2($userid, $from, $to, $view) {
-        global $DB, $COURSE;
+        global $DB, $COURSE, $OUTPUT;
 
-        $pagesize = 30;
-        $offset = optional_param('assiduityoffset', 0, PARAM_INT);
+        $pagesize = 31;
 
         $modulestr = get_string('assiduity', 'report_examtraining');
         $attemptsstr = get_string('attempts', 'report_examtraining');
 
         $examcontext = examtraining_get_context();
 
-        $fromclause = ($from) ? " AND qa.timefinish > $from " : '';
-        $toclause = ($to) ? " AND qa.timefinish < $to " : '';
+        $params = [$userid];
+        $fromclause = '';
+        if (!empty($form)) {
+            $fromclause = ' AND qa.timefinish > ? ';
+            $params[] = $from;
+        }
+
+        $toclause = '';
+        if (!empty($to)) {
+            $toclause = ' AND qa.timefinish < ? ';
+            $params[] = $to;
+        }
 
         // Compute attempts "per day".
 
         $sql = "
             SELECT
                 UNIX_TIMESTAMP(DATE(FROM_UNIXTIME(timefinish))) as daystamp,
-                COUNT(id) as acount
+                COUNT(qa.id) as acount
             FROM
-                {quiz_attempts} qa
+                {quiz_attempts} qa,
+                {report_examtraining} ua
             WHERE
+                qa.uniqueid = ua.uniqueid AND
                 userid = ?
-                $fromclause
-                $toclause
+                {$fromclause}
+                {$toclause}
             GROUP BY
                 DAY(FROM_UNIXTIME(timefinish))
+            HAVING
+                daystamp != 0
             ORDER BY
                 daystamp
         ";
 
-        $allrecs = count($DB->get_records_sql($sql, array($userid)));
+        $assiduity = $DB->get_records_sql($sql, $params);
 
-        if ($assiduity = $DB->get_records_sql_menu($sql, array($userid), $offset, $pagesize)) {
+        $template = new Stdclass;
 
-            $dateticks = array_keys($assiduity);
-
-            $firstdate = $dateticks[0];
-            $lastdate = $dateticks[count($dateticks) - 1];
-
-            // Rebuild an unholed array for bargraphs.
-            $stamp = $firstdate;
-            $i = 0;
-            $attemptstable = array();
-            while ($stamp < $lastdate && ($i < 500)) {
-                $date = date('Y-m-d', $stamp);
-                if (!empty($date)) {
-                    $attemptstable[$date] = 0 + @$assiduity[$stamp];
-                    $stamp += DAYSECS;
-                    $i++;
-                }
-            }
-
-            $label = get_string('assiduity', 'report_examtraining');
-            $jqplotter = new jqplot_renderer();
-            $template = new StdClass;
-            $template->title = $label;
-            if ($allrecs > $pagesize) {
-                $template->paged = true;
-                $template->previousiconurl = $this->output->image_url('previous', 'report_examtraining');
-                $template->nexticonurl = $this->output->image_url('next', 'report_examtraining');
-                if ($offset + $pagesize < $allrecs) {
-                    $params = array('id' => $COURSE->id, 'view' => $view, 'assiduityoffset' => $offset + $pagesize);
-                    $template->nexturl = new moodle_url('/report/examtraining/index.php', $params);
-                }
-                if ($offset > 0) {
-                    $params = array('id' => $COURSE->id, 'view' => $view, 'assiduityoffset' => $offset - $pagesize);
-                    $template->previousurl = new moodle_url('/report/examtraining/index.php', $params);
-                }
-            }
-            $template->plot = $jqplotter->assiduity_bargraph($attemptstable, array_keys($attemptstable), $label, 'assiduity');
-
+        if (empty($assiduity)) {
+            $template->hasattempts = false;
+            $template->noattemptsnotification = $OUTPUT->notification(get_string('noattempts', 'report_examtraining'));
             return $this->output->render_from_template('report_examtraining/assiduitygraph', $template);
         }
+        $template->hasattempts = true;
+
+        $stamps = array_keys($assiduity);
+        $firstdate = $stamps[0];
+        $lastdate = array_pop($stamps);
+
+        $dateticks = array_keys($assiduity);
+
+        $firstdate = $dateticks[0];
+        $lastdate = $dateticks[count($dateticks) - 1];
+
+        $viewstart = optional_param('assiduityfrom', 0, PARAM_INT);
+
+        // Rebuild an unholed array for bargraphs.
+        $start = $stamp = max($firstdate, $viewstart);
+        $i = 0;
+        $attemptstable = [];
+        while ($i < $pagesize) {
+            $date = strftime('%Y/%m/%d', (int)$stamp);
+            if (array_key_exists($stamp, $assiduity)) {
+                $attemptstable[$date] = $assiduity[$stamp]->acount;
+            } else {
+                $attemptstable[$date] = 0;
+            }
+            $stamp += DAYSECS;
+            $i++;
+        }
+
+        if ($lastdate > $stamp || $start > $firstdate) {
+            $template->paged = true;
+            $template->previousiconurl = $this->output->pix_icon('previous', get_string('previous', 'report_examtraining'), 'report_examtraining');
+            $template->nexticonurl = $this->output->pix_icon('next', get_string('next', 'report_examtraining'), 'report_examtraining');
+            if ($lastdate > $stamp) {
+                $params = array('id' => $COURSE->id, 'view' => $view, 'assiduityfrom' => $start + $pagesize * DAYSECS);
+                $template->nexturl = new moodle_url('/report/examtraining/index.php', $params);
+            }
+            if ($start > $firstdate) {
+                $params = array('id' => $COURSE->id, 'view' => $view, 'assiduityoffset' => $start - $pagesize * DAYSECS);
+                $template->previousurl = new moodle_url('/report/examtraining/index.php', $params);
+            }
+        }
+        $jqplotter = new jqplot_renderer();
+        $label = get_string('assiduity', 'report_examtraining');
+        $template->plot = $jqplotter->assiduity_bargraph($attemptstable, array_keys($attemptstable), $label, 'assiduity');
+
+        return $this->output->render_from_template('report_examtraining/assiduitygraph', $template);
     }
 
     /**
@@ -142,10 +168,12 @@ class html_renderer extends \plugin_renderer_base {
         $sql = "
             SELECT
                 timefinish * 1000,
-                COUNT(id) as acount
+                COUNT(qa.id) as acount
             FROM
-                {quiz_attempts} qa
+                {quiz_attempts} qa,
+                {report_examtraining} ua
             WHERE
+                qa.uniqueid = ua.uniqueid AND
                 userid = ?
                 $fromclause
                 $toclause
@@ -200,7 +228,7 @@ class html_renderer extends \plugin_renderer_base {
         if (!empty($usergroups)) {
             foreach ($usergroups as $group) {
                 $str = $group->name;
-                if ($group->id == get_current_group($courseid)) {
+                if ($group->id == groups_get_course_group($courseid)) {
                     $str = "<b>$str</b>";
                 }
                 $groupnames[] = $str;
@@ -223,8 +251,11 @@ class html_renderer extends \plugin_renderer_base {
     /**
      * a raster for html printing of a report structure.
      *
-     * @param string ref $str a buffer for accumulating output
-     * @param object $structure a course structure object.
+     * @param int $userid the user for wich the report needs to be computed
+     * @param int $from the from start date
+     * @param int $to the to start date
+     * @param object $height graph height
+     * @param arrayref $stats the overal stats calcualted internally and provided for further use.
      */
     public function trainings_globals($userid, $from, $to, $height = 'large', &$stats) {
         global $CFG;
@@ -286,15 +317,25 @@ class html_renderer extends \plugin_renderer_base {
      * @param object $structure a course structure object.
      */
     public function modules($userid, $from, $to) {
+        global $OUTPUT;
 
         $modulestr = get_string('seriesize', 'report_examtraining');
         $attemptsstr = get_string('series', 'report_examtraining');
 
         $modulecount = examtraining_get_module_count($userid, $from, $to);
 
-        $jqplotter = new jqplot_renderer();
-        $str = $jqplotter->modules_bargraph($modulecount, get_string('permodule', 'report_examtraining'), 'permodule');
-        return $str;
+        $template = new StdClass;
+
+        $template->hasattempts = true;
+        if ($modulecount == 0) {
+            $template->hasattempts = false;
+            $template->noattemptsnotification = $OUTPUT->notification(get_string('noattempts', 'report_examtraining'));
+        } else {
+            $jqplotter = new jqplot_renderer();
+            $template->modules = $jqplotter->modules_bargraph($modulecount, get_string('permodule', 'report_examtraining'), 'permodule');
+        }
+
+        return $OUTPUT->render_from_template('report_examtraining/permodules', $template);
     }
 
     /**
@@ -302,7 +343,7 @@ class html_renderer extends \plugin_renderer_base {
      *
      * @param array $data 12 categories mastering array
      */
-    public function radar($userid, $from, $to) {
+    public function radar($userid, $from, $to, $title = '') {
         global $DB;
 
         $examcontext = examtraining_get_context();
@@ -313,8 +354,18 @@ class html_renderer extends \plugin_renderer_base {
         $quizzes = implode(',', $examcontext->trainingquizzes);
         $matched = userquiz_get_user_subcats($userid, $quizzes, $from, $to);
 
-        // For each root cat, calculate the hitratio.
+        debug_print_for_user('admin', $examcontext->rootcategory);
+        debug_print_for_user('admin', $subcatdata);
+
+        // For each root cat, calculate the hitratio from subcats.
         $maincats = $DB->get_records('question_categories', array('parent' => $examcontext->rootcategory), 'sortorder', 'id, name');
+
+        foreach ($matched as $catid => $catcounters) {
+            if (in_array($catid, array_keys($maincats))) {
+                
+            }
+        }
+
         $radardata = array();
         $radarheaders = array();
         if ($matched) {
@@ -331,8 +382,11 @@ class html_renderer extends \plugin_renderer_base {
         }
 
         $template = new StdClass;
+        if (!empty($title)) {
+            $template->title = $title;
+        }
 
-        $template->heading = $this->output->heading(get_string('mastering', 'report_examtraining'));
+        debug_print_for_user('admin', $radardata);
 
         $radararg = implode(',', $radardata);
         $headersarg = implode(',', $radarheaders);
@@ -373,7 +427,7 @@ class html_renderer extends \plugin_renderer_base {
         $statsrawarr = array_values($stats);
         foreach ($statsrawarr as $stat) {
             $firstdayinyear = mktime(0, 0, 0, 1, 1, $statsrawarr[0]->year);
-            $statdate = ($firstdayinyear + $stat->week * 7 * DAYSECS) * 1000;
+            $statdate = strftime('%Y/%m/%d %H:%M', ($firstdayinyear + $stat->week * 7 * DAYSECS));
             $data[0][] = $statdate;
             $data[1][] = $examcontext->rateAserie;
             $data[2][] = $examcontext->rateCserie;
@@ -407,14 +461,14 @@ class html_renderer extends \plugin_renderer_base {
             ),
         );
         $label = get_string('globalprogress', 'report_examtraining');
-        $str .= jqplot_print_timecurve_graph($data, $label, 'globalprogress', $labels, true);
+        $str .= local_vflibs_jqplot_print_timecurve_bars($data, $label, 'globalprogress', $labels, true);
         $str .= "</center>";
 
         return $str;
     }
 
     public function trainings_subcats($userid, $from, $to, $printmode = 'table') {
-        global $CFG;
+        global $CFG, $DB;
 
         $examcontext = examtraining_get_context();
 
@@ -427,45 +481,46 @@ class html_renderer extends \plugin_renderer_base {
         $str = $this->output->heading(get_string('traininghitspercategory', 'report_examtraining'));
         $str .= '<center>';
         $statsrawarr = array_values($stats);
-        $datacats = array();
+        $cats = [];
+        $datacats = [];
+        $datacatstot = [];
         foreach ($statsrawarr as $stat) {
             $firstdayinyear = mktime(0, 0, 0, 1, 1, $statsrawarr[0]->year);
             $statdate = ($firstdayinyear + $stat->week * 7 * DAYSECS);
             $subcatid = $stat->categoryid;
+            if (!array_key_exists($subcatid, $datacats)) {
+                $datacats[$subcatid] = [];
+            }
+            if (!array_key_exists($statdate, $datacats[$subcatid])) {
+                $datacats[$subcatid][$statdate] = new STdClass;
+            }
+
             $datacats[$subcatid][$statdate]->ccount = @$datacats[$subcatid][$statdate]->ccount + $stat->ccount;
             $datacats[$subcatid][$statdate]->acount = @$datacats[$subcatid][$statdate]->acount + $stat->acount;
             $datacats[$subcatid][$statdate]->cmatched = @$datacats[$subcatid][$statdate]->cmatched + $stat->cmatched;
             $datacats[$subcatid][$statdate]->amatched = @$datacats[$subcatid][$statdate]->amatched + $stat->amatched;
+
+            if (!array_key_exists($subcatid, $datacatstot)) {
+                $datacatstot[$subcatid] = new StdClass;
+            }
+
             $datacatstot[$subcatid]->ccount = @$datacatstot[$subcatid]->ccount + $stat->ccount;
             $datacatstot[$subcatid]->acount = @$datacatstot[$subcatid]->acount + $stat->acount;
             $datacatstot[$subcatid]->cmatched = @$datacatstot[$subcatid]->cmatched + $stat->cmatched;
             $datacatstot[$subcatid]->amatched = @$datacatstot[$subcatid]->amatched + $stat->amatched;
         }
 
-        if (!function_exists('sortbysubcatname')) {
-            function sortbysubcatname($a, $b) {
-                global $DB;
-
-                $subcatordera = $DB->get_field('question_categories', 'sortorder', array('id' => $a));
-                $subcatorderb = $DB->get_field('question_categories', 'sortorder', array('id' => $b));
-                if ($subcatordera == $subcatorderb) {
-                    return 0;
-                }
-                if ($subcatordera > $subcatorderb) {
-                    return 1;
-                }
-                return -1;
-            }
-        }
-
-        uksort($datacats, 'sortbysubcatname');
+        uksort($datacats, array('\\report_examtraining\\output\\html_renderer', 'sortbysubcatname'));
 
         $subcatshitratios = array();
         // Post compile hitratios.
         foreach ($datacats as $subcatid => $datacatarr) {
+            if (!array_key_exists($subcatid, $cats)) {
+                $cats[$subcatid] = new StdClass;
+            }
             $cats[$subcatid]->count = 0 + @$datacatstot[$subcatid]->ccount + @$datacatstot[$subcatid]->acount;
             $cats[$subcatid]->matched = 0 + @$datacatstot[$subcatid]->cmatched + @$datacatstot[$subcatid]->amatched;
-            $ratio = $cats[$subcatid]->matched / ($cats[$subcatid]->count) * 100;
+            $ratio = ($cats[$subcatid]->count) ? $cats[$subcatid]->matched / ($cats[$subcatid]->count) * 100 : 0;
             $cats[$subcatid]->ratio = ($cats[$subcatid]->count) ? round($ratio) : 0;
         }
 
@@ -483,7 +538,7 @@ class html_renderer extends \plugin_renderer_base {
             $table->width = '90%';
             $table->align = array('left', 'left');
             foreach ($cats as $catid => $cat) {
-                $catname = get_field('question_categories', 'name', 'id', $catid);
+                $catname = $DB->get_field('question_categories', 'name', ['id' => $catid]);
                 $table->data[] = array($catname, $cats[$catid]->ratio. '% ('.$cats[$catid]->matched.'/'.$cats[$catid]->count.')');
             }
 
@@ -544,7 +599,7 @@ class html_renderer extends \plugin_renderer_base {
             $examtrytpl->finishdate = date('d/m/y', $attemptres->timefinish);
             $params = array('id' => $COURSE->id, 'attemptid' => $attemptid, 'view' => 'userattempt');
             $examtrytpl->examurl = new moodle_url('/report/examtraining/index.php', $params);
-            $examtry->ahitratio = round($attemptres->ahitratio * 100);
+            $examtry->ahitratio = round(0 + @$attemptres->ahitratio * 100);
             $examtry->chitratio = round(0 + @$attemptres->chitratio * 100);
             if ($attemptres->ahitratio < 0.85 || $attemptres->chitratio < 0.75) {
                 $examtry->resulticonurl = $badurl;
@@ -824,5 +879,19 @@ class html_renderer extends \plugin_renderer_base {
         $str .= '</table>';
 
         return $str;
+    }
+
+    public static function sortbysubcatname($a, $b) {
+        global $DB;
+
+        $subcatordera = $DB->get_field('question_categories', 'sortorder', array('id' => $a));
+        $subcatorderb = $DB->get_field('question_categories', 'sortorder', array('id' => $b));
+        if ($subcatordera == $subcatorderb) {
+            return 0;
+        }
+        if ($subcatordera > $subcatorderb) {
+            return 1;
+        }
+        return -1;
     }
 }

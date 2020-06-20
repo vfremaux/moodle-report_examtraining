@@ -5,3 +5,48 @@
     opacity: 0.5;
     -moz_opacity: 0.5;
 }
+
+#examtraining-selector {
+    display: flex;
+    flew-wrap: wrap;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+    border: 1px solid #999;
+    margin-bottom: 20px;
+}
+
+#examtraining-selector .formitem div {
+    display: inline-block;
+    margin-right; 20px;
+    margin-top: 10px;
+    margin-bottom: 10p;
+}
+
+#examtraining-assiduity {
+    justify-content: center;
+}
+
+.examtraining-report-item {
+    justify-content:center;
+}
+
+.report-examtraining-block {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.report-examtraining-panel100 {
+    flex-basis: 100%;
+}
+
+.report-examtraining-panel50 {
+    flex-basis: 49%;
+}
+
+.report-examtraining-panel33 {
+    flex-basis: 32%;
+}

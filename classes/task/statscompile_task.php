@@ -47,13 +47,14 @@ class statscompile_task extends \core\task\scheduled_task {
      * Run trainingsessions cron.
      */
     public function execute() {
+        global $SITE;
 
         @raise_memory_limit('512M');
         @set_time_limit(1800);
 
         $attempts = userquiz_cron_results();
         $admin = get_admin();
-        email_to_user($admin, $admin, $SITE->fullname." : Userquiz Statcompilation : $attempts attempts compiled", 'Done.', 'Done.');
+        email_to_user($admin, $admin, $SITE->shortname." : Userquiz Statcompilation : $attempts attempts compiled", 'Done.', 'Done.');
 
     }
 }

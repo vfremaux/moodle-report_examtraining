@@ -39,7 +39,7 @@ ini_set('memory_limit', '1024M');
 // Get data.
 
 $logs = use_stats_extract_logs($input->from, $input->to, $userid, $COURSE->id);
-$aggregate = use_stats_aggregate_logs($logs, 'module', $input->from, $input->to);
+$aggregate = use_stats_aggregate_logs($logs, $input->from, $input->to);
 
 // Get results.
 

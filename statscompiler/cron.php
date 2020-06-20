@@ -30,10 +30,13 @@ require_once($CFG->dirroot.'/report/examtraining/statscompilelib.php');
 @raise_memory_limit('512M');
 @set_time_limit(1800);
 
+$systemcontext = context_system::instance();
+$PAGE->set_context($systemcontext);
+
 $CFG->trace = $CFG->dataroot.'/userquiz_cron_compile.log';
 
 $attempts = userquiz_cron_results();
 
 $admin = get_admin();
 
-email_to_user($admin, $admin, $SITE->fullname." : Userquiz Statcompilation : $attempts attempts compiled", 'Done.', 'Done.');
+email_to_user($admin, $admin, $SITE->shortname." : Userquiz Statcompilation : $attempts attempts compiled", 'Done.', 'Done.');

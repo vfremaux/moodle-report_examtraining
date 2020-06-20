@@ -23,102 +23,142 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
+require_once($CFG->dirroot.'/report/examtraining/classes/datacache.class.php');
+require_once($CFG->dirroot.'/blocks/userquiz_monitor/locallib.php');
 
 /**
- * precompile all uncompiled results in userquiz attemps records
- *
+ * The generic function to get all attempt sets in all conditions
  */
-function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_results_worker', $nocats = true,
-                                     $range = true, $fromid = '') {
-    global $CFG, $DB;
+function userquiz_get_attempts($courseid, $userid = 0, $set = 'training', $options = [], $offset = 0, $limit = 0) {
+    global $DB;
 
-    $rangeclause = ($range) ? ' ua.datecompiled = 0 AND ' : '';
+    $uqconfig = examtraining_get_context($courseid);
+    $params = [];
 
-    $fromidclause = ($fromid) ? " ua.id >= $fromid AND " : '';
+    if ($set == 'training') {
+        $quizlist = $uqconfig->trainingquizzes;
+    } else if ($set == 'exam') {
+        if (!empty($uqconfig->examquiz)) {
+            $quizlist = [$uqconfig->examquiz];
+        }
+    } else {
+        $quizlist = $uqconfig->trainingquizzes;
+        if (!empty($uqconfig->examquiz)) {
+            $quizlist[] = $uqconfig->examquiz;
+        }
+    }
+
+    if (!empty($quizlist)) {
+        list ($insql, $params) = $DB->get_in_or_equal($quizlist);
+        $quizclause = " qa.quiz $insql AND ";
+    }
+
+    // Course clause.
+    $courseclause = '';
+    if (!empty($courseid)) {
+        $courseclause = ' q.course = ? AND ';
+        $params[] = $courseid;
+    }
+
+    // User clause.
+    $userclause = '';
+    if (!empty($userid)) {
+        $userclause = ' qa.userid = ? AND ';
+        $params[] = $userid;
+    }
+
+    // If new records only, choose never compiled attempts.
+    $rangeclause = '';
+    if (!empty($options['new'])) {
+        $rangeclause = ' ua.datecompiled = 0 AND ';
+    }
+
+    // If some records only, restrict to those ids.
+    $idlistclause = '';
+    if (!empty($options['ids'])) {
+        list($insql, $inparams) = $DB->get_in_or_equal($options['ids']);
+        $idlistclause = " ua.id $insql AND ";
+        foreach ($inparams as $p) {
+            $params[] = $p;
+        }
+    }
+
+    // Give a start id.
+    $fromidclause = '';
+    if (!empty($options['fromid'])) {
+        $fromidclause = " ua.id >= ? AND ";
+        $params[] = $fromid;
+    }
+
+    // Resolve the records range
+    if (!empty($options['limit'])) {
+        // Start over the last reached runpoint.
+        $limit = $options['limit'];
+        $start = $SESSION->examtrainingruns * $limit;
+    } else {
+        $start = 0;
+        $limit = 0;
+    }
 
     $sql = "
         SELECT
-            COUNT(*)
+            qa.*,
+            qca.categories as categories,
+            ua.id as uaid
         FROM
             {quiz_attempts} qa,
-            {report_examtraining} ua
+            {quiz} q,
+            {report_examtraining} ua,
+            {qa_chooseconstraints_attempt} qca
         WHERE
             ua.uniqueid = qa.uniqueid AND
-            $fromidclause
-            $rangeclause
+            q.id = qa.quiz AND
+            qca.attemptid = qa.id AND
+            qa.quiz = qca.quizid AND
+            {$quizclause}
+            {$courseclause}
+            {$userclause}
+            {$idlistclause}
+            {$fromidclause}
+            {$rangeclause}
             qa.timefinish != 0
+         ORDER BY
+            qa.id
     ";
+    $attempts = $DB->get_records_sql($sql, $params, $offset, $limit);
 
-    $attemptscount = $DB->count_records_sql($sql, array());
+    return $attempts;
+}
 
-    $limit = optional_param('limit', 0, PARAM_INT);
-    $auto = optional_param('auto', 0, PARAM_INT);
-    $maxruns = optional_param('maxruns', 0, PARAM_INT);
-    $running = optional_param('running', 0, PARAM_INT);
-    $output = optional_param('output', 0, PARAM_INT);
+/**
+ * precompile all uncompiled results in userquiz attemps records
+ * @param int $courseid the course to compile for. If 0, will compile for all courses
+ * @param string $work the worker function to trig for each result.
+ * @param array $options contextual calculation options
+ */
+function userquiz_precompile_results($courseid = 0, $work = 'userquiz_precompile_results_worker', $options = []) {
+    global $CFG, $DB, $SESSION;
 
-    if (!$running) {
-    
-        "reseting runs config ";
-        if ($output) {
-            echo $out.'<br/>';
-        } else {
-            debug_trace($out);
-        }
-        set_config('runs', 0, 'report_examtraining');
+    // Setup session
+    if (!isset($SESSION->examtrainingruns)) {
+        $SESSION->examtrainingruns = 0;
     }
 
-    if ($limit) {
-        $e = new StdClass;
-        $e->limit = $limit;
-        $e->attemptscount = $attemptscount;
-        $e->runs = $CFG->runs;
-        $e->maxruns = $maxruns;
-        $e->rangeclause = $rangeclause;
-        $out = get_string('processingmessage', 'report_examtraining', $e);
-        if ($output) {
-            mtrace($out.'<br/>');
-        } else {
-            debug_trace($out);
+    if (!isset($SESSION->examtrainingtime)) {
+        if (!empty($options['auto'])) {
+            $SESSION->examtrainingtime = time();
         }
-        $start = ($range) ? 0 : $CFG->runs * $limit;
-        $sql = "
-            SELECT
-                *
-            FROM
-                {quiz_attempts} qa,
-                {report_examtraining} ua
-            WHERE
-                ua.uniqueid = qa.uniqueid,
-                $fromidclause
-                $rangeclause
-                qa.timefinish != 0
-        ";
-        $attempts = $DB->get_records_sql($sql, array(), 'id', '*', $start, $limit);
-    } else {
-        $out = "processing $attemptscount records";
-        if ($output) {
-            mtrace($out.'<br/>');
-        } else {
-            debug_trace($out);
+    }
+
+    $attempts = userquiz_get_attempts($courseid, 0, $options);
+
+    if (empty($options['running'])) {
+        // The interactive "force continue running" signal is gone. Unmark it. this compile step will be the last.
+        $out = "reseting runs config ";
+        if (!empty($options['output'])) {
+            echo $out.'<br/>';
         }
-        $sql = "
-            SELECT
-                qa.*,
-                ua.id as uaid
-            FROM
-                {quiz_attempts} qa,
-                {report_examtraining} ua,
-                {qa_chooseconstraints_attempt} qca
-            WHERE
-                ua.uniqueid = qa.uniqueid AND
-                qca.attemptid = qa.uniqueid AND
-                qa.quiz = qca.quizid AND
-                $fromidclause
-                $rangeclause
-                qa.timefinish != 0
-        ";
-        $attempts = $DB->get_records_sql($sql, array());
+        set_config('runs', 0, 'report_examtraining');
     }
 
     // Only process finished attempts.
@@ -137,19 +177,19 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
             $rootcategory = 0;
             if ($attempt->categories) {
                 $catarr = explode(',', $attempt->categories);
-                $parent = $DB->get_field('question_categories', 'parent', 'id', $catarr[0]);
+                $parent = $DB->get_field('question_categories', 'parent', ['id' => $catarr[0]]);
                 if (!$parent) {
                     $rootcategory = $catarr[0];
                 } else {
                     while ($parent != 0) {
                         $rootcategory = $parent;
-                        $parent = get_field('question_categories', 'parent', 'id', $parent);
+                        $parent = $DB->get_field('question_categories', 'parent', ['id' => $parent]);
                     }
                 }
             }
 
             // Only mark compilation time if complete compilation is done.
-            if (!$nocats) {
+            if (!empty($options['nocats'])) {
                 $reportattempt = new StdClass;
                 $reportattempt->datecompiled = time();
                 $reportattempt->id = $attempt->uaid;
@@ -167,8 +207,9 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
             }
 
             // Block id (userquiz_monitor) is deduced from attempt's course heuristic.
-            $attemptcourse = $DB->get_field('quiz', 'course', array('id' => $attempt->quiz));
-            $params = array('pageid' => $attemptcourse, 'blockname' => 'userquiz_monitor');
+            $attemptcourse = $DB->get_field('quiz', 'course', ['id' => $attempt->quiz]);
+            $coursecontext = context_course::instance($attemptcourse);
+            $params = array('parentcontextid' => $coursecontext->id, 'blockname' => 'userquiz_monitor');
             $blockinstance = $DB->get_record('block_instances', $params);
             $theblock = block_instance('userquiz_monitor', $blockinstance);
 
@@ -177,60 +218,61 @@ function userquiz_precompile_results($id = 0, $work = 'userquiz_precompile_resul
             $attempt->serieamatched = 0;
             $attempt->seriecmatched = 0;
 
-            $work($attempt, $rootcats[$rootcategory], $theblock, !$auto, $nocats);
+            $work($attempt, $rootcats[$rootcategory], $theblock, !empty($options['auto']), @$options['nocats']);
             $j++;
         }
 
-        $out = " compiled $j attempts ";
-        if ($output) {
-            echo $out.'<br/>';
-        } else {
-            if (function_exists('debug_trace')) {
-                debug_trace($out);
-            }
+        mtrace(" Compiled $j attempts ");
+
+        $attemptsleft = userquiz_get_attempts($courseid, 0, $options);
+        $attemptsleft = count($attemptsleft);
+
+        // If nothing left, reset everything and go out.
+        // backgroundrunsenabled is a "strong force out by config option" in case we side is stucked.
+        if ($attemptsleft == 0 || empty($CFG->backgroundrunsenabled)) {
+            $SESSION->examtrainingruns = 0;
+            $SESSION->examtrainingtime = 0;
+            $options['running'] = 0;
+            return false; // Nothing more to compile.
         }
 
-        if (!empty($CFG->backgroundrunsenabled) && $limit && $auto) {
-            sleep($auto);
-            if (!$maxruns || @$CFG->runs < $maxruns) {
-                if ($maxruns) {
-                    set_config('runs', 1 + @$CFG->runs);
+        $needrespawn = false;
+
+        // Check if we can respawn : We can respawn if we are in autorunnung and maxruns has not be reached.
+        if (!empty($options['auto'])) {
+            // We have no limitation engaged in runs or limitation is NOT reached..
+            if (empty($options['maxruns']) || @$SESSION->examtrainingruns < $options['maxruns']) {
+                $SESSION->examtrainingruns++;
+                $needrespawn = true;
+            }
+
+            // Check the running time condition.
+            if (!empty($SESSION->examtrainingtime)) {
+                // We can respawn if we have not spent all processing time.
+                if (time() - $SESSION->examtrainingtime < $options['auto']) {
+                    $needrespawn = $needrespawn && true;
                 }
+            }
+
+            if ($needsrespawn) {
                 redirect($url);
-            } else {
-                set_config('runs', 0);
             }
         }
         return true;
     }
+
     return false;
 }
 
 /**
  * precompile all uncompiled results in userquiz attemps records
+ * @param $id
+ * @param $ids
  */
-function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_precompile_results_worker') {
+function userquiz_precompile_some_results($courseid = 0, array $ids = [], $work = 'userquiz_precompile_results_worker', $options = []) {
     global $DB;
 
-    list($insql, $inparams) = $DB->get_in_or_equal($ids);
-
-    $sql = "
-        SELECT
-            *
-        FROM
-            {quiz_attempts} qa,
-            {report_examtraining} ua,
-            {qa_chooseconstraints_attempt} qca
-        WHERE
-            qa.uniqueid = ua.uniqueid AND
-            qca.attemptid = qa.uniqueid AND
-            qca.quizid = qa.quiz
-            ua.id $insql
-    ";
-
-    $attempts = $DB->get_records_sql($sql, $inparams);
-
-    $output = optional_param('output', 0, PARAM_INT);
+    $attempts = userquiz_get_attempts($courseid, 0, ['ids' => $ids]);
 
     // Process required attempts.
     if (!empty($attempts)) {
@@ -253,18 +295,18 @@ function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_preco
             $rootcategory = 0;
             if ($attempt->categories) {
                 $catarr = explode(',', $attempt->categories);
-                $parent = $DB->get_field('question_categories', 'parent', array('id' => $catarr[0]));
+                $parent = $DB->get_field('question_categories', 'parent', ['id' => $catarr[0]]);
                 if (!$parent) {
                     $rootcategory = $catarr[0];
                 } else {
                     while ($parent != 0) {
                         $rootcategory = $parent;
-                        $parent = $DB->get_field('question_categories', 'parent', array('id' => $parent));
+                        $parent = $DB->get_field('question_categories', 'parent', ['id' => $parent]);
                     }
                 }
             }
 
-            $DB->update_field('userquiz_attempts', 'datecompiled', time(), array('uniqueid' => $attempt->uniqeid));
+            $DB->update_field('report_examtraining', 'datecompiled', time(), ['uniqueid' => $attempt->uniqeid]);
 
             if ($rootcategory && !isset($rootcats[$rootcategory])) {
                 // Get rootcats.
@@ -282,13 +324,8 @@ function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_preco
             $work($attempt, $rootcats[$rootcategory], $theblock, true);
             $j++;
         }
-        $out = "complied $j records";
-        if ($output) {
-            echo $out.'<br/>';
-        } else {
-            if (function_exists('debug_trace')) {
-                debug_trace($out);
-            }
+        if ($options['output']) {
+            mtrace("Compiled $j records.");
         }
         return true;
     }
@@ -302,25 +339,27 @@ function userquiz_precompile_some_results($id = 0, $ids, $work = 'userquiz_preco
 function userquiz_cron_results() {
     global $DB;
 
+    // Get all attempts not yet compiled.
     $sql = "
         SELECT
-            *
+            COUNT(*)
         FROM
-            {quiz_attempt} qa
+            {quiz_attempts} qa,
             {report_examtraining} ua
         WHERE
             ua.uniqueid = qa.uniqueid AND
             ua.datecompiled = 0 AND
-            qa.timefinish != 0
+            qa.timefinish > 0 AND
+            ua.qcount > 0
     ";
-
     $attemptscount = $DB->count_records_sql($sql);
 
     $output = optional_param('output', 0, PARAM_INT);
+    $output = $output || defined('CLI_SCRIPT');
 
-    $out = "processing $attemptscount records";
+    $out = "Found to compile : $attemptscount records\n";
     if ($output) {
-        mtrace($out.'<br/>');
+        mtrace($out);
     } else {
         if (function_exists('debug_trace')) {
             debug_trace($out);
@@ -331,16 +370,19 @@ function userquiz_cron_results() {
 
     $sql = "
         SELECT
-            *
+            qa.*,
+            qca.categories as categories
         FROM
             {quiz_attempts} qa,
-            {report_examtraining} ua
+            {report_examtraining} ua,
+            {qa_chooseconstraints_attempt} qca
         WHERE
             qa.uniqueid = ua.uniqueid AND
+            qca.attemptid = qa.uniqueid AND
             ua.datecompiled = 0 AND
             qa.timefinish != 0
     ";
-    $attempts = $DB->get_records_sql($sql, null, '', '*');
+    $attempts = $DB->get_records_sql($sql, []);
 
     // Only process finished attempts.
     if (!empty($attempts)) {
@@ -353,7 +395,7 @@ function userquiz_cron_results() {
 
         foreach ($attempts as $attempt) {
 
-            $out = " compiling attempt $attempt->id ";
+            $out = "Compiling attempt $attempt->id\n";
             if ($output) {
                 echo $out.'<br/>';
             } else {
@@ -371,15 +413,15 @@ function userquiz_cron_results() {
                 } else {
                     while ($parent != 0) {
                         $rootcategory = $parent;
-                        $parent = $DB->get_field('question_categories', 'parent', array('id' => $parent));
+                        $parent = $DB->get_field('question_categories', 'parent', ['id' => $parent]);
                     }
                 }
             }
 
-            $DB->update_field('report_examtraining', 'datecompiled', time(), array('uniqueid' => $attempt->uniqueid));
+            $DB->set_field('report_examtraining', 'datecompiled', time(), ['uniqueid' => $attempt->uniqueid]);
 
             if ($rootcategory && !isset($rootcats[$rootcategory])) {
-                // Get rootcats.
+                // Get rootcats at first level.
                 $params = array('parent' => $rootcategory);
                 if (!$cats = $DB->get_records('question_categories', $params, 'sortorder, id', 'id,name')) {
                     // This may be a bad case.... lost cat or something similar.
@@ -415,6 +457,15 @@ function userquiz_cron_results() {
 
         userquiz_precompile_coverage_ratios(); // Recompile all ratios (for all blocks).
         return $attemptscount;
+    } else {
+        $out = "No attempt data\n";
+        if ($output) {
+            mtrace($out.'<br/>');
+        } else {
+            if (function_exists('debug_trace')) {
+                debug_trace($out);
+            }
+        }
     }
     return false;
 }
@@ -422,8 +473,8 @@ function userquiz_cron_results() {
 function userquiz_block_from_attempt($quizattempt) {
     global $DB;
 
-    $attemptcourse = $DB->get_field('quiz', 'course', array('id' => $attempt->quiz));
-    $coursecontext = context_course::instance($attemptcourse->id);
+    $attemptcourseid = $DB->get_field('quiz', 'course', array('id' => $quizattempt->quiz));
+    $coursecontext = context_course::instance($attemptcourseid);
     $params = array('parentcontextid' => $coursecontext->id, 'blockname' => 'userquiz_monitor');
     $blockinstance = $DB->get_record('block_instances', $params);
     $theblock = block_instance('userquiz_monitor', $blockinstance);
@@ -445,35 +496,37 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
     }
 
     // Get real instances and discard all page jumps.
-    $questioninstances = explode(',', $attempt->layout);
-    foreach ($questioninstances as $instance) {
-        if ($instance == 0) {
-            continue;
+    $slots = explode(',', $attempt->layout);
+    $realinstances = [];
+    foreach ($slots as $s) {
+        if ($s != 0) {
+            $realinstances[] = $DB->get_field('quiz_slots', 'questionid', ['quizid' => $attempt->quiz, 'slot' => $s]);
         }
-        $realinstances[] = $instance;
     }
-    $realinstancelist = implode(',', $realinstances);
+
+    echo "ROOT CATS<br/>";
+    debug_print_for_user('admin', $rootcats);
 
     // Get real questions, analyse answers and make A and C counts (serie 1 / serie 2).
-    if (!$questions = $DB->get_records_list('question', 'id', $realinstancelist)) {
+    $realinstancelist = implode(',', $realinstances);
+    if ($questions = $DB->get_records_list('question', 'id', $realinstances)) {
         $out = "($attempt->id:$realinstancelist)";
-        if ($verbose && $output) {
+        if ($verbose || $output) {
              echo $out;
         } else {
             if (function_exists('debug_trace')) {
-                debug_param($out);
+                debug_trace($out);
             }
         }
     }
     $attempt->qcount = count($questions);
 
-    // Initialize.
-    $attempts = array();
+    // Initialize question attempts counters.
+    $qattempts = array();
 
-    // Compile answered and matched questions.
-    if ($allstates = get_all_user_records($attempt->uniqueid, $attempt->userid, null, true)) {
-
-        if (!$allstates->valid()) {
+    // Compile answered and matched questions; getting as recordset for performance.
+    if ($allstates = block_userquiz_monitor_get_all_user_records($attempt->uniqueid, $attempt->userid, null, true)) {
+        if ($allstates->valid()) {
             $i = 0;
             foreach ($allstates as $state) {
                 if ($verbose && $output) {
@@ -483,11 +536,11 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
                         debug_trace(".");
                     }
                 }
-                $question = $DB->get_record_select('question', " id = $state->question ", array(), 'id, defaultgrade, category');
-                $parent = $DB->get_field('question_categories', 'parent', array('id' => $question->category));
+                $question = $DB->get_record('question', ['id' => $state->question], 'id, defaultmark, category');
+                $parent = $DB->get_field('question_categories', 'parent', ['id' => $question->category]);
 
                 if (!$parent) {
-                    if ($verbose && $output) {
+                    if ($verbose || $output) {
                         echo "f";
                     } else {
                         if (function_exists('debug_trace')) {
@@ -497,23 +550,27 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
                     continue; // Fix lost states.
                 }
 
+                // Climb up to the upper root cats.
                 while (!in_array($parent, array_keys($rootcats)) && $parent != 0) {
-                    $parent = $DB->get_field('question_categories', 'parent', array('id' => $parent));
+                    $parent = $DB->get_field('question_categories', 'parent', ['id' => $parent]);
                 }
 
-                $attempts[$parent]->qcount = @$attempts[$parent]->qcount + 1;
+                if (!array_key_exists($parent, $qattempts)) {
+                    $qattempts[$parent] = new StdClass;
+                }
+                $qattempts[$parent]->qcount = @$qattempts[$parent]->qcount + 1;
                 if ($question->defaultmark == '1000') {
-                    $attempts[$parent]->ccount = @$attempts[$parent]->ccount + 1;
+                    $qattempts[$parent]->ccount = @$qattempts[$parent]->ccount + 1;
                     $attempt->seriecanswered++;
                     if ($state->grade > 0) {
-                        $attempts[$parent]->cmatched = @$attempts[$parent]->cmatched + 1;
+                        $qattempts[$parent]->cmatched = @$qattempts[$parent]->cmatched + 1;
                         $attempt->seriecmatched++;
                     }
                 } else {
-                    $attempts[$parent]->acount = @$attempts[$parent]->acount + 1;
+                    $qattempts[$parent]->acount = @$qattempts[$parent]->acount + 1;
                     $attempt->serieaanswered++;
                     if ($state->grade > 0) {
-                        $attempts[$parent]->amatched = @$attempts[$parent]->amatched + 1;
+                        $qattempts[$parent]->amatched = @$qattempts[$parent]->amatched + 1;
                         $attempt->serieamatched++;
                     }
                 }
@@ -531,12 +588,14 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
         // Free some memory here ?
         unset($allstates);
     } else {
+        echo "No states ";
         if ($verbose && $output) {
             echo 0;
         }
     }
 
     // Save back compilation.
+    $recattempt = new Stdclass;
     $recattempt->id = $DB->get_field('report_examtraining', 'id', array('uniqueid' => $attempt->uniqueid));
     $recattempt->uniqueid = $attempt->uniqueid;
     $recattempt->qcount = 0 + @$attempt->qcount;
@@ -557,20 +616,20 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
     }
 
     if (!$nocats) {
-        foreach ($attempts as $catid => $catattempt) {
-            $catattempt = new StdClass;
+        foreach ($qattempts as $catid => $catattempt) {
             $catattempt->categoryid = $catid;
             $catattempt->userid = $attempt->userid;
             $catattempt->attemptid = $attempt->uniqueid;
-            $catattempt->quizid = $attempt->quizid;
+            $catattempt->quizid = $attempt->quiz;
             $select = "
                 categoryid = ? AND
                 userid = ? AND
                 attemptid = ? AND
-                quiz = ?
+                quizid = ?
             ";
             $params = array($catid, $attempt->userid, $attempt->uniqueid, $attempt->quiz);
-            if ($exists = $DB->get_record_select('userquiz_monitor_cat_stats', $select, $params)) {
+            if ($oldrec = $DB->get_record_select('userquiz_monitor_cat_stats', $select, $params)) {
+                $catattempt->id = $oldrec->id;
                 if ($DB->update_record('userquiz_monitor_cat_stats', $catattempt)) {
                     if ($verbose && $output) {
                         echo 'u';
@@ -595,7 +654,7 @@ function userquiz_precompile_results_worker(&$attempt, &$rootcats, $block, $verb
     }
 
     // Free as much memory as possible.
-    unset($attempts);
+    unset($qattempts);
 }
 
 /**
@@ -606,26 +665,16 @@ function userquiz_precompile_userstats_worker(&$attempt, &$rootcats, &$block, $v
     global $DB;
 
     $output = optional_param('output', 0, PARAM_INT);
-
-    if (empty($attempt->layout)) {
-        return false;
-    }
-
-    // Get real instances and discard all page jumps.
-    $questioninstances = explode(',', $attempt->layout);
-    foreach ($questioninstances as $instance) {
-        if ($instance == 0) {
-            continue;
-        }
-        $realinstances[] = $instance;
-    }
-    $realinstancelist = implode(',', $realinstances);
+    $datacache = \report_examtraining\datacache::instance();
+    $datacache->set_questionfields('id, defaultmark, category');
+    $datacache->set_categoryfields('id, parent, name');
 
     // Initialize.
-    $attempts = array();
+    $attempts = [];
+    $coverage = [];
 
     // Compile answered and matched questions.
-    if ($allstates = get_all_user_records($attempt->uniqueid, $attempt->userid, null, true)) {
+    if ($allstates = block_userquiz_monitor_get_all_user_records($attempt->uniqueid, $attempt->userid, null, true)) {
 
         if ($allstates->valid()) {
             foreach ($allstates as $state) {
@@ -634,8 +683,15 @@ function userquiz_precompile_userstats_worker(&$attempt, &$rootcats, &$block, $v
                     echo ".";
                 }
 
-                if (!$question = $DB->get_record('question', array('id' => $state->question), 'id, defaultmark, category')) {
+                if (!$question = $datacache->get_question($state->question)) {
+                    if ($verbose) {
+                        echo "m";
+                    }
                     continue;
+                }
+
+                if (!array_key_exists($question->id, $coverage)) {
+                    $coverage[$question->id] = new Stdclass;
                 }
 
                 // Question has matched, unconditionnaly (or partially), we can mark it for match stats.
@@ -655,38 +711,13 @@ function userquiz_precompile_userstats_worker(&$attempt, &$rootcats, &$block, $v
     if (!empty($coverage)) {
         foreach ($coverage as $qid => $qc) {
             $newrec = false;
-            $params = array('userid' => $attempt->userid, 'blockid' => $block->instance->id);
-            if (!$rec = $DB->get_record('userquiz_monitor_coverage', $params, 'questionid', $qid)) {
-                $rec = new StdClass;
-                $rec->questionid = $qid;
-                $rec->userid = $attempt->userid;
-                $rec->blockid = $block->instance->id;
-                $newrec = true;
-            }
-            $rec->usecount = 0 + @$rec->usecount + @$qc->seen;
-            $rec->matchcount = 0 + @$rec->matchcount + @$qc->matched;
-            if ($newrec) {
-                if ($DB->insert_record('userquiz_monitor_coverage', $rec)) {
-                    if ($verbose && $output) {
-                        echo 'ci';
-                    } else {
-                        if (function_exists('debug_trace')) {
-                            debug_trace('ci ');
-                        }
-                    }
-                }
-            } else {
-                if ($DB->update_record('userquiz_monitor_coverage', $rec)) {
-                    if ($verbose && $output) {
-                        echo 'cu';
-                    } else {
-                        if (function_exists('debug_trace')) {
-                            debug_trace('cu ');
-                        }
-                    }
-                }
-            }
+            $params = array('userid' => $attempt->userid, 'blockid' => $block->instance->id, 'questionid' => $qid);
+            $rec = $datacache->get_coverage($params);
+            $rec->usecount = 0 + $rec->usecount + @$qc->seen;
+            $rec->matchcount = 0 + $rec->matchcount + @$qc->matched;
         }
+        // At the end, update all cache records.
+        $datacache->save_coverages();
     }
     if ($verbose && $output) {
         echo '<br/>';
@@ -702,43 +733,69 @@ function userquiz_precompile_userstats_worker(&$attempt, &$rootcats, &$block, $v
  * to process those results in userquiz_monitor_coverage
  *
  */
-function userquiz_precompile_coverage_ratios() {
-    global $DB;
+function userquiz_precompile_coverage_ratios($courseid = 0) {
+    global $DB, $COURSE;
 
-    $blocks = $DB->get_records('block_instances', array('blockname' => 'userquiz_monitor'));
+    if ($courseid == 0) {
+        $courseid = $COURSE->id;
+        $parentcontextid = context_course::instance($courseid)->id;
+        $params['parentcontextid'] = $parentcontextid;
+    }
 
-    foreach ($blocks as $ablock) {
-        $theblock = block_instance('userquiz_monitor', $ablock);
+    $params['blockname'] = 'userquiz_monitor';
+    $blocks = $DB->get_records('block_instances', $params);
 
-        list($insql, $params) = $DB->get_in_or_equal($theblock->config->trainingquizzes);
+    echo "<pre>";
 
-        $sql = "
-            SELECT DISTINCT
-                userid,
-                userid
-            FROM
-                {quiz_attempts}
-            WHERE
-                quiz $insql
-        ";
-        if ($users = $DB->get_records_sql($sql, $params)) {
-            foreach ($users as $user) {
-                userquiz_precompile_question_coverage_worker($user->userid, $theblock);
+    if ($blocks) {
+        mtrace('Compiling for '.count($blocks));
+        foreach ($blocks as $ablock) {
+            $theblock = block_instance('userquiz_monitor', $ablock);
+
+            list($insql, $params) = $DB->get_in_or_equal($theblock->config->trainingquizzes);
+
+            // Get all attempts from the training context.
+            $sql = "
+                SELECT DISTINCT
+                    qa.userid,
+                    u.username
+                FROM
+                    {quiz_attempts} qa,
+                    {user} u
+                WHERE
+                    u.id = qa.userid AND
+                    quiz $insql
+            ";
+
+            if ($users = $DB->get_records_sql($sql, $params)) {
+                mtrace("Having ".count($users)." users to compile coverage for.");
+                foreach ($users as $user) {
+                    mtrace("Compiling for {$user->username}...\n");
+                    userquiz_precompile_question_coverage_worker($user->userid, $theblock);
+                }
+            } else {
+                mtrace("No attempts to compile");
             }
         }
+    } else {
+        mtrace('No blocks to compile');
     }
+
+    echo "</pre>";
 
     return false;
 }
 
 /**
- *
- *
+ * Compile coverage for a single user.
+ * @params int $userid
+ * @param objectref &$block block instance in context
  */
 function userquiz_precompile_question_coverage_worker($userid, &$block) {
     global $DB;
     static $i = 0;
 
+    // For debug.
     $output = optional_param('output', 0, PARAM_INT);
 
     // Finally compute coverage rates on distinct questions.
@@ -751,8 +808,8 @@ function userquiz_precompile_question_coverage_worker($userid, &$block) {
     $params = array($block->instance->id, $userid);
 
     $sql = "
-        SELECT COUNT(DISTINCT
-            questionid)
+        SELECT
+            COUNT(DISTINCT questionid)
         FROM
             {userquiz_monitor_coverage}
         WHERE
@@ -763,8 +820,8 @@ function userquiz_precompile_question_coverage_worker($userid, &$block) {
     $seenquestions = $DB->get_field_sql($sql, $params);
 
     $sql = "
-        SELECT COUNT(DISTINCT
-            questionid)
+        SELECT
+            COUNT(DISTINCT questionid)
         FROM
             {userquiz_monitor_coverage}
         WHERE
@@ -775,8 +832,8 @@ function userquiz_precompile_question_coverage_worker($userid, &$block) {
     $matchedquestions = $DB->get_field_sql($sql, $params);
 
     $newrec = false;
-    $select = " userid = ? AND blockid = ? AND attemptid = 0 ";
-    if (!$rec = $DB->get_record_select('userquiz_monitor_user_stats', $select, array($userid, $block->instance->id))) {
+    $params = ['userid' => $userid, 'blockid' => $block->instance->id, 'attemptid' => 0 ];
+    if (!$rec = $DB->get_record('userquiz_monitor_user_stats', $params)) {
         $rec = new StdClass;
         $rec->userid = $userid;
         $rec->blockid = $block->instance->id;
@@ -822,7 +879,7 @@ function userquiz_precompile_question_coverage_worker($userid, &$block) {
 }
 
 /**
- *
+ * Get result data by weeks.
  */
 function userquiz_get_weekly_globals($userid, $quizzeslist, $from, $to) {
     global $DB;
@@ -856,7 +913,7 @@ function userquiz_get_weekly_globals($userid, $quizzeslist, $from, $to) {
             {report_examtraining} ua,
             {user} u
         WHERE
-            qa.id = ua.uniqueid AND
+            qa.uniqueid = ua.uniqueid AND
             u.id = qa.userid AND
             userid = ? AND
             $quizzesclause
@@ -891,7 +948,7 @@ function userquiz_get_user_globals($userid, $quizzeslist, $from, $to) {
     if (is_array($quizzeslist)) {
         $quizzesidlist = implode("','", $quizzeslist);
     } else {
-        $quizzesidlist = str_replace(',', ',', $quizzeslist);
+        $quizzesidlist = $quizzeslist;
     }
     $quizzesclause = (!empty($quizzesidlist)) ? " quiz IN ('$quizzesidlist') AND " : '';
 
@@ -942,21 +999,43 @@ function userquiz_get_user_globals($userid, $quizzeslist, $from, $to) {
 }
 
 /**
- *
- *
+ * get precompiled subcats data for reports.
+ * @param int $userid
+ * @param array $quizzeslist
+ * @param int $from
+ * @param int $to
  */
 function userquiz_get_attempts_subcats($userid, $quizzeslist, $from, $to) {
     global $DB;
 
-    $toclause = ($to != 0) ? " AND qa.timefinish <= $to " : '';
-    $fromclause = ($from != 0) ? " AND qa.timefinish >= $from " : '';
-
-    if (is_array($quizzeslist)) {
-        $quizzesidlist = implode(',', $quizzeslist);
-    } else {
-        $quizzesidlist = str_replace(',', "','", $quizzeslist);
+    $quizzesclause = '';
+    $params = [$userid];
+    $inparams = [];
+    if (!empty($quizzeslist)) {
+        if (is_array($quizzeslist)) {
+            $quizzesids = $quizzeslist;
+        } else {
+            $quizzesids = explode(',', $quizzeslist);
+        }
+        list($insql, $inparams) = $DB->get_in_or_equal($quizzesids);
+        $quizzesclause = " qa.quiz $insql AND ";
     }
-    $quizzesclause = (!empty($quizzesidlist)) ? " qa.quiz IN ('$quizzesidlist') AND " : '';
+
+    foreach ($inparams as $p) {
+        $params[] = $p;
+    }
+
+    $toclause = '';
+    if (!empty($to)) {
+        $toclause = ' AND qa.timefinish <= ? ';
+        $params[] = $to;
+    }
+
+    $fromclause = '';
+    if (!empty($from)) {
+        $fromclause = ' AND qa.timefinish >= ? ';
+        $params[] = $from;
+    }
 
     $sql = "
         SELECT
@@ -978,7 +1057,7 @@ function userquiz_get_attempts_subcats($userid, $quizzeslist, $from, $to) {
             WEEK(FROM_UNIXTIME(timefinish))
     ";
 
-    $stats = $DB->get_records_sql($sql, array($userid));
+    $stats = $DB->get_records_sql($sql, $params);
 
     return $stats;
 }

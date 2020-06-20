@@ -32,8 +32,14 @@ require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 @raise_memory_limit('512M');
 
 $id = required_param('id', PARAM_INT); // The course id.
+$view = optional_param('view', 'user', PARAM_TEXT); // The course id.
+$userid = optional_param('userid', '', PARAM_INT); // The course id.
 
-$url = new moodle_url('/report/examtraining/index.php', array('id' => $id));
+$params = array('id' => $id, 'view' => $view);
+if (!empty($userid)) {
+    $params['userid'] = $userid;
+}
+$url = new moodle_url('/report/examtraining/index.php', $params);
 $PAGE->set_url($url);
 
 $context = context_course::instance($id);
@@ -108,7 +114,7 @@ if ($output == 'html') {
     $html = '';
     $tablewidth = "100%";
 } else if ($output == 'pdf') {
-    require_once($CFG->dirroot.'/local/lib/html2pdf/moodlehtml2pdf.php');
+    require_once($CFG->dirroot.'/local/vflibs/html2pdf/moodlehtml2pdf.php');
 
     $pdf = new HTML2PDF('P', 'A4', 'fr', true, 'UTF-8', array(10, 15, 10, 20));
     $pdf->pdf->SetDisplayMode('fullpage');

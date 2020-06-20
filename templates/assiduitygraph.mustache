@@ -1,41 +1,47 @@
 
 
 
-<!-- assiduitygraph -->
-<div class="examtraining-assiduity container-fluid">
+<!-- report_examtraining/assiduitygraph -->
+<div class="">
 
     <div class="header">
-        <h2>{{title}}</h2>
+        <h2>{{#str}}assiduity, report_examtraining{{/str}}</h2>
     </div>
 
-    <div class="row-fluid">
+    {{#hasattempts}}
+    <div id="report-examtraining-assiduity">
 
-    {{#paged}}
-    <div class="examtraining-assiduity-previous span1">
-        {{#previousurl}}
-        <a href="{{{previousurl}}}"><img src="{{{previousiconurl}}}"></a>
-        {{/previousurl}}
-        {{^previousurl}}
-        <img src="{{{previousiconurl}}}" class="shadow">
-        {{/previousurl}}
+        {{#paged}}
+        <div class="report-examtraining-assiduity-previous">
+            {{#previousurl}}
+            <a href="{{{previousurl}}}"><img src="{{{previousiconurl}}}"></a>
+            {{/previousurl}}
+            {{^previousurl}}
+            <img src="{{{previousiconurl}}}" class="shadow">
+            {{/previousurl}}
+        </div>
+        {{/paged}}
+
+        <div class="examtraining-assiduity-plot">
+            {{{plot}}}
+        </div>
+
+        {{#paged}}
+        <div class="examtraining-assiduity-next">
+            {{#nexturl}}
+            <a href="{{{#nexturl}}}"><img src="{{{nexticonurl}}}"></a>
+            {{/nexturl}}
+            {{^nexturl}}
+            <img src="{{{nexticonurl}}}" class="shadow">
+            {{/nexturl}}
+        </div>
+        {{/paged}}
+
     </div>
-    {{/paged}}
+    {{/hasattempts}}
 
-    <div class="examtraining-assiduity-plot span10">
-        {{{plot}}}
-    </div>
-
-    {{#paged}}
-    <div class="examtraining-assiduity-next span1">
-        {{#nexturl}}
-        <a href="{{{#nexturl}}}"><img src="{{{nexticonurl}}}"></a>
-        {{/nexturl}}
-        {{^nexturl}}
-        <img src="{{{nexticonurl}}}" class="shadow">
-        {{/nexturl}}
-    </div>
-    {{/paged}}
-
-    <div class="row-fluid">
+    {{^hasattempts}}
+    {{{noattemptsnotification}}}
+    {{/hasattempts}}
 </div>
-<!-- /assiduitygraph -->
+<!-- /report_examtraining/assiduitygraph -->

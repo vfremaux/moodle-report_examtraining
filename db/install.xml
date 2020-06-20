@@ -4,7 +4,7 @@
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    <TABLE NAME="report_examtraining" COMMENT="Default comment for userquiz_monitor, please edit me">
+    <TABLE NAME="report_examtraining" COMMENT="Registers the attempts as part of a userquiz_monitor set">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" ENUM="false"/>
         <FIELD NAME="uniqueid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false"/>

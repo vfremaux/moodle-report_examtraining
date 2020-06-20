@@ -36,6 +36,7 @@ $input->num = optional_param('num', 0, PARAM_INT);
 $input->orderby = optional_param('orderby', '', PARAM_TEXT);
 $input->subview = optional_param('subview', '', PARAM_TEXT);
 $input->offset = optional_param('offset', 0, PARAM_INT);
+$input->groupid = optional_param('groupid', 0, PARAM_INT);
 $pagesize = 20;
 
 // TODO : secure groupid access depending on proper capabilities.
@@ -43,7 +44,8 @@ $pagesize = 20;
 // Pre print the group selector.
 if ($output == 'html') {
     // Time and group period form.
-    include($CFG->dirroot.'/report/examtraining/course_selector_form.html');
+    $input->nousers = true; // Tells its a group selector.
+    echo $renderer->selectorform($course, $view, $input);
 }
 
 // Compute target group.
@@ -91,10 +93,10 @@ if ($output == 'html') {
         foreach ($targetusers as $userid => $auser) {
 
             $logs = use_stats_extract_logs($input->from, $input->to, $userid, $course->id);
-            $aggregate = use_stats_aggregate_logs($logs, 'module', $input->from, $input->to);
+            $aggregate = use_stats_aggregate_logs($logs, $input->from, $input->to);
 
-            $weeklogs = use_stats_extract_logs(time() - 7 * DAYSECS, time(), $userid, $course->id);
-            $weekaggregate = use_stats_aggregate_logs($weeklogs, 'module', $input->from, $input->to);
+            $weeklogs = use_stats_extract_logs($input->to - 7 * DAYSECS, $input->to, $userid, $course->id);
+            $weekaggregate = use_stats_aggregate_logs($weeklogs, $input->to - 7 * DAYSECS, $input->to, '', true, true);
 
             $userglobals = userquiz_get_user_globals(array_keys($targetusers), $reportcontext->trainingquizzes,
                                                      $input->from, $input->to);
@@ -181,10 +183,10 @@ if ($output == 'html') {
             // Get data.
 
             $logs = use_stats_extract_logs($input->from, $input->to, $auser->id, $COURSE->id);
-            $aggregate = use_stats_aggregate_logs($logs, 'module', $input->from, $input->to);
+            $aggregate = use_stats_aggregate_logs($logs, $input->from, $input->to);
 
             $weeklogs = use_stats_extract_logs(time() - (DAYSECS * 7), time(), $auser->id, $COURSE->id);
-            $weekaggregate = use_stats_aggregate_logs($weeklogs, 'module', $input->from, $input->to);
+            $weekaggregate = use_stats_aggregate_logs($weeklogs, $input->from, $input->to);
 
             // Print result.
 
