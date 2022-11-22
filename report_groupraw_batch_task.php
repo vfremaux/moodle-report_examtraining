@@ -83,7 +83,7 @@ if (!empty($targetusers)) {
 
     $rawfile = mb_convert_encoding(implode(';', $resultset)."\n", 'ISO-8859-1', 'UTF-8');
 
-    $reportcontext = examtraining_get_context($course->id);
+    $reportcontext = block_userquiz_monitor_get_block($course->id)->config;
 
     global $COURSE;
     $COURSE->id = $course->id;
@@ -91,10 +91,10 @@ if (!empty($targetusers)) {
     foreach ($targetusers as $userid => $auser) {
 
         $logs = use_stats_extract_logs($input->from, $input->to, $auser->id, $COURSE->id);
-        $aggregate = use_stats_aggregate_logs($logs, 'module', $input->from, $input->to);
+        $aggregate = use_stats_aggregate_logs($logs, $input->from, $input->to);
 
-        $weeklogs = use_stats_extract_logs($input->to - DAYSECS * 7, time(), $auser->id, $COURSE->id);
-        $weekaggregate = use_stats_aggregate_logs($weeklogs, 'module', $input->from, $input->to);
+        $weeklogs = use_stats_extract_logs($input->to - DAYSECS * 7, $input->to, $auser->id, $COURSE->id);
+        $weekaggregate = use_stats_aggregate_logs($weeklogs, $input->to - DAYSECS * 7, $input->to, '', true, true);
 
         $logusers = $auser->id;
         $globalresults->elapsed = 0;

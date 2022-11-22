@@ -35,7 +35,7 @@ class xls_renderer extends \plugin_renderer_base {
     public function trainings(&$xlsdoc, $startrow, $xlsformats, $userid, $courseid, &$results) {
         global $CFG, $DB;
 
-        $examcontext = examtraining_get_context();
+        $examcontext = block_userquiz_monitor_get_block($courseid)->config;
 
         $ratiostr = get_string('ratio', 'report_examtraining');
         $aratiostr = get_string('ratioa', 'report_examtraining');
@@ -55,11 +55,11 @@ class xls_renderer extends \plugin_renderer_base {
         $xlsdoc->write_string($startrow, 4, $ccountstr, $xlsformats['tt']);
         $startrow++;
 
-        $xlsdoc->write_string($startrow, 0, (@$results->hitratio + 0).'%', $xlsformats['p']);
-        $xlsdoc->write_string($startrow, 1, (@$results->ahitratio + 0).'%', $xlsformats['p']);
-        $xlsdoc->write_string($startrow, 1, (@$results->chitratio + 0).'%', $xlsformats['p']);
-        $xlsdoc->write_string($startrow, 1, (@$results->aanswered + 0), $xlsformats['p']);
-        $xlsdoc->write_string($startrow, 1, (@$results->canswered + 0), $xlsformats['p']);
+        $xlsdoc->write_string($startrow, 0, (@$results->qratio + 0).'%', $xlsformats['p']);
+        $xlsdoc->write_string($startrow, 1, (@$results->aratio + 0).'%', $xlsformats['p']);
+        $xlsdoc->write_string($startrow, 1, (@$results->cratio + 0).'%', $xlsformats['p']);
+        $xlsdoc->write_string($startrow, 1, (@$results->acount + 0), $xlsformats['p']);
+        $xlsdoc->write_string($startrow, 1, (@$results->ccount + 0), $xlsformats['p']);
         $startrow++;
 
         // Jump line.
@@ -89,10 +89,10 @@ class xls_renderer extends \plugin_renderer_base {
             // Per category result.
             foreach ($cats as $cat) {
                 $xlsdoc->write_string($startrow, 0, format_string($cat->name), $xlsformats['ctl']);
-                $xlsdoc->write_string($startrow, 1, @$results->categories[$cat->id]->count_proposed + 0, $xlsformats['p']);
-                $xlsdoc->write_string($startrow, 2, @$results->categories[$cat->id]->count_answered + 0, $xlsformats['p']);
-                $xlsdoc->write_string($startrow, 3, @$results->categories[$cat->id]->count_matched + 0, $xlsformats['p']);
-                $xlsdoc->write_string($startrow, 4, (@$results->categories[$cat->id]->ratio + 0).' %', $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 1, @$results->categories[$cat->id]->qsize + 0, $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 2, @$results->categories[$cat->id]->qcount + 0, $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 3, @$results->categories[$cat->id]->qmatched + 0, $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 4, (@$results->categories[$cat->id]->qratio + 0).' %', $xlsformats['p']);
                 $startrow++;
             }
 
@@ -117,14 +117,15 @@ class xls_renderer extends \plugin_renderer_base {
     public function globalrow(&$xlsdoc, $userid, $courseid, &$data, $from, $to, &$row) {
         global $CFG, $COURSE, $DB;
 
-        $examcontext = examtraining_get_context();
-
-        $user = $DB->get_record('user', array('id' => $userid));
         if ($courseid != $COURSE->id) {
             $course = $DB->get_record('course', array('id' => $courseid));
         } else {
             $course = &$COURSE;
         }
+
+        $examcontext = block_userquiz_monitor_get_block($course->id)->config;
+
+        $user = $DB->get_record('user', array('id' => $userid));
 
         $resultset = array();
         $usergroups = groups_get_all_groups($courseid, $userid, 0, 'g.id, g.name');
@@ -173,16 +174,21 @@ class xls_renderer extends \plugin_renderer_base {
         $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
         $col++;
 
-        $data = raw_format_duration(@$data->elapsed); // Elapsed time.
+        $data = examtraining_raw_format_duration(@$data->elapsed); // Elapsed time.
         $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
         $col++;
 
-        $data = raw_format_duration(@$data->weekelapsed); // Elapsed time this week.
+        $data = examtraining_raw_format_duration(@$data->weekelapsed); // Elapsed time this week.
         $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
         $col++;
 
         $trainingstats = userquiz_get_user_globals($userid, $examcontext->trainingquizzes, $from, $to);
         $weektrainingstats = userquiz_get_user_globals($userid, $examcontext->trainingquizzes, time() - DAYSECS * 7, time());
+
+        if ($userid == 7198) {
+            debug_trace("Getting results for report. Xls renderer. ");
+            debug_trace($trainingstats);
+        }
 
         $data = 0 + @$trainingstats[$userid]->answered; // Answered questions on training.
         $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
@@ -392,12 +398,12 @@ class xls_renderer extends \plugin_renderer_base {
         $row++;
 
         $xlsdoc->write_string($row, 0, get_string('ratioa', 'report_examtraining'), $xlsformats['ctr']);
-        $xlsdoc->write_string($row, 1, 0 + @$data->ahitratio.' %', $xlsformats['pl']);
+        $xlsdoc->write_string($row, 1, 0 + @$data->aratio.' %', $xlsformats['pl']);
         $xlsdoc->merge_cells($row, 1, $row, 12);
         $row++;
 
         $xlsdoc->write_string($row, 0, get_string('ratioc', 'report_examtraining'), $xlsformats['ctr']);
-        $xlsdoc->write_string($row, 1, 0 + @$data->chitratio.' %', $xlsformats['pl']);
+        $xlsdoc->write_string($row, 1, 0 + @$data->cratio.' %', $xlsformats['pl']);
         $xlsdoc->merge_cells($row, 1, $row, 12);
         $row++;
 
@@ -512,11 +518,13 @@ class xls_renderer extends \plugin_renderer_base {
     }
 
     /**
+     * STATUS : SEEMS NOT USED
      * a raster for printing exam results in XSL.
      */
-    public function exams(&$xlsdoc, $startrow, $xlsformats, $userid) {
+    public function exams(&$xlsdoc, $results, $startrow, $xlsformats, $userid) {
+        global $COURSE;
 
-        $examcontext = examtraining_get_context();
+        $examcontext = block_userquiz_monitor_get_block($COURSE->id)->config;
 
         $datestr = get_string('date', 'report_examtraining');
         $tryindexstr = get_string('tryindex', 'report_examtraining');

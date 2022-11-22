@@ -40,8 +40,8 @@ class jqplot_renderer {
 
         $template->title = addslashes($title);
 
-        $answeredarr = array($data->aanswered, $data->canswered);
-        $hitratioarr = array($data->ahitratio, $data->chitratio);
+        $answeredarr = array($data->acount, $data->ccount);
+        $hitratioarr = array($data->aratio, $data->cratio);
 
         $template->matchedstr = get_string('matched', 'report_examtraining');
         $template->questionstr = get_string('question', 'report_examtraining');
@@ -66,7 +66,7 @@ class jqplot_renderer {
 
         $template = new StdClass();
 
-        $template->xticks = implode(",", $ticks);
+        $template->xticks = "'".implode("','", $ticks)."'";
         $template->htmlid = $htmlid.'_'.$instance;
 
         $template->title = addslashes($title);
@@ -134,8 +134,92 @@ class jqplot_renderer {
                 highlighter: {
                     show: false,
                 },
-                axes:{ xaxis:{renderer: \$.jqplot.CategoryAxisRenderer, label:'{$qstr}', ticks:xticks},
-                       yaxis:{label:'{$numberstr}', autoscale:true}
+                axes:{
+                    xaxis:{
+                        renderer: \$.jqplot.CategoryAxisRenderer,
+                        label:'{$qstr}',
+                        ticks:xticks
+                    },
+                    yaxis:{
+                        label:'{$numberstr}',
+                        autoscale:true
+                    }
+                },
+            });
+        ";
+
+        $str .= '</script>';
+        $plotid++;
+
+        return $str;
+    }
+
+    /**
+     * data as array groupname=> workratio
+     *
+     */
+    public function groupworkratio_bargraph(&$data, $title, $htmlid) {
+        global $plotid;
+        static $instance = 0;
+
+        $htmlid = $htmlid.'_'.$instance;
+        $instance++;
+
+        // Preformat data with empty values.
+        ksort($data);
+
+        $xticks = "'".implode("','", array_keys($data))."'";
+
+        $str = '<center>';
+        $str .= '<div id="'.$htmlid.'" style="width:1500px; height:500px;"></div>';
+        $str .= '</center>';
+
+        $str .= '<script type="text/javascript" language="javascript">';
+        $str .= '
+            $.jqplot.config.enablePlugins = true;
+        ';
+
+        $title = addslashes($title);
+        $qstr = addslashes(get_string('group', 'report_examtraining'));
+        $numberstr = addslashes(get_string('workratio', 'report_examtraining'));
+
+        $str .= local_vflibs_jqplot_simplebarline('data_'.$htmlid, $data);
+
+        $str .= "
+
+            xticks = [{$xticks}];
+
+            plot{$plotid} = \$.jqplot(
+                '$htmlid',
+                [data_$htmlid],
+                {
+                title:'$title',
+                seriesDefaults:{
+                    renderer: \$.jqplot.BarRenderer,
+                    rendererOptions:{barPadding: 6, barMargin:4}
+                },
+                axesDefaults:{
+                    tickRenderer: \$.jqplot.CanvasAxisTickRenderer,
+                },
+                series:[
+                    {color:'#FF0000'}
+                ],
+                highlighter: {
+                    show: false,
+                },
+                axes:{
+                    xaxis:{
+                        renderer: \$.jqplot.CategoryAxisRenderer,
+                        tickOptions: {
+                            angle: -90
+                        },
+                        label:'{$qstr}',
+                        ticks:xticks
+                     },
+                     yaxis:{
+                        label:'{$numberstr}',
+                        autoscale:true
+                    }
                 },
             });
         ";
@@ -159,7 +243,7 @@ class jqplot_renderer {
 
         $str = '<center>';
         $str .= '<div id="'.$htmlid.'"
-                   style="width:700px; height:500px;"></div>';
+                   style="width:1024px; height:500px;"></div>';
         $str .= '</center>';
 
         $str .= '<script type="text/javascript" language="javascript">';

@@ -15,22 +15,24 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details.
- *
- * @package    report_examtraining
+ * @package    report_learningtimecheck
  * @category   report
- * @author     valery fremaux <valery.fremaux@gmail.com>
- * @copyright  2016 onwards valery fremaux (valery.fremaux@gmail.com)
+ * @copyright  1999 onwards Martin Dougiamas  {@link http://moodle.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') || die;
 
-$plugin->version  = 2022100200;
-$plugin->requires = 2019111200;
-$plugin->component = 'report_examtraining';
-$plugin->release = '3.9.0 (Build 2022100200)';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->supported = [39,311];
+/**
+ * Standard upgrade handler.
+ * @param int $oldversion
+ */
+function xmldb_report_examtraining_upgrade($oldversion = 0) {
+    global $DB, $OUTPUT;
 
-// Non moodle attributes.
-$plugin->codeincrement = '3.9.0004';
+    $dbman = $DB->get_manager();
+
+    $result = true;
+    // Removed old upgrade stuff, as it now uses install.xml by default to install.
+
+     return $result;
+}

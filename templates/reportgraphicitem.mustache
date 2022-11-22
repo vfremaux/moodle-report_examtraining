@@ -2,10 +2,20 @@
 
 
 <!-- reportgraphicitem -->
-{{{heading}}}
+<div class="examtraining-coverage">
+    <div class="header">
+        <h2>{{title}}</h2>
+    </div>
 
-<div class="examtraining-report-item coverage">
-    <img src="{{{generatorurl}}}" width="{{width}}" height="{{height}}" /><br/>
-    {{legendstr}}
+    <div class="examtraining-report-item coverage" style="display:flex">
+        <div style="text-align:center">
+        <img src="{{{generatorurl}}}" width="{{width}}" height="{{height}}" /><br/>
+        {{{legendstr}}}
+        </div>
+        <div style="text-align:center">
+        <img src="{{{generatorurlmatched}}}" width="{{width}}" height="{{height}}" /><br/>
+        {{{legendmatchedstr}}}
+        </div>
+    </div>
 </div>
 <!-- /reportgraphicitem -->

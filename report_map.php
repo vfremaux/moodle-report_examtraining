@@ -49,20 +49,20 @@ ini_set('memory_limit', '2048M');
  * Pre print the group selector
  * time and group period form
  */
-require($CFG->dirroot.'/report/examtraining/course_selector_form.html');
+$input->nousers = true;
+echo $renderer->selectorform($course, $view, $input);
 
 // Compute target group.
+$pagesize = 50;
 
 if ($groupid) {
-    $targetusers = groups_get_members($groupid);
+    $targetusers = get_enrolled_users($context, '', $groupid, 'u.*', 'u.lastname, u.firstname', $input->offset, $pagesize, true);
     $max = count($targetusers);
-    $page = count($targetusers);
+    $pagesize = count($targetusers);
 } else {
-    $fields = 'u.id, '.get_all_user_name_fields(true, 'u');
-    $allusers = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname');
+    $allusers = get_enrolled_users($context, '', 0, 'u.id', 'u.lastname, u.firstname', 0, 0, true);
     $max = count($allusers);
-    $fields = 'u.id, '.get_all_user_name_fields(true, 'u').', email, institution';
-    $targetusers = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname', $input->offset, $page);
+    $targetusers = get_enrolled_users($context, '', 0, 'u.*', 'u.lastname, u.firstname', $input->offset, $pagesize, true);
 }
 
 // Filters teachers out.
@@ -84,8 +84,9 @@ if (!empty($targetusers)) {
     echo '<table width="800">';
     echo '<tr valign="top">';
     echo '<td width="80%">';
-    $reportcontext = examtraining_get_context();
-    $userglobals = userquiz_get_user_globals(array_keys($targetusers), $reportcontext->trainingquizzes, $input->from, $input->to);
+    $reportcontext = block_userquiz_monitor_get_block($COURSE->id)->config;
+    $compiler = new \report_examtraining\stats\compiler();
+    $userglobals = $compiler->get_user_globals(array_keys($targetusers), $COURSE->id, $input->from, $input->to);
     echo $htmlrenderer->coverage_vs_ratio($targetusers, $course->id, $input->from, $input->to, $userglobals);
     echo '</td><td width="20%">';
     $advicestr = get_string('jqplotzoomadvice', 'report_examtraining');

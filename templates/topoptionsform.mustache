@@ -6,15 +6,15 @@
 <input type="hidden" name="from" value="{{from}}" />
 <input type="hidden" name="to" value="{{to}}" />
 <input type="hidden" name="groupid" value="{{groupid}}" />
-<input type="hidden" name="view" value="course_{{subview}}" />
+<input type="hidden" name="view" value="tops" />
 
 <table width="100%">
     <tr valign="top">
         <td width="50%">
-            {{{toporderstr}}}: {{{orderselect}}}
+            {{#str}}toporder, report_examtraining{{/str}} : {{{orderselect}}}
         </td>
         <td width="50%">
-            {{{toplengthstr}}}: {{{lengthselect}}}
+            {{#str}}toplength, report_examtraining{{/str}} : {{{lengthselect}}}
         </td>
     </tr>
 </table>

@@ -1,0 +1,20 @@
+
+
+
+<!-- report_examtraning/permodules -->
+<div class="">
+    <div class="header">
+        <h2>{{#str}}permodule, report_examtraining{{/str}}</h2>
+    </div>
+
+    {{#hasattempts}}
+    <div id="report-examtraining-permodules">
+        {{{modules}}}
+    </div>
+    {{/hasattempts}}
+
+    {{^hasattempts}}
+    {{{noattemptsnotification}}}
+    {{/hasattempts}}
+</div>
+<!-- /report_examtraning/permodules -->

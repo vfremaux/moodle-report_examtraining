@@ -123,7 +123,9 @@ function report_examtraining_pluginfile($course, $cm, $context, $filearea, $args
  * @return bool returns true if the store is supported by the report, false otherwise.
  */
 function report_examtraining_supports_logstore($instance) {
-    if ($instance instanceof \core\log\sql_internal_reader || $instance instanceof \logstore_legacy\log\store) {
+    if ($instance instanceof \core\log\sql_internal_reader ||
+            $instance instanceof \logstore_legacy\log\store ||
+                    $instance instanceof \logstore_standard\log\store) {
         return true;
     }
     return false;

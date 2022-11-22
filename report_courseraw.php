@@ -35,6 +35,7 @@ require_once($CFG->dirroot.'/report/examtraining/reportasyncprecompilelib.php');
 require_once($CFG->dirroot.'/report/examtraining/classes/output/rawrenderer.php');
 
 $input = examtraining_reports_input($course);
+$groupid = optional_param('groupid', false, PARAM_INT);
 
 $page = 20;
 
@@ -45,7 +46,8 @@ $page = 20;
  * Pre print the group selector
  * time and group period form
  */
-require_once($CFG->dirroot.'/report/examtraining/courseraw_selector_form.html');
+$input->nousers = true;
+echo $renderer->selectorform($course, $view, $input);
 
 $rawrenderer = $PAGE->get_renderer('report_examtraining', 'raw');
 
@@ -68,6 +70,7 @@ if ($groupid) {
         $targetusers = groups_get_members($groupid);
     }
 }
+$input->nousers = count($targetusers) > 0;
 
 // Fitlers teachers out.
 foreach ($targetusers as $uid => $user) {
@@ -90,6 +93,7 @@ if (!empty($targetusers)) {
     for ($i = 1; $i < 10; $i++) {
         $resultset[] = "Q$i";
     }
+
     for ($i = 1; $i <= 10; $i++) {
         $resultset[] = "Q".($i * 10);
     }
@@ -100,17 +104,17 @@ if (!empty($targetusers)) {
 
     $rawfile = implode(';', $resultset)."\n";
 
-    $examtrainingcontext = examtraining_get_context();
+    $examtrainingcontext = block_userquiz_monitor_get_block($COURSE->id)->config;
 
     foreach ($targetusers as $uid => $auser) {
         $logs = use_stats_extract_logs($input->from, $input->to, $uid, $COURSE->id);
         echo 'Logs extracted. Mem state : '.memory_get_usage().'<br/>';
-        $aggregate = use_stats_aggregate_logs($logs, 'module', $uid);
+        $aggregate = use_stats_aggregate_logs($logs, $input->from, $input->to);
         echo 'Logs aggregated. Mem state : '.memory_get_usage().'<br/>';
 
-        $weeklogs = use_stats_extract_logs($input->to - DAYSECS * 7, time(), $uid, $COURSE->id);
+        $weeklogs = use_stats_extract_logs($input->to - DAYSECS * 7, $input->to, $uid, $COURSE->id);
         echo 'Week Logs extracted. Mem state : '.memory_get_usage().'<br/>';
-        $weekaggregate = use_stats_aggregate_logs($weeklogs, 'module', $uid);
+        $weekaggregate = use_stats_aggregate_logs($weeklogs, $input->to - DAYSECS * 7, $input->to, '', true, $COURSE);
         echo 'Week Logs aggregated. Mem state : '.memory_get_usage().'<br/>';
 
         echo "Compiling for ".fullname($auser).'<br/>';
@@ -133,6 +137,7 @@ if (!empty($targetusers)) {
             }
         }
 
+        // globalheader retreives additional userquiz_monitor quiz results. 
         $rawfile .= $rawrenderer->globalheader($auser->id, $course->id, $globalresults, $input->from, $input->to);
     }
 

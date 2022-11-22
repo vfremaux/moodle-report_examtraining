@@ -31,6 +31,11 @@ class raw_renderer extends \plugin_renderer_base {
     /**
      * a raster for printing in raw format
      * with all the relevant data about a user.
+     * @param int $userid the reported user id
+     * @param int $courseid the current course
+     * @param array &$data the global results
+     * @param int $from from timestamp
+     * @param int $to to timestamp
      */
     public function globalheader($userid, $courseid, &$data, $from, $to) {
         global $CFG, $COURSE, $DB;
@@ -39,6 +44,7 @@ class raw_renderer extends \plugin_renderer_base {
         static $c3fieldid = 0;
 
         $loginfo = examtraining_get_log_reader_info();
+        $compiler = new \report_examtraining\stats\compiler();
 
         if ($dobfieldid == 0) {
             $dobfieldid = $DB->get_field('user_info_field', 'id', array('shortname' => 'AMFDOB'));
@@ -51,22 +57,23 @@ class raw_renderer extends \plugin_renderer_base {
             $c3fieldid = $DB->get_field('user_info_field', 'id', array('shortname' => 'c3'));
         }
 
-        $examcontext = examtraining_get_context($courseid);
+        $examcontext = block_userquiz_monitor_get_block($courseid)->config;
 
-        $user = $DB->get_record('user', array('id' => $userid));
+        $user = $DB->get_record('user', ['id' => $userid]);
         if ($courseid != $COURSE->id) {
-            $course = $DB->get_record('course', array('id' => $courseid));
+            $course = $DB->get_record('course', ['id' => $courseid]);
         } else {
             $course = &$COURSE;
         }
 
-        $resultset = array();
+        $resultset = [];
+
         $usergroups = groups_get_all_groups($courseid, $userid, 0, 'g.id, g.name');
 
         if (!empty($usergroups)) {
             foreach ($usergroups as $group) {
                 $str = $group->name;
-                if ($group->id == groups_get_course_group($courseid)) {
+                if ($group->id == groups_get_course_group($course)) {
                     $str = "$str";
                 }
                 $groupnames[] = $str;
@@ -78,6 +85,33 @@ class raw_renderer extends \plugin_renderer_base {
 
         $resultset[] = $user->id; // Userid.
         $resultset[] = $user->username; // Username.
+
+        // Lastname
+        /*
+        $namestr = mb_convert_encoding(strtoupper(trim(preg_replace('/\s+/', ' ', $user->lastname))), 'ISO-8859-1', 'UTF-8');
+        $namestr = mb_ereg_replace('/é|è|ë|ê/', 'E', $namestr);
+        $namestr = mb_ereg_replace('/ä|a/', 'A', $namestr);
+        $namestr = mb_ereg_replace('/ç/', 'C', $namestr);
+        $namestr = mb_ereg_replace('/ü|ù|/', 'U', $namestr);
+        $namestr = mb_ereg_replace('/î/', 'I', $namestr);
+        */
+        $namestr = $user->lastname;
+        $resultset[] = $namestr;
+
+        // Firstname
+        /*
+        $namestr = mb_convert_encoding(strtoupper(trim(preg_replace('/\s+/', ' ', $user->firstname))), 'ISO-8859-1', 'UTF-8');
+        $namestr = mb_ereg_replace('/é|è|ë|ê/', 'E', $namestr);
+        $namestr = mb_ereg_replace('/ä|a/', 'A', $namestr);
+        $namestr = mb_ereg_replace('/ç/', 'C', $namestr);
+        $namestr = mb_ereg_replace('/ü|ù|/', 'U', $namestr);
+        $namestr = mb_ereg_replace('/î/', 'I', $namestr);
+        */
+        $namestr = $user->firstname;
+        $resultset[] = $namestr;
+
+        // Email
+        $resultset[] = $user->email;
 
         $sql = "
             SELECT
@@ -91,63 +125,70 @@ class raw_renderer extends \plugin_renderer_base {
                 userid = ?
         ";
 
+        // First enrol date
         $firstenroll = $DB->get_field_sql($sql, array($user->id));
-        $resultset[] = ($firstenroll) ? date('d/m/Y', $firstenroll) : ''; // From date.
+        $resultset[] = ($firstenroll) ? date('d/m/Y', $firstenroll) : '';
+
+        // First login date
         $select = " userid = ? AND action = '".$loginfo->loggedin."' ";
         $firstlogin = $DB->get_field_select($loginfo->table, 'MIN('.$loginfo->timeparam.')', $select, array($user->id));
         $resultset[] = ($firstlogin) ? date('d/m/Y', $firstlogin) : ''; // Firstlogin.
+
+        // Last login date
         $select = " userid = ? AND action = '".$loginfo->loggedin."' ";
         $lastlogin = $DB->get_field_select($loginfo->table, 'MAX('.$loginfo->timeparam.')', $select, array($user->id));
         $resultset[] = ($lastlogin) ? date('d/m/Y', $lastlogin) : ''; // Firstlogin.
+
+        // Report period start
         $resultset[] = date('d/m/Y', $from); // From date.
+
+        // Report period end
         $resultset[] = date('d/m/Y', $to); // To date.
+
+        // Week Report period start
         $resultset[] = date('d/m/Y', $to - DAYSECS * 7); // Last week of period.
-        $namestr = mb_convert_encoding(strtoupper(trim(preg_replace('/\s+/', ' ', $user->lastname))), 'ISO-8859-1', 'UTF-8');
-        $namestr = mb_ereg_replace('/é|è|ë|ê/', 'E', $namestr);
-        $namestr = mb_ereg_replace('/ä|a/', 'A', $namestr);
-        $namestr = mb_ereg_replace('/ç/', 'C', $namestr);
-        $namestr = mb_ereg_replace('/ü|ù|/', 'U', $namestr);
-        $namestr = mb_ereg_replace('/î/', 'I', $namestr);
-        $resultset[] = $namestr;
-        $namestr = mb_convert_encoding(strtoupper(trim(preg_replace('/\s+/', ' ', $user->firstname))), 'ISO-8859-1', 'UTF-8');
-        $namestr = mb_ereg_replace('/é|è|ë|ê/', 'E', $namestr);
-        $namestr = mb_ereg_replace('/ä|a/', 'A', $namestr);
-        $namestr = mb_ereg_replace('/ç/', 'C', $namestr);
-        $namestr = mb_ereg_replace('/ü|ù|/', 'U', $namestr);
-        $namestr = mb_ereg_replace('/î/', 'I', $namestr);
-        $resultset[] = $namestr;
 
-        $resultset[] = $user->email;
+        // Elapsed in course
+        $resultset[] = examtraining_raw_format_duration(@$data->elapsed); // Elapsed time.
 
-        $resultset[] = raw_format_duration(@$data->elapsed); // Elapsed time.
-        $resultset[] = raw_format_duration(@$data->weekelapsed); // Elapsed time this week.
+        // Elapsed in course in last week
+        $resultset[] = examtraining_raw_format_duration(@$data->weekelapsed); // Elapsed time this week.
 
-        $trainingstats = userquiz_get_user_globals($userid, $examcontext->trainingquizzes, $from, $to);
-        $weektrainingstats = userquiz_get_user_globals($userid, $examcontext->trainingquizzes, $to - DAYSECS * 7, $to);
+        // Userquiz monitor quiz results.
+        // Try using a direct method less optimized
+        $trainingstats = $compiler->get_user_globals($userid, $course->id, $from, $to);
+        $weektrainingstats = $compiler->get_user_globals($userid, $course->id, $to - DAYSECS * 7, $to);
 
-        $resultset[] = 0 + @$trainingstats[$userid]->aanswered; // Answered A questions on training.
-        $resultset[] = 0 + @$weektrainingstats[$userid]->aanswered; // Answered A questions on training this week.
+        // Block direct alternative : 
+        /*
+        require_once($CFG->dirroot.'/report/examtraining/quickfixlib.php');
+        $trainingstats[$userid] = report_examtraining_get_user_block_results($examcontext, $userid);
+        $weektrainingstats[$userid] = report_examtraining_get_user_block_results($examcontext, $userid, true);
+        */
 
-        $resultset[] = 0 + @$trainingstats[$userid]->canswered; // Answered C questions on training.
-        $resultset[] = 0 + @$weektrainingstats[$userid]->canswered; // Answered C questions on training this week.
+        $resultset[] = 0 + @$trainingstats[$userid]->acount; // Answered A questions on training.
+        $resultset[] = 0 + @$weektrainingstats[$userid]->acount; // Answered A questions on training this week.
 
-        $resultset[] = ((0 + @$trainingstats[$userid]->ahitratio)).' %'; // Ratio A.
-        $resultset[] = ((0 + @$weektrainingstats[$userid]->ahitratio)).' %'; // Ratio A.
+        $resultset[] = 0 + @$trainingstats[$userid]->ccount; // Answered C questions on training.
+        $resultset[] = 0 + @$weektrainingstats[$userid]->ccount; // Answered C questions on training this week.
 
-        $resultset[] = ((0 + @$trainingstats[$userid]->chitratio)).' %'; // Ratio C.
-        $resultset[] = ((0 + @$weektrainingstats[$userid]->chitratio)).' %'; // Ratio C.
+        $resultset[] = ((0 + @$trainingstats[$userid]->aratio)).' %'; // Ratio A.
+        $resultset[] = ((0 + @$weektrainingstats[$userid]->aratio)).' %'; // Ratio A.
+
+        $resultset[] = ((0 + @$trainingstats[$userid]->cratio)).' %'; // Ratio C.
+        $resultset[] = ((0 + @$weektrainingstats[$userid]->cratio)).' %'; // Ratio C.
 
         // $select = " userid = $userid AND blockid = {$examcontext->instanceid} AND attemptid = 0 ";
         // $resultset[] = 0 + get_field_select('userquiz_monitor_user_stats', 'coverageseen', $select).' %'; // knowledge covering
         // $resultset[] = 0 + get_field_select('userquiz_monitor_user_stats', 'coveragematched', $select).' %'; // knowledge covering
 
-        $examstats = userquiz_get_user_globals($userid, $examcontext->examquiz, $from, $to);
+        $examstats = $compiler->get_user_globals($userid, $course->id, $from, $to, 0, 'exam');
 
         $matchedexams = 0;
-        if ($stats = userquiz_get_attempts_stats($userid, $examcontext->examquiz, $from, $to)) {
+        if ($stats = $compiler->get_attempts_stats($userid, $course->id, $from, $to, 0, 'exam')) {
             foreach ($stats as $attemptid => $attemptres) {
-                if (($attemptres->ahitratio * 100 >= $examcontext->rateAserie) &&
-                        ($attemptres->chitratio * 100 >= $examcontext->rateCserie)) {
+                if (($attemptres->aratio * 100 >= $examcontext->rateAserie) &&
+                        ($attemptres->cratio * 100 >= $examcontext->rateCserie)) {
                     $matchedexams++;
                 }
             }
@@ -156,7 +197,7 @@ class raw_renderer extends \plugin_renderer_base {
         $resultset[] = 0 + $matchedexams; // Succeeded exam attempts.
         $resultset[] = 0 + @$examstats[$userid]->attempts; // Exam attempts.
 
-        $modules = examtraining_get_module_count($userid, $from, $to);
+        $modules = $compiler->get_attempts_per_size($userid, $from, $to);
 
         for ($i = 1; $i < 10; $i++) {
             $modules[$i] = 0 + @$modules[$i];

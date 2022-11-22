@@ -1,12 +1,12 @@
 
 <!-- topreport -->
 {{#hasusers}}
-<div class="container-fluid">
-    <div class="row-fluid">
-        <div class="span12">
+<div class="report-examtraining-block">
+    <div class="report-examtraining-panel100">
 
-            <h2>{{topexamshdr}}</h2>
+        <h2>{{topexamshdr}}</h2>
 
+        <div class="content">
             {{#hasexams}}
                 {{{topexamstable}}}
             {{/hasexams}}
@@ -14,12 +14,11 @@
             {{^hasexams}}
                 {{{notrainingactivity}}}
             {{/hasexams}}
-
         </div>
     </div>
 
-    <div class="row-fluid">
-        <div class="span6">
+    <div class="report-examtraining-block">
+        <div class="report-examtraining-panel50">
 
             <h2>{{topquestionshdr}}</h2>
 
@@ -32,12 +31,12 @@
             {{/hasquestions}}
 
         </div>
-        <div class="span6">
+        <div class="report-examtraining-panel50">
 
             <h2>{{topcoveragehdr}}</h2>
 
             {{#hascoverage}}
-                {{topcoveragetable}}
+                {{{topcoveragetable}}}
             {{/hascoverage}}
 
             {{^hascoverage}}

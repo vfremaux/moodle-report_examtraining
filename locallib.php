@@ -31,6 +31,7 @@ require_once($CFG->dirroot.'/report/examtraining/excelformats.php');
 
 /**
  * Returns proper info to query log
+ @return a $readerinfo object describing log and log fields
  */
 function examtraining_get_log_reader_info() {
 
@@ -62,21 +63,31 @@ function examtraining_get_log_reader_info() {
     return $readerinfo;
 }
 
-function count_questions_in_categories_rec($rootcatid, &$cats) {
+/**
+ * Status : check redundancy with other implementations.
+ * @see block_userquiz_monitor/xlib.php §block_userquiz_mponitor_get_top_cats()
+ * Counts all questions by type in a cat and its subtree.
+ * Optimized and memory cached function.
+ * @param int $rootcatid the top root category.
+ * @param array $cats category records with question count ans subs.
+s */
+function examtraining_count_questions_in_cats_rec($rootcatid, &$cats) {
     global $DB;
 
     static $level = 0;
     static $countcache = array();
 
+    $cats = new SdClass;
+
     if (!isset($countcache[$level])) {
 
         // Count real questions.
         $select = " category = ? AND parent = 0 AND hidden = 0 ";
-        $cats->count = $DB->count_records_select('question', $select, array($rootcatid));
+        $cats->qcount = $DB->count_records_select('question', $select, array($rootcatid));
         $select = "category = ? AND parent = 0 AND defaultmark = 1 AND hidden = 0 ";
-        $cats->count_a = $DB->count_records_select('question', $select, array($rootcatid));
+        $cats->acount = $DB->count_records_select('question', $select, array($rootcatid));
         $select = "category = ? AND parent = 0 AND defaultmark = 1000 AND hidden = 0 ";
-        $cats->count_c = $DB->count_records_select('question', $select, array($rootcatid));
+        $cats->ccount = $DB->count_records_select('question', $select, array($rootcatid));
 
         $childs = $DB->get_records('question_categories', array('parent' => $rootcatid), 'id,id');
 
@@ -88,31 +99,32 @@ function count_questions_in_categories_rec($rootcatid, &$cats) {
                 }
                 $subs = new StdClass;
                 $level++;
-                count_questions_in_categories_rec($subcat->id, $subs);
+                examtraining_count_questions_in_cats_rec($subcat->id, $subs);
                 $level--;
-                $cats->count += $subs->count;
-                $cats->count_a += $subs->count_a;
-                $cats->count_c += $subs->count_c;
+                $cats->qcount += $subs->qcount;
+                $cats->acount += $subs->acount;
+                $cats->ccount += $subs->ccount;
                 $cats->subs[$subcat->id] = $subs;
             }
             $rec = new Stdclass();
-            $rec->count = $cats->count;
-            $rec->count_a = $cats->count_a;
-            $rec->count_c = $cats->count_c;
+            $rec->qcount = $cats->qcount;
+            $rec->acount = $cats->acount;
+            $rec->ccount = $cats->ccount;
             $rec->subs = $cats->subs;
             $countcache[$level] = $rec;
         }
     } else {
-        $cats->count = $countcache[$level]->count;
-        $cats->count_a = $countcache[$level]->count_a;
-        $cats->count_c = $countcache[$level]->count_c;
+        $cats->qcount = $countcache[$level]->qcount;
+        $cats->acount = $countcache[$level]->acount;
+        $cats->ccount = $countcache[$level]->ccount;
         $cats->subs = &$countcache[$level]->subs;
     }
 }
 
 /**
  * special time formating
- *
+ * @param int $timevalue a unix timestamp
+ * @param stirng $mode the formatting mode. (html or anything else)
  */
 function examtraining_reports_format_time($timevalue, $mode = 'html') {
 
@@ -158,39 +170,16 @@ function examtraining_reports_init_worksheet($userid, &$xlsformats, &$workbook, 
 }
 
 /**
- * get participating objects to this training context, knowing the course.
- * We have to fetch the userquiz_monitor block configuration matching this course.
+ * recursively get all question id list in all subtree
+ * @param int $rootcatid
+ * @param arrayref &$questionids an array that collects question ids.
  */
-function examtraining_get_context($courseid = 0, $passthru = false) {
-    global $COURSE, $DB;
-
-    if (!$courseid) {
-        $courseid = $COURSE->id;
-    }
-
-    $coursecontext = context_course::instance($COURSE->id);
-    $params = array('blockname' => 'userquiz_monitor', 'parentcontextid' => $coursecontext->id);
-    if (!$instance = $DB->get_record('block_instances', $params)) {
-        if (!$passthru) {
-            print_error('no userquiz monitor here', 'block_userquiz_monitor');
-        }
-        return false;
-    }
-
-    $theblock = block_instance('userquiz_monitor', $instance);
-    $theblock->config->instanceid = $instance->id;
-    return $theblock->config;
-}
-
-/**
- * recursively get all question ids
- */
-function examtraining_reports_get_questions_rec($catid, &$questionids) {
+function examtraining_reports_get_questions_rec($rootcatid, &$questionids) {
     global $DB;
     static $level = 0;
 
     $select = " category = ? AND parent = 0 ";
-    if ($questions = $DB->get_records_select('question', $select, array($catid), 'id', 'id,name,category')) {
+    if ($questions = $DB->get_records_select('question', $select, array($rootcatid), 'id', 'id,name,category')) {
         foreach ($questions as $q) {
             if (!in_array($q->id, $questionids)) {
                 $questionids[] = $q->id;
@@ -198,7 +187,7 @@ function examtraining_reports_get_questions_rec($catid, &$questionids) {
         }
     }
 
-    if ($subcats = $DB->get_records('question_categories', array('parent' => $catid), 'sortorder,id', 'id, name')) {
+    if ($subcats = $DB->get_records('question_categories', array('parent' => $rootcatid), 'sortorder,id', 'id, name')) {
         foreach ($subcats as $c) {
             $level++;
             examtraining_reports_get_questions_rec($c->id, $questionids);
@@ -207,47 +196,11 @@ function examtraining_reports_get_questions_rec($catid, &$questionids) {
     }
 }
 
-/*
- * Overloads weblib.php function to get it more usable
- *
- */
-function examtraining_get_module_count($userid, $from, $to) {
-    global $DB;
-
-    $examcontext = examtraining_get_context();
-    $testquizzes = implode("','", $examcontext->trainingquizzes);
-
-    $fromclause = ($from) ? " AND qa.timefinish > $from " : '';
-    $toclause = ($to) ? " AND qa.timefinish < $to " : '';
-
-    // Compute attempts "per module size".
-
-    $sql = "
-        SELECT
-            qcount,
-            COUNT(qa.id) as acount
-        FROM
-            {quiz_attempts} qa
-        LEFT JOIN
-            {report_examtraining} ua
-        ON
-            qa.uniqueid = ua.uniqueid
-        WHERE
-            userid = ? AND
-            quiz IN ('$testquizzes ')
-            $fromclause
-            $toclause
-        GROUP BY
-            qcount
-        ORDER BY
-            qcount
-    ";
-
-    return $DB->get_records_sql_menu($sql, array($userid));
-}
 
 /**
- * returns the lost of the groups of the user.
+ * returns the list of the names of the groups of the user.
+ * @param int $courseid the courseid
+ * @param int $userid the userid
  */
 function examtraining_get_grouplist($courseid, $userid) {
     global $DB;
@@ -264,344 +217,12 @@ function examtraining_get_grouplist($courseid, $userid) {
     return implode(', ', $groupnames);
 }
 
-function examtraining_compute_results($userid, $from, $to, $part, $attemptid = 0) {
-    global $USER, $CFG, $DB;
-    global $qcategories;
-    global $questions;
-
-    // Init structure.
-
-    $examcontext = examtraining_get_context();
-
-    // We get all states.
-    if ($part == 'training') {
-        $quizzeslist = implode("','", $examcontext->trainingquizzes);
-    } else {
-        $quizzeslist = str_replace(',', "','", $examcontext->examquiz);
-    }
-
-    // Category cache.
-    if (empty($questions)) {
-        $questions = $DB->get_records('question', array(), 'id', 'id,defaultgrade,category');
-    }
-    if (empty($qcategories)) {
-        $qcategories = get_records('question_categories', array(), 'id', 'id,parent');
-    }
-
-    // Prefetch categories structure.
-
-    $cats = new StdClass;
-    $totalquestions = count_questions_in_categories_rec($examcontext->rootcategory, $cats);
-
-    // Compute results.
-
-    $results = new StdClass;
-    $results->categories = array();
-    $results->attempts = array();
-    $results->items = 0;
-    $results->done = 0;
-
-    if (empty($attemptid)) {
-        $select = " userid = ? AND timefinish > ? AND timefinish < ? AND quiz IN ('$quizzeslist') ";
-        $attempts = $DB->get_records_select('quiz_attempts', $select, array($userid, $from, $to));
-    } else {
-        $select = " id = ? ";
-        $attempts = $DB->get_records_select('quiz_attempts', $select, array($attemptid));
-    }
-
-    if ($attempts) {
-        foreach ($attempts as $attempt) {
-            if ($statesrs = get_all_user_records($attempt->uniqueid, $userid, null, true)) {
-                if ($statesrs->valid()) {
-                    foreach ($statesrs as $state) {
-
-                        // Compute answers in states against question answers determining question type.
-                        if (!$question = &$questions[$state->question]) {
-                            continue;
-                        }
-                        $cattype = ($question->defaultmark == 1) ? 'A' : 'C';
-                        $ht = "hastype_$cattype";
-                        $ca = "count_answered_$cattype";
-                        $cp = "count_proposed_$cattype";
-                        $cm = "count_matched_$cattype";
-                        $cat = "count_answered";
-                        $cpt = "count_proposed";
-                        $cmt = "count_matched";
-
-                        // Aggregate upper category till rootcategory.
-                        $currentcat = &$qcategories[$question->category];
-
-                        if ($state->grade > 0) {
-                            @$results->attempts[$attempt->id]->{$cm}++;
-                            @$results->attempts[$attempt->id]->{$cmt}++;
-                        }
-                        if (strstr($state->answer, ':') !== false) {
-                            @$results->attempts[$attempt->id]->{$ca}++;
-                            @$results->attempts[$attempt->id]->{$cat}++;
-                        }
-                        @$results->attempts[$attempt->id]->{$cp}++;
-                        @$results->attempts[$attempt->id]->{$cpt}++;
-                        $results->attempts[$attempt->id]->timefinish = $attempt->timefinish;
-                        $results->modules[$attempt->userquiz][$attempt->id] = 1; // To count frequency of use of questionset.
-
-                        do {
-                            $previouscatid = $currentcat->id;
-                            $results->categories[$currentcat->id]->{$ht} = 1;
-                            if ($state->grade > 0) {
-                                $results->categories[$currentcat->id]->{$cm}++;
-                                $results->categories[$currentcat->id]->{$cmt}++;
-                            }
-                            if (strstr($state->answer, ':') !== false) {
-                                $results->categories[$currentcat->id]->{$ca}++;
-                                $results->categories[$currentcat->id]->{$cat}++;
-                            }
-                            $results->categories[$currentcat->id]->{$cp}++;
-                            $results->categories[$currentcat->id]->{$cpt}++;
-                            $currentcat = &$qcategories[$currentcat->parent];
-                        } while ($currentcat && ($previouscatid != $examcontext->rootcategory));
-                    }
-                }
-                $statesrs->close();
-            }
-        }
-    }
-
-    // Post compute ratios.
-    if (!empty($results->categories)) {
-        foreach (array_keys($results->categories) as $catid) {
-            if (@$results->categories[$catid]->count_answered_A) {
-                $ratio = @$results->categories[$catid]->count_matched_A / $results->categories[$catid]->count_answered_A;
-                $results->categories[$catid]->hitratio_A = round($ratio * 100);
-            } else {
-                $results->categories[$catid]->hitratio_A = 0;
-            }
-            if (@$results->categories[$catid]->count_proposed_A) {
-                $ratio = @$results->categories[$catid]->count_matched_A / $results->categories[$catid]->count_proposed_A;
-                $results->categories[$catid]->ratio_A = round($ratio * 100);
-            } else {
-                $results->categories[$catid]->ratio_A = 0;
-            }
-            if (@$results->categories[$catid]->count_answered_C) {
-                $ratio = @$results->categories[$catid]->count_matched_C / $results->categories[$catid]->count_answered_C;
-                $results->categories[$catid]->hitratio_C = round($ratio * 100);
-            } else {
-                $results->categories[$catid]->hitratio_C = 0;
-            }
-            if (@$results->categories[$catid]->count_proposed_C) {
-                $ratio = @$results->categories[$catid]->count_matched_C / $results->categories[$catid]->count_proposed_C;
-                $results->categories[$catid]->ratio_C = round($ratio * 100);
-            } else {
-                $results->categories[$catid]->ratio_C = 0;
-            }
-            if (@$results->categories[$catid]->count_answered) {
-                $ratio = @$results->categories[$catid]->count_matched / $results->categories[$catid]->count_answered;
-                $results->categories[$catid]->hitratio = round($ratio * 100);
-            } else {
-                $results->categories[$catid]->hitratio = 0;
-            }
-            if (@$results->categories[$catid]->count_proposed) {
-                $ratio = @$results->categories[$catid]->count_matched / $results->categories[$catid]->count_proposed;
-                $results->categories[$catid]->ratio = round($ratio * 100);
-            } else {
-                $results->categories[$catid]->ratio = 0;
-            }
-            if ($catid != $examcontext->rootcategory) {
-                $cat = get_record('question_categories', 'id', $catid);
-                if ($cat->parent == $examcontext->rootcategory) {
-                    if (@$cats->subs[$catid]->count > 0) {
-                        $ratio = (0 + @$results->categories[$catid]->count_matched) / $cats->subs[$catid]->count;
-                        $results->categories[$catid]->mastering = $ratio * 40;
-                        $results->masteringdata[$catid] = min(100, $results->categories[$catid]->mastering);
-                        $results->masteringheaders[$catid] = shorten_text($cat->name, 15);
-                    } else {
-                        $results->categories[$catid]->mastering = 0;
-                        $results->masteringdata[$catid] = 0;
-                        $results->masteringheaders[$catid] = shorten_text($cat->name, 15);
-                    }
-                }
-            }
-        }
-    }
-    if (!empty($results->attempts)) {
-        foreach (array_keys($results->attempts) as $attemptid) {
-            if (@$results->attempts[$attemptid]->count_answered_A) {
-                $ratio = @$results->attempts[$attemptid]->count_matched_A / $results->attempts[$attemptid]->count_answered_A;
-                $results->attempts[$attemptid]->hitratio_A = round($ratio * 100);
-            } else {
-                $results->attempts[$attemptid]->hitratio_A = 0;
-            }
-            if (@$results->attempts[$attemptid]->count_proposed_A) {
-                $ratio = @$results->attempts[$attemptid]->count_matched_A / $results->attempts[$attemptid]->count_answered_A;
-                $results->attempts[$attemptid]->ratio_A = round($ratio * 100);
-            } else {
-                $results->attempts[$attemptid]->ratio_A = 0;
-            }
-            if (@$results->attempts[$attemptid]->count_answered_C) {
-                $ratio = @$results->attempts[$attemptid]->count_matched_C / $results->attempts[$attemptid]->count_answered_C;
-                $results->attempts[$attemptid]->hitratio_C = round($ratio * 100);
-            } else {
-                $results->attempts[$attemptid]->hitratio_C = 0;
-            }
-            if (@$results->attempts[$attemptid]->count_proposed_C) {
-                $ratio = @$results->attempts[$attemptid]->count_matched_C / $results->attempts[$attemptid]->count_proposed_C;
-                $results->attempts[$attemptid]->ratio_C = round($ratio * 100);
-            } else {
-                $results->attempts[$attemptid]->ratio_C = 0;
-            }
-            if (@$results->attempts[$attemptid]->count_answered) {
-                $ratio = @$results->attempts[$attemptid]->count_matched / $results->attempts[$attemptid]->count_answered;
-                $results->attempts[$attemptid]->hitratio = round($ratio * 100);
-            } else {
-                $results->attempts[$attemptid]->hitratio = 0;
-            }
-            if (@$results->attempts[$attemptid]->count_proposed) {
-                $ratio = @$results->attempts[$attemptid]->count_matched / $results->attempts[$attemptid]->count_proposed;
-                $results->attempts[$attemptid]->ratio = round($ratio * 100);
-            } else {
-                $results->attempts[$attemptid]->ratio = 0;
-            }
-        }
-    }
-
-    if (isset($results->categories[$examcontext->rootcategory])) {
-        $itemsc = 0 + @$results->categories[$examcontext->rootcategory]->count_proposed_C;
-        $itemsa = 0 + @$results->categories[$examcontext->rootcategory]->count_proposed_A;
-        $results->items = $itemsa + $itemsc;
-        $donec = 0 + @$results->categories[$examcontext->rootcategory]->count_matched_C;
-        $donea = 0 + @$results->categories[$examcontext->rootcategory]->count_matched_A;
-        $results->done = $donec + $donea;
-
-        if ($cats->count > 0) {
-            $ratio = (0 + @$results->categories[$examcontext->rootcategory]->count_matched) / $cats->count;
-            $results->categories[$examcontext->rootcategory]->mastering = $ratio * 40;
-        } else {
-            $results->categories[$examcontext->rootcategory]->mastering = 0;
-        }
-        if ($cats->count_a > 0) {
-            $ratio = (0 + @$results->categories[$examcontext->rootcategory]->count_matched_A) / $cats->count_a;
-            $results->categories[$examcontext->rootcategory]->mastering_A = $ratio * 40;
-        } else {
-            $results->categories[$examcontext->rootcategory]->mastering_A = 0;
-        }
-        if ($cats->count_c > 0) {
-            $ratio = (0 + @$results->categories[$examcontext->rootcategory]->count_matched_C) / $cats->count_c;
-            $results->categories[$examcontext->rootcategory]->mastering_C = $ratio * 40;
-        } else {
-            $results->categories[$examcontext->rootcategory]->mastering_C = 0;
-        }
-    }
-    return $results;
-}
-
 /**
- *
- *
+ * formats a duration for rax output
+ * @params int secs duration in seconds
+ * @return printable duration expression.
  */
-function examtraining_compute_global_results($userid, $from, $to) {
-    global $USER, $CFG;
-    global $questions;
-
-    // Init structure.
-
-    $examcontext = examtraining_get_context();
-
-    // We get all states.
-    $quizzeslist = implode("','", $examcontext->testquizzes);
-    $examquizzeslist = str_replace(',', "','", $examcontext->examquizzes);
-
-    $results = new StdClass;
-    if (!isset($questions)) {
-        $questions = $DB->get_records('question', array(), 'id,defaultgrade,category');
-    }
-
-    $examselect = "
-        userid = ? AND
-        timefinish > ? AND
-        timefinish < ? AND
-        quiz IN ('$examquizzeslist')
-    ";
-    if ($exams = $DB->get_records_select('quiz_attempts', $examselect, array($userid, $from, $to))) {
-        $results->exams = count($exams);
-    } else {
-        $results->exams = 0;
-    }
-
-    $select = "
-        userid = ? AND
-        timefinish > ? AND
-        timefinish < ? AND
-        userquiz IN ('$quizzeslist')
-    ";
-    $distinctquestions = array();
-    if ($attempts = $DB->get_records_select('quiz_attempts', $select, array($userid, $from, $to))) {
-        $results->attempts = count($attempts);
-        foreach ($attempts as $attempt) {
-            if ($statesrs = get_all_user_records($attempt->id, $userid, null, true)) {
-                if ($statesrs->valid()) {
-                    foreach ($staters as $state) {
-                        // Compute answers in states against question answers determining question type.
-                        $question = &$questions[$state->question];
-
-                        if (!$question) {
-                            continue;
-                        }
-                        $cattype = ($question->defaultmark == 1) ? 'A' : 'C';
-                        $ht = "hastype_$cattype";
-                        $ca = "count_answered_$cattype";
-                        $cp = "count_proposed_$cattype";
-                        $cm = "count_matched_$cattype";
-                        $cat = "count_answered";
-                        $cpt = "count_proposed";
-                        $cmt = "count_matched";
-
-                        // Aggregate on globalizers.
-                        if ($state->grade > 0) {
-                            @$results->{$cm}++;
-                            @$results->{$cmt}++;
-                        }
-                        if (strstr($state->answer, ':') !== false) {
-                            @$results->{$ca}++;
-                            @$results->{$cat}++;
-                        }
-                        @$results->{$cp}++;
-                        @$results->{$cpt}++;
-                    }
-                }
-                $$statesrs->close();
-            }
-        }
-    }
-
-    // Post compute ratios.
-    if (!empty($results->count_proposed)) {
-        $results->ratio = round( (0 + @$results->count_matched) / $results->count_proposed * 100);
-    } else {
-        $results->ratio = 0;
-    }
-    if (!empty($results->count_proposed_A)) {
-        $results->ratio_A = round((0 + @$results->count_matched_A) / $results->count_proposed_A * 100);
-    } else {
-        $results->ratio_A = 0;
-    }
-    if (!empty($results->count_proposed_C)) {
-        $results->ratio_C = round((0 + @$results->count_matched_C) / $results->count_proposed_C * 100);
-    } else {
-        $results->ratio_C = 0;
-    }
-    $results->items = @$results->count_proposed;
-    $results->done = @$results->count_matched;
-
-    $questionids = array();
-    examtraining_reports_get_questions_rec($examcontext->rootcategory, $questionids);
-    $questioncount = count($questionids);
-    if ($questioncount) {
-        $results->knowledge_covering_ratio = round(count($distinctquestions) / $questioncount * 100);
-    }
-
-    return $results;
-}
-
-function raw_format_duration($secs) {
+function examtraining_raw_format_duration($secs) {
     $min = floor($secs / 60);
     $hours = floor($min / 60);
     $days = floor($hours / 24);
@@ -622,6 +243,10 @@ function raw_format_duration($secs) {
     return $secs.' '.get_string('secs');
 }
 
+/**
+ * Processes front end url params values and assemble them for report driving
+ * @param object $course
+ */
 function examtraining_reports_input($course) {
     $input = new StdClass();
 
@@ -665,4 +290,20 @@ function examtraining_reports_input($course) {
     }
 
     return $input;
+}
+
+/**
+ * Allocates a color from an HTML color string into a php image raster
+ * @param object ref &$im a php image (imagecreate or imagecreatetruecolor)
+ * @param string $color an HTML color (#RRGGBB)
+ * @return an index on created color.
+ */
+function examtraining_allocate_html_color(&$im, $color) {
+
+    if ( preg_match( "/[#]?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i", $color, $matches)) {
+        $red = hexdec( $matches[1] );
+        $green = hexdec( $matches[2] );
+        $blue = hexdec( $matches[3] );
+    }
+    return ImageColorAllocate($im, $red, $green, $blue);
 }

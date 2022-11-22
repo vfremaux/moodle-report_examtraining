@@ -1,0 +1,109 @@
+<!-- report_examtraining/courseglobals -->
+
+<div class="examtraining-course-globals">
+
+<h3>{{#str}}attempts, report_examtraining{{/str}}</h3>
+
+<div class="examtraining-values">
+    <div data-item="qname">
+    </div>
+    <div class="examtraining-value q" data-item="count">
+        <span class="value-name">{{#str}}count, report_examtraining{{/str}}</span><br/>
+        <span class="value-value">{{course.qcount}}</span>
+    </div>
+    <div class="examtraining-value q" data-item="matched">
+        <span class="value-name">{{#str}}matched, report_examtraining{{/str}}</span><br/>
+        <span class="value-value">{{course.qmatched}}</span>
+    </div>
+    <div class="examtraining-value q" data-item="ratio">
+        <span class="value-name">{{#str}}hitratio, report_examtraining{{/str}}</span><br/>
+        <span class="value-value">{{course.qratio}}%</span>
+    </div>
+</div>
+    {{#dualserie}}
+<div class="examtraining-values">
+    <div data-item="aname">
+        {{serieAname}}
+    </div>
+    <div class="examtraining-value a" data-item="count">
+        <span class="value-name">{{#str}}count, report_examtraining{{/str}}</span><br/>
+        <span class="value-value">{{course.acount}}</span>
+    </div>
+    <div class="examtraining-value a" data-item="matched">
+        <span class="value-name">{{#str}}matched, report_examtraining{{/str}}</span><br/>
+        <span class="value-value">{{course.amatched}}</span>
+    </div>
+    <div class="examtraining-value a" data-item="ratio">
+        <span class="value-name">{{#str}}hitratio, report_examtraining{{/str}}</span><br/>
+        <span class="value-value">{{course.aratio}}%</span>
+    </div>
+</div>
+<div class="examtraining-values">
+    <div data-item="cname">
+        {{serieCname}}
+    </div>
+    <div class="examtraining-value c" data-item="count">
+        <span class="value-name">{{#str}}count, report_examtraining{{/str}}</span><br/>
+        <span class="value-value">{{course.ccount}}</span>
+    </div>
+    <div class="examtraining-value c" data-item="matched">
+        <span class="value-name">{{#str}}matched, report_examtraining{{/str}}</span><br/>
+        <span class="value-value">{{course.cmatched}}</span>
+    </div>
+    <div class="examtraining-value c" data-item="ratio">
+        <span class="value-name">{{#str}}hitratio, report_examtraining{{/str}}</span><br/>
+        <span class="value-value">{{course.cratio}}%</span>
+    </div>
+</div>
+    {{/dualserie}}
+</div>
+
+{{#withgroupratios}}
+<h3>{{#str}}groupratios, report_examtraining{{/str}}</h3>
+
+<div id="course-group-ratios">
+    {{{groupratiograph}}}
+</div>
+
+{{/withgroupratios}}
+
+<h3>{{#str}}coverage, report_examtraining{{/str}}</h3>
+
+<table class="generaltable">
+{{#group}}
+    <tr>
+        <td class="field">
+            {{#str}}group{{/str}}
+        </td>
+        <td class="value">
+            {{{group.name}}}
+        </td>
+    </tr>
+    <tr>
+        <td class="field">
+            {{#str}}size{{/str}}
+        </td>
+        <td class="value">
+            {{{groupsize}}}
+        </td>
+    </tr>
+{{/group}}
+    <tr>
+        <td colspan="2" id="q-coverage">
+            {{{qgraph}}}
+        </td>
+    </tr>
+{{#dualserie}}
+    <tr>
+        <td id="a-coverage">
+            {{{agraph}}}
+        </td>
+        <td id="c-coverage">
+            {{{cgraph}}}
+        </td>
+    </tr>
+{{/dualserie}}
+</table>
+</div>
+
+<!-- /report_examtraining/courseglobals -->

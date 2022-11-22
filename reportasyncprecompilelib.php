@@ -36,12 +36,12 @@ function report_compile_users_preworker(&$context) {
     $start = $context->from;
     $end = $context->to;
     $logs = use_stats_extract_logs($start, $end, array_keys($context->sourcerecs), $context->course->id);
-    $context->aggregate = use_stats_aggregate_logs($logs, 'module', $from, $to);
+    $context->aggregate = use_stats_aggregate_logs($logs, $from, $to);
 
     $start = $context->to - DAYSECS * 7;
     $end = time();
     $weeklogs = use_stats_extract_logs($start, $end, array_keys($context->sourcerecs), $context->course->id);
-    $context->weekaggregate = use_stats_aggregate_logs($weeklogs, 'module', $from, $to);
+    $context->weekaggregate = use_stats_aggregate_logs($weeklogs, $from, $to);
 
     if (file_exists($CFG->dataroot.'/'.$context->course->id.'/'.$context->filename)) {
         $context->rawfile = fopen($CFG->dataroot.'/'.$context->course->id."/".$context->filename, 'ab');
@@ -112,6 +112,7 @@ function report_compile_init_columns(&$resultset) {
     $resultset[] = get_string('username'); // Username from user profile.
     $resultset[] = get_string('lastname', 'report_examtraining'); // User name.
     $resultset[] = get_string('firstname', 'report_examtraining'); // User name.
+    $resultset[] = get_string('email', 'report_examtraining'); // Email.
 
     // Key Dates.
     $resultset[] = get_string('firstenrolldate', 'report_examtraining'); // Enrol start date.

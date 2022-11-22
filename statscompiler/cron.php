@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * cron (old fashion) url. Can be used indepently from moodle tasks.
  *
  * @package     report_examtraining
  * @subpackage  report
@@ -30,10 +31,14 @@ require_once($CFG->dirroot.'/report/examtraining/statscompilelib.php');
 @raise_memory_limit('512M');
 @set_time_limit(1800);
 
+$systemcontext = context_system::instance();
+$PAGE->set_context($systemcontext);
+
 $CFG->trace = $CFG->dataroot.'/userquiz_cron_compile.log';
 
-$attempts = userquiz_cron_results();
+$compiler = new \report_examtraining\stats\compiler();
+$attempts = $compiler->cron_results(); // cron results compile results for all available userquiz_monitor instances.
 
 $admin = get_admin();
 
-email_to_user($admin, $admin, $SITE->fullname." : Userquiz Statcompilation : $attempts attempts compiled", 'Done.', 'Done.');
+email_to_user($admin, $admin, $SITE->shortname." : Userquiz Statcompilation : $attempts attempts compiled", 'Done.', 'Done.');

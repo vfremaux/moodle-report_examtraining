@@ -1,4 +1,3 @@
-<?php
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -15,22 +14,29 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details.
+ * Contain the JS logic for the examtraining report.
  *
  * @package    report_examtraining
- * @category   report
- * @author     valery fremaux <valery.fremaux@gmail.com>
- * @copyright  2016 onwards valery fremaux (valery.fremaux@gmail.com)
+ * @copyright  2020 Valery Fremaux <valery.fremaux@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
+define(['jquery', 'core/log'], function($, log) {
 
-$plugin->version  = 2022100200;
-$plugin->requires = 2019111200;
-$plugin->component = 'report_examtraining';
-$plugin->release = '3.9.0 (Build 2022100200)';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->supported = [39,311];
+    var examtraining = {
 
-// Non moodle attributes.
-$plugin->codeincrement = '3.9.0004';
+        init: function() {
+            $('input[name="gofromstart_btn"]').bind('click', this.submitfromstart);
+
+            log.debug('AMD report examtraining initialized');
+        },
+
+        submitfromstart: function() {
+            $('#examtraining-selector-fromstart').val(1);
+            $('form[name="selector"]').submit();
+        }
+
+    };
+
+    return examtraining;
+
+});

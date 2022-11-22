@@ -37,6 +37,7 @@ require_once($CFG->dirroot.'/report/examtraining/classes/output/xlsrenderer.php'
 require_once($CFG->dirroot.'/local/vflibs/jqplotlib.php');
 
 $input = examtraining_reports_input($course);
+$input->nousers = 0;
 $userid = optional_param('userid', $USER->id, PARAM_INT); // Admits special values : -1 current group, -2 course users.
 
 ini_set('memory_limit', '1024M');
@@ -49,9 +50,8 @@ if (!has_capability('report/examtraining:viewall', $context)) {
 }
 
 // Get data.
-
 $logs = use_stats_extract_logs($input->from, $input->to, $userid, $COURSE->id);
-$aggregate = use_stats_aggregate_logs($logs, 'module', $input->from, $input->to);
+$aggregate = use_stats_aggregate_logs($logs, $input->from, $input->to);
 
 // Print result.
 
@@ -71,7 +71,7 @@ foreach ($aggregate as $module => $classarray) {
 if ($output == 'html') {
     // Time period form.
 
-    require($CFG->dirroot.'/report/examtraining/selector_form.html');
+    echo $renderer->selectorform($course, $view, $input);
 
     $htmlrenderer = $PAGE->get_renderer('report_examtraining', 'html');
 
@@ -84,7 +84,8 @@ if ($output == 'html') {
     echo $htmlrenderer->exams($userid, $input->from, $input->to);
     echo $htmlrenderer->assiduity2($userid, $input->from, $input->to, $view);
     echo $htmlrenderer->modules($userid, $input->from, $input->to);
-    echo $htmlrenderer->radar($userid, $input->from, $input->to);
+    $title = get_string('mastering', 'report_examtraining');
+    echo $htmlrenderer->coverage_radar($userid, $input->from, $input->to, $title, 'q', '#A0D040', '#708030');
 
 } else {
 
