@@ -15,22 +15,18 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details.
+ * Event observers.
  *
- * @package    report_examtraining
- * @category   report
- * @author     valery fremaux <valery.fremaux@gmail.com>
- * @copyright  2016 onwards valery fremaux (valery.fremaux@gmail.com)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package report_examtraining
  */
+
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version  = 2025043000;
-$plugin->requires = 2022112801;
-$plugin->component = 'report_examtraining';
-$plugin->release = '4.5.0 (Build 2025043000)';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->supported = [403, 405];
-
-// Non moodle attributes.
-$plugin->codeincrement = '4.5.0005';
+$observers = [
+    [
+        'eventname' => '\\core\\event\\course_reset_ended',
+        'callback' => '\\report_examtraining\\observers::handle_course_reset_ended',
+        'priority' => 200,
+        'internal' => false,
+    ],
+];

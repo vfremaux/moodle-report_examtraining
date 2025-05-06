@@ -26,6 +26,8 @@ namespace report_examtraining\output;
 
 defined('MOODLE_INTERNAL') || die();
 
+use report_examtraining\stats\compiler;
+
 class xls_renderer extends \plugin_renderer_base {
 
     /**
@@ -35,7 +37,7 @@ class xls_renderer extends \plugin_renderer_base {
     public function trainings(&$xlsdoc, $startrow, $xlsformats, $userid, $courseid, &$results) {
         global $CFG, $DB;
 
-        $examcontext = examtraining_get_context();
+        $examcontext = block_userquiz_monitor_get_block($courseid)->config;
 
         $ratiostr = get_string('ratio', 'report_examtraining');
         $aratiostr = get_string('ratioa', 'report_examtraining');
@@ -55,11 +57,11 @@ class xls_renderer extends \plugin_renderer_base {
         $xlsdoc->write_string($startrow, 4, $ccountstr, $xlsformats['tt']);
         $startrow++;
 
-        $xlsdoc->write_string($startrow, 0, (@$results->hitratio + 0).'%', $xlsformats['p']);
-        $xlsdoc->write_string($startrow, 1, (@$results->ahitratio + 0).'%', $xlsformats['p']);
-        $xlsdoc->write_string($startrow, 1, (@$results->chitratio + 0).'%', $xlsformats['p']);
-        $xlsdoc->write_string($startrow, 1, (@$results->aanswered + 0), $xlsformats['p']);
-        $xlsdoc->write_string($startrow, 1, (@$results->canswered + 0), $xlsformats['p']);
+        $xlsdoc->write_string($startrow, 0, (@$results->qratio + 0).'%', $xlsformats['p']);
+        $xlsdoc->write_string($startrow, 1, (@$results->aratio + 0).'%', $xlsformats['p']);
+        $xlsdoc->write_string($startrow, 1, (@$results->cratio + 0).'%', $xlsformats['p']);
+        $xlsdoc->write_string($startrow, 1, (@$results->acount + 0), $xlsformats['p']);
+        $xlsdoc->write_string($startrow, 1, (@$results->ccount + 0), $xlsformats['p']);
         $startrow++;
 
         // Jump line.
@@ -89,10 +91,10 @@ class xls_renderer extends \plugin_renderer_base {
             // Per category result.
             foreach ($cats as $cat) {
                 $xlsdoc->write_string($startrow, 0, format_string($cat->name), $xlsformats['ctl']);
-                $xlsdoc->write_string($startrow, 1, @$results->categories[$cat->id]->count_proposed + 0, $xlsformats['p']);
-                $xlsdoc->write_string($startrow, 2, @$results->categories[$cat->id]->count_answered + 0, $xlsformats['p']);
-                $xlsdoc->write_string($startrow, 3, @$results->categories[$cat->id]->count_matched + 0, $xlsformats['p']);
-                $xlsdoc->write_string($startrow, 4, (@$results->categories[$cat->id]->ratio + 0).' %', $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 1, @$results->categories[$cat->id]->qsize + 0, $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 2, @$results->categories[$cat->id]->qcount + 0, $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 3, @$results->categories[$cat->id]->qmatched + 0, $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 4, (@$results->categories[$cat->id]->qratio + 0).' %', $xlsformats['p']);
                 $startrow++;
             }
 
@@ -112,26 +114,30 @@ class xls_renderer extends \plugin_renderer_base {
     /**
      * a raster for printing in an xls file
      * with all the relevant data about a user.
+     * $data only holds elapsed info.
      *
      */
-    public function globalrow(&$xlsdoc, $userid, $courseid, &$data, $from, $to, &$row) {
+    public function globalrow(&$xlsdoc, $userid, $courseid, $data, $from, $to, &$row, $reportcontext) {
         global $CFG, $COURSE, $DB;
 
-        $examcontext = examtraining_get_context();
+        $compiler = new compiler();
 
-        $user = $DB->get_record('user', array('id' => $userid));
         if ($courseid != $COURSE->id) {
-            $course = $DB->get_record('course', array('id' => $courseid));
+            $course = $DB->get_record('course', ['id' => $courseid]);
         } else {
             $course = &$COURSE;
         }
 
-        $resultset = array();
+        $examcontext = block_userquiz_monitor_get_block($course->id)->config;
+
+        $user = $DB->get_record('user', ['id' => $userid]);
+
+        $resultset = [];
         $usergroups = groups_get_all_groups($courseid, $userid, 0, 'g.id, g.name');
 
-         $col = 0;
+        $col = 0;
 
-        $data = '';
+        $datum = '';
         if (!empty($usergroups)) {
             foreach ($usergroups as $group) {
                 $str = $group->name;
@@ -140,10 +146,10 @@ class xls_renderer extends \plugin_renderer_base {
                 }
                 $groupnames[] = $str;
             }
-            $data = implode(', ', $groupnames); // Entity.
+            $datum = implode(', ', $groupnames); // Entity.
 
         }
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+        $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
         $col++;
 
         $xlsdoc->write_string($row, $col, $user->id, $xlsformats['pl']);
@@ -161,71 +167,154 @@ class xls_renderer extends \plugin_renderer_base {
                 {$loginfo->courseparam} = ?
         ";
 
-        $data = date('d/m/Y', $DB->get_field_sql($sql, array($userid, $courseid))); // Userid.
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+        $datum = date('d/m/Y', $DB->get_field_sql($sql, [$userid, $courseid])); // Userid.
+        $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
         $col++;
 
-        $data = mb_convert_encoding(strtoupper(trim(preg_replace('/\s+/', ' ', $user->lastname))), 'ISO-8859-1', 'UTF-8');
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+        $datum = mb_convert_encoding(strtoupper(trim(preg_replace('/\s+/', ' ', $user->lastname))), 'ISO-8859-1', 'UTF-8');
+        $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
         $col++;
 
-        $data = mb_convert_encoding(strtoupper(trim(preg_replace('/\s+/', ' ', $user->firstname))), 'ISO-8859-1', 'UTF-8');
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+        $datum = mb_convert_encoding(strtoupper(trim(preg_replace('/\s+/', ' ', $user->firstname))), 'ISO-8859-1', 'UTF-8');
+        $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
         $col++;
 
-        $data = raw_format_duration(@$data->elapsed); // Elapsed time.
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+        $datum = examtraining_raw_format_duration($data->elapsed); // Elapsed time.
+        $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
         $col++;
 
-        $data = raw_format_duration(@$data->weekelapsed); // Elapsed time this week.
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+        $datum = examtraining_raw_format_duration($data->weekelapsed); // Elapsed time this week.
+        $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
         $col++;
 
-        $trainingstats = userquiz_get_user_globals($userid, $examcontext->trainingquizzes, $from, $to);
-        $weektrainingstats = userquiz_get_user_globals($userid, $examcontext->trainingquizzes, time() - DAYSECS * 7, time());
+        debug_trace("writing for user $userid in $courseid from $from to $to at row $row ");
 
-        $data = 0 + @$trainingstats[$userid]->answered; // Answered questions on training.
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
-        $col++;
+        $trainingstats = $compiler->get_user_globals($userid, $courseid, $from, $to);
+        debug_trace($trainingstats);
+        $weektrainingstats = $compiler->get_user_globals($userid, $courseid, time() - DAYSECS * 7, time());
+        debug_trace($weektrainingstats);
 
-        $data = 0 + @$weektrainingstats[$userid]->answered; // Answered questions on training this week.
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
-        $col++;
+        if (!empty($reportcontext->dualseries)) {
 
-        $data = ((0 + @$trainingstats[$userid]->chitratio)).' %'; // Ratio C.
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
-        $col++;
+            // A serie.
 
-        $data = ((0 + @$weektrainingstats[$userid]->chitratio)).' %'; // Ratio C.
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
-        $col++;
+            $datum = $trainingstats[$userid]->acount ?? 0; // Answered questions on training.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
 
-        $data = ((0 + @$trainingstats[$userid]->ahitratio)).' %'; // Ratio A.
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
-        $col++;
+            $datum = ($trainingstats[$userid]->aratio ?? 0).' %'; // Ratio A.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
 
-        $data = ((0 + @$weektrainingstats[$userid]->ahitratio)).' %'; // Ratio A.
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
-        $col++;
+            $datum = 0 + $weektrainingstats[$userid]->acount ?? 0; // Answered questions on training this week.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
 
-        $examstats = userquiz_get_user_globals($userid, $examcontext->examquiz, $from, $to);
+            $datum = ($weektrainingstats[$userid]->aratio ?? 0).' %'; // Ratio A this week.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
+
+            // C serie.
+            $datum = $trainingstats[$userid]->ccount ?? 0; // C Answered questions on training.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
+
+            $datum = ($trainingstats[$userid]->cratio ?? 0).' %'; // Ratio C.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
+
+            $datum = $weektrainingstats[$userid]->ccount ?? 0; // Answered questions on training this week.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
+
+            $datum = ($weektrainingstats[$userid]->cratio ?? 0).' %'; // Ratio C.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
+        } else {
+
+            // Single serie.
+
+            $datum = $trainingstats[$userid]->acount ?? 0; // Answered questions on training.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
+
+            $datum = ($trainingstats[$userid]->aratio ?? 0).' %'; // Ratio A.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
+
+            $datum = 0 + $weektrainingstats[$userid]->acount ?? 0; // Answered questions on training this week.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
+
+            $datum = ($weektrainingstats[$userid]->aratio ?? 0).' %'; // Ratio A this week.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
+
+        }
+
+
+        $examstats = $compiler->get_user_globals($userid, $courseid, $from, $to, 0, 1);
 
         $matchedexams = 0;
-        if ($stats = userquiz_get_attempts_stats($userid, $examcontext->examquiz)) {
+        $rateamean = 0;
+        $ratecmean = 0;
+        $lasta = 0;
+        $lastc = 0;
+        $numexams = 0;
+        if ($stats = $compiler->get_attempts_stats($userid, $courseid, $from, $to, false, 'exam')) {
             foreach ($stats as $attemptid => $attemptres) {
-                if ($attemptres->ahitratio * 100 >= $examcontext->rateAserie &&
-                        $attemptres->chitratio * 100 >= $examcontext->rateCserie) {
-                    $matchedexams++;
+                $numexams++;
+                $rateamean += $attemptres->aratio;
+                $ratecmean += $attemptres->cratio;
+                $lasta = $attemptres->aratio;
+                $lastc = $attemptres->cratio;
+                if (empty($examcontext->dualseries)) {
+                    // Single serie.
+                    if ($attemptres->aratio >= $examcontext->rateAserie) {
+                        $matchedexams++;
+                    }
+                } else {
+                    if ($attemptres->aratio >= $examcontext->rateAserie &&
+                            $attemptres->cratio >= $examcontext->rateCserie) {
+                        $matchedexams++;
+                    }
                 }
             }
         }
 
-        $data = 0 + $matchedexams; // Succeeded exam attempts.
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+        if (!empty($reportcontext->dualseries)) {
+
+            $datum = ($numexams) ? sprintf('%d', $rateamean / $numexams) : '-' ; // Mean ratio A on exams.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
+
+            $datum = ($numexams) ? sprintf('%d', $ratecmean / $numexams) : '-' ; // Mean ratio C on exams.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
+
+            $datum = ($lasta) ? $lasta : '-' ; // Last ratio A on exams.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
+
+            $datum = ($lastc) ? $lastc : '-' ; // Last ratio A on exams.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
+        } else {
+            $datum = ($numexams) ? sprintf('%d', $rateamean / $numexams) : '-' ; // Mean ratio A on exams.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
+
+            $datum = ($lasta) ? $lasta : '-' ; // Last ratio A on exams.
+            $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
+            $col++;
+        }
+
+        $datum = $matchedexams; // Succeeded exam attempts.
+        $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
         $col++;
 
-        $data = 0 + @$examstats[$userid]->attempts; // Exam attempts.
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+        $datum = $numexams ; // Exam attempts.
+        $xlsdoc->write_string($row, $col, $datum, $xlsformats['pl']);
         $col++;
 
         $row++; // Passed by reference.
@@ -322,8 +411,8 @@ class xls_renderer extends \plugin_renderer_base {
 
         $loginfo = examtraining_get_log_reader_info();
 
-        $user = $DB->get_record('user', array('id' => $userid));
-        $course = $DB->get_record('course', array('id' => $courseid));
+        $user = $DB->get_record('user', ['id' => $userid]);
+        $course = $DB->get_record('course', ['id' => $courseid]);
 
         $row = 0;
 
@@ -392,12 +481,12 @@ class xls_renderer extends \plugin_renderer_base {
         $row++;
 
         $xlsdoc->write_string($row, 0, get_string('ratioa', 'report_examtraining'), $xlsformats['ctr']);
-        $xlsdoc->write_string($row, 1, 0 + @$data->ahitratio.' %', $xlsformats['pl']);
+        $xlsdoc->write_string($row, 1, 0 + @$data->aratio.' %', $xlsformats['pl']);
         $xlsdoc->merge_cells($row, 1, $row, 12);
         $row++;
 
         $xlsdoc->write_string($row, 0, get_string('ratioc', 'report_examtraining'), $xlsformats['ctr']);
-        $xlsdoc->write_string($row, 1, 0 + @$data->chitratio.' %', $xlsformats['pl']);
+        $xlsdoc->write_string($row, 1, 0 + @$data->cratio.' %', $xlsformats['pl']);
         $xlsdoc->merge_cells($row, 1, $row, 12);
         $row++;
 
@@ -414,7 +503,7 @@ class xls_renderer extends \plugin_renderer_base {
             WHERE
                 userid = ?
         ";
-        $firstcon = $DB->get_record_sql($sql, array($userid));
+        $firstcon = $DB->get_record_sql($sql, [$userid]);
         $xlsdoc->write_string($row, 0, get_string('firstconnection', 'report_examtraining').' :', $xlsformats['ctr']);
         $mintime = ($firstcon->mintime) ? userdate($firstcon->mintime) : get_string('never');
         $xlsdoc->write_string($row, 1, $mintime, $xlsformats['pl']);
@@ -446,63 +535,118 @@ class xls_renderer extends \plugin_renderer_base {
      *
      *
      */
-    public function globalheader(&$xlsdoc, &$xlsformats, &$row) {
+    public function globalheader(&$xlsdoc, &$xlsformats, &$row, $reportcontext) {
 
         $col = 0;
 
-        $resultset[] = get_string('entity', 'report_examtraining'); // Groupname.
+        $data = get_string('entity', 'report_examtraining'); // Groupname.
         $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
         $col++;
 
-        $resultset[] = get_string('id', 'report_examtraining'); // Userid.
+        $data = get_string('id', 'report_examtraining'); // Userid.
         $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
         $col++;
 
-        $resultset[] = get_string('startdate', 'report_examtraining'); // Start date.
+        $data = get_string('startdate', 'report_examtraining'); // Start date.
         $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
         $col++;
 
-        $resultset[] = get_string('lastname', 'report_examtraining'); // Last name.
+        $data = get_string('lastname', 'report_examtraining'); // Last name.
         $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
         $col++;
 
-        $resultset[] = get_string('firstname', 'report_examtraining'); // First name.
+        $data = get_string('firstname', 'report_examtraining'); // First name.
         $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
         $col++;
 
-        $resultset[] = get_string('timeelapsed', 'report_examtraining');
+        $data = get_string('timeelapsed', 'report_examtraining');
         $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
         $col++;
 
-        $resultset[] = get_string('timeelapsedcurweek', 'report_examtraining');
+        $data = get_string('timeelapsedcurweek', 'report_examtraining');
         $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
         $col++;
 
-        $resultset[] = get_string('answeredquestions', 'report_examtraining');
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
-        $col++;
+        if (!empty($reportcontext->dualseries)) {
 
-        $resultset[] = get_string('answeredquestionscurweek', 'report_examtraining');
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
-        $col++;
+            $data = get_string('aansweredquestions', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
 
-        $resultset[] = get_string('ratioa', 'report_examtraining');
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
-        $col++;
+            $data = get_string('ratioa', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
 
-        $resultset[] = get_string('ratioacurweek', 'report_examtraining');
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
-        $col++;
+            $data = get_string('aansweredquestionscurweek', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
 
-        $resultset[] = get_string('ratioc', 'report_examtraining');
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
-        $col++;
+            $data = get_string('ratioacurweek', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
 
-        $resultset[] = get_string('ratioccurweek', 'report_examtraining');
-        $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
-        $col++;
+            $data = get_string('cansweredquestions', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
 
-        $resultset[] = get_string('examsuccess', 'report_examtraining');
+            $data = get_string('ratioc', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
+
+            $data = get_string('cansweredquestionscurweek', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
+
+            $data = get_string('ratioccurweek', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
+        } else {
+            $data = get_string('answeredquestions', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
+
+            $data = get_string('ratio', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
+
+            $data = get_string('answeredquestionscurweek', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
+
+            $data = get_string('ratiocurweek', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
+        }
+
+        if (!empty($reportcontext->dualseries)) {
+            $data = get_string('exammeanratioa', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
+
+            $data = get_string('exammeanratioc', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
+        } else {
+            $data = get_string('exammeanratio', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
+        }
+
+        if (!empty($reportcontext->dualseries)) {
+            $data = get_string('lastexamratioa', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
+
+            $data = get_string('lastexamratioc', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
+        } else {
+            $data = get_string('lastexamratio', 'report_examtraining');
+            $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
+            $col++;
+        }
+
+        $data = get_string('examsuccess', 'report_examtraining');
         $xlsdoc->write_string($row, $col, $data, $xlsformats['pl']);
         $col++;
 
@@ -512,11 +656,13 @@ class xls_renderer extends \plugin_renderer_base {
     }
 
     /**
+     * STATUS : SEEMS NOT USED
      * a raster for printing exam results in XSL.
      */
-    public function exams(&$xlsdoc, $startrow, $xlsformats, $userid) {
+    public function exams(&$xlsdoc, $results, $startrow, $xlsformats, $userid) {
+        global $COURSE;
 
-        $examcontext = examtraining_get_context();
+        $examcontext = block_userquiz_monitor_get_block($COURSE->id)->config;
 
         $datestr = get_string('date', 'report_examtraining');
         $tryindexstr = get_string('tryindex', 'report_examtraining');
@@ -552,10 +698,10 @@ class xls_renderer extends \plugin_renderer_base {
                 $timevalue = examtraining_reports_format_time($attemptres->timefinish, 'xls');
                 $xlsdoc->write_string($startrow, 1, $timevalue, $xlsformats['zt']);
                 $xlsdoc->write_string($startrow, 2, ($attemptres->ratio + 0).' %', $xlsformats['p']);
-                $xlsdoc->write_string($startrow, 3, (@$attemptres->ratio_A + 0).' %', $xlsformats['p']);
-                $xlsdoc->write_string($startrow, 4, (@$attemptres->ratio_C + 0).' %', $xlsformats['p']);
-                $xlsdoc->write_string($startrow, 5, @$attemptres->count_answered_A + 0, $xlsformats['p']);
-                $xlsdoc->write_string($startrow, 6, @$attemptres->count_answered_A + 0, $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 3, ($attemptres->ratio_A ?? 0).' %', $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 4, ($attemptres->ratio_C ?? 0).' %', $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 5, $attemptres->count_answered_A ?? 0, $xlsformats['p']);
+                $xlsdoc->write_string($startrow, 6, $attemptres->count_answered_A ?? 0, $xlsformats['p']);
                 $startrow++;
 
                 $i++;

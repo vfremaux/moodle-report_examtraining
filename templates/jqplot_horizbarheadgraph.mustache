@@ -35,7 +35,7 @@
         axesDefaults:{useSeriesColor: false, syncTicks:true},
         axes:{ xaxis:{label:'Questions', min:0, tickOptions:{textColor:'#D67B16', formatString:'%d'}},
                x2axis:{label:'{{hitratiostr}}', min:0, max:100, tickOptions:{formatString:'%d\%', textColor:'#A5A9DA'}},
-                  yaxis:{renderer:$.jqplot.CategoryAxisRenderer, ticks:['A', 'C']}
+                  yaxis:{renderer:$.jqplot.CategoryAxisRenderer{{#dualseries}}, ticks:['A', 'C']{{/dualseries}}}
         }
     });
 

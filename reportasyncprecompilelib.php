@@ -112,6 +112,7 @@ function report_compile_init_columns(&$resultset) {
     $resultset[] = get_string('username'); // Username from user profile.
     $resultset[] = get_string('lastname', 'report_examtraining'); // User name.
     $resultset[] = get_string('firstname', 'report_examtraining'); // User name.
+    $resultset[] = get_string('email', 'report_examtraining'); // Email.
 
     // Key Dates.
     $resultset[] = get_string('firstenrolldate', 'report_examtraining'); // Enrol start date.

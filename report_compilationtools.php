@@ -32,22 +32,24 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 
-$id = required_param('id', PARAM_INT); // The course id.
+$courseid = required_param('id', PARAM_INT); // The course id.
 
 // Quick controller for enabing/disabling background tasks.
 $bgenabled = optional_param('backgroundenabled', 0, PARAM_BOOL);
+if (optional_param('changebackground', 0, PARAM_BOOL)) {
+    set_config('backgroundrunsenabled', $bgenabled);
+}
 if ($bgenabled) {
-    set_config('backgroundrunsenabled', $bgenabled, 'report_examtraining');
     echo $OUTPUT->notification('Background compilations enabled');
-    $CFG->backgroundrunsenabled = true;
 }
 // Print tools.
 
 $template = new StdClass;
 
-$template->id = $id;
+$template->id = $courseid;
 $template->sesskey = sesskey();
 $template->backgroundenabledchecked = (empty($CFG->backgroundrunsenabled)) ? '' : 'checked="checked"';
+$template->backgroundenabled = !empty($CFG->backgroundrunsenabled);
 $template->compilerstatsurl = new moodle_url('/report/examtraining/statscompiler/clear_userstats.php');
 $template->precompileuserstatsurl = new moodle_url('/report/examtraining/statscompiler/precompile_userstats.php');
 $template->precompileunityurl = new moodle_url('/report/examtraining/statscompiler/precompile_unity.php');
@@ -57,6 +59,8 @@ $template->clearstateurl = new moodle_url('/report/examtraining/statscompiler/cl
 
 $template->bulksizehelpicon = $OUTPUT->help_icon('bulksize', 'report_examtraining');
 $template->maxbulkshelpicon = $OUTPUT->help_icon('maxbulks', 'report_examtraining');
+$template->clearstatsdatahelpicon = $OUTPUT->help_icon('clearstatsdata', 'report_examtraining');
+$template->examcompiledrecords = $DB->count_records_select('report_examtraining', ' course = ? AND datecompiled > 0 ', [$courseid]);
 
 echo $OUTPUT->render_from_template('report_examtraining/precompiletools', $template);
 

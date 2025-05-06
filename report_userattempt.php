@@ -45,26 +45,31 @@ require_capability('report/examtraining:viewall', $context);
 
 // Get data.
 
-$attempt = get_record('quiz_attempts', 'uniqueid', $attemptid);
-$quiz = get_record('userquiz', 'id', $attempt->quiz);
+$attempt = $DB->get_record('quiz_attempts', ['uniqueid' => $attemptid]);
+$quiz = $DB->get_record('quiz', ['id' => $attempt->quiz]);
 
-$user = get_record('user', 'id', $attempt->userid);
+$user = $DB->get_record('user', ['id' => $attempt->userid]);
 
 $questionset = explode(',', $attempt->layout);
 $realquestions = array();
 
-foreach ($questionset as $qid) {
-    if ($qid == 0 || $qid == '') {
+foreach ($questionset as $sid) {
+    if ($sid == 0 || $sid == '') {
         continue;
     }
-    $realquestions[] = $qid;
 
-    $q = $DB->get_record('question', 'id', $qid);
+    $slot = $DB->get_record('quiz_slots', ['quizid' => $quiz->id ,'slot' => $sid]);
+    $realquestions[] = $slot->questionid;
+    $q = $DB->get_record('question', ['id' => $slot->questionid]);
+    if (!is_object($q)) {
+        echo "Missing question $qid<br>";
+        continue;
+    }
 
     // If randomized, need fetch the effective question.
     // TODO / Redraw, question_states not exists anymore.
     if (preg_match('/^random/', $q->qtype)) {
-        if ($state = get_record('question_states', 'attempt', $attemptid, 'question', $q->id, 'event', 0)) {
+        if ($state = $DB->get_record('question_states', ['attempt' => $attemptid, 'question' => $q->id, 'event' => 0])) {
             if (preg_match("/^{$q->qtype}(\\d+)-/", $state->answer, $matches)) {
                 $effectiveqid = $matches[1];
             }
@@ -74,7 +79,7 @@ foreach ($questionset as $qid) {
     }
 
     $questions[$qid] = $q;
-    $questions[$effectiveqid] = get_record('question', 'id', $effectiveqid);
+    $questions[$effectiveqid] = $DB->get_record('question', ['id' => $effectiveqid]);
     $questionforwards[$qid] = $effectiveqid;
 
 }
@@ -103,16 +108,17 @@ foreach ($realquestions as $qid) {
         $effectiveqid = $qid;
     }
 
-    $effq = $DB->get_record('question', array('id' => $effectiveqid));
+    $effq = $DB->get_record('question', ['id' => $effectiveqid]);
+    $effq->category = $DB->get_field('question_bank_entries', 'quesitoncategoryid', ['id' => $effq->id]);
 
     if (!array_key_exists($effq->category, $qcategories)) {
-        $qcategories[$effq->category] = $DB->get_record('question_categories', array('id' => $effq->category));
+        $qcategories[$effq->category] = $DB->get_record('question_categories', ['id' => $effq->category]);
     }
 
     $effg = clone($effq);
-    $effg->answers = $DB->get_records('question_answers', array('question' => $effectiveqid));
+    $effg->answers = $DB->get_records('question_answers', ['question' => $effectiveqid]);
 
-    if ($state = get_record('question_states', 'attempt', $attemptid, 'question', $qid, 'event', 3)) {
+    if ($state = get_record('question_states', ['attempt' => $attemptid, 'question' => $qid, 'event' => 3])) {
         $effg->score = $state->raw_grade;
         list($questioninfo, $answerid) = explode(':', $state->answer);
     } else {
@@ -226,7 +232,7 @@ if ($output == 'html' || $output == 'pdf') {
         if (!empty($usergroups)) {
             foreach ($usergroups as $group) {
                 $str = $group->name;
-                if ($group->id == get_current_group($COURSE->id)) {
+                if ($group->id == groups_get_current_group($COURSE->id)) {
                     $str = "<b>$str</b>";
                 }
                 $groupnames[] = $str;

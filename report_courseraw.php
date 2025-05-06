@@ -70,6 +70,7 @@ if ($groupid) {
         $targetusers = groups_get_members($groupid);
     }
 }
+$input->nousers = count($targetusers) > 0;
 
 // Fitlers teachers out.
 foreach ($targetusers as $uid => $user) {
@@ -92,6 +93,7 @@ if (!empty($targetusers)) {
     for ($i = 1; $i < 10; $i++) {
         $resultset[] = "Q$i";
     }
+
     for ($i = 1; $i <= 10; $i++) {
         $resultset[] = "Q".($i * 10);
     }
@@ -102,7 +104,7 @@ if (!empty($targetusers)) {
 
     $rawfile = implode(';', $resultset)."\n";
 
-    $examtrainingcontext = examtraining_get_context();
+    $examtrainingcontext = block_userquiz_monitor_get_block($COURSE->id)->config;
 
     foreach ($targetusers as $uid => $auser) {
         $logs = use_stats_extract_logs($input->from, $input->to, $uid, $COURSE->id);
@@ -112,29 +114,22 @@ if (!empty($targetusers)) {
 
         $weeklogs = use_stats_extract_logs($input->to - DAYSECS * 7, $input->to, $uid, $COURSE->id);
         echo 'Week Logs extracted. Mem state : '.memory_get_usage().'<br/>';
-        $weekaggregate = use_stats_aggregate_logs($weeklogs, $input->to - DAYSECS * 7, $input->to, '', true, true);
+        $weekaggregate = use_stats_aggregate_logs($weeklogs, $input->to - DAYSECS * 7, $input->to, '', true, $COURSE);
         echo 'Week Logs aggregated. Mem state : '.memory_get_usage().'<br/>';
 
         echo "Compiling for ".fullname($auser).'<br/>';
         $globalresults = new StdClass;
         $globalresults->elapsed = 0;
         if (isset($aggregate)) {
-            foreach ($aggregate as $classname => $classarray) {
-                foreach ($classarray as $modid => $modulestat) {
-                    $globalresults->elapsed += $modulestat->elapsed;
-                }
-            }
+            $globalresults->elapsed += $aggregate['coursetotal'][$COURSE->id]->elapsed ?? 0;
         }
 
         $globalresults->weekelapsed = 0;
         if (isset($weekaggregate)) {
-            foreach ($weekaggregate as $classarray) {
-                foreach ($classarray as $modid => $modulestat) {
-                    $globalresults->weekelapsed += $modulestat->elapsed;
-                }
-            }
+            $globalresults->elapsed += $weekaggregate['coursetotal'][$COURSE->id]->elapsed ?? 0;
         }
 
+        // globalheader retreives additional userquiz_monitor quiz results. 
         $rawfile .= $rawrenderer->globalheader($auser->id, $course->id, $globalresults, $input->from, $input->to);
     }
 

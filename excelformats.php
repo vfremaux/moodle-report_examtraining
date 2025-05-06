@@ -33,14 +33,14 @@ defined('MOODLE_INTERNAL') || die();
 function examtraining_reports_xls_formats(&$workbook) {
 
     // Nominal text format.
-    $xlsformats['t'] =& $workbook->add_format();
+    $xlsformats['t'] = $workbook->add_format();
     $xlsformats['t']->set_size(12);
     $xlsformats['t']->set_color(0);
     $xlsformats['t']->set_fg_color(1);
     $xlsformats['t']->set_bold(1);
 
     // Nominal text wrapped.
-    $xlsformats['tw'] =& $workbook->add_format();
+    $xlsformats['tw'] = $workbook->add_format();
     $xlsformats['tw']->set_size(12);
     $xlsformats['tw']->set_color(0);
     $xlsformats['tw']->set_fg_color(1);
@@ -48,64 +48,64 @@ function examtraining_reports_xls_formats(&$workbook) {
     $xlsformats['tw']->set_text_wrap();
 
     // Nominal text format backgrounded.
-    $xlsformats['t2'] =& $workbook->add_format();
+    $xlsformats['t2'] = $workbook->add_format();
     $xlsformats['t2']->set_size(12);
     $xlsformats['t2']->set_color(1);
     $xlsformats['t2']->set_fg_color(10);
     $xlsformats['t2']->set_bold(1);
 
     // Positive text format.
-    $xlsformats['t+'] =& $workbook->add_format();
+    $xlsformats['t+'] = $workbook->add_format();
     $xlsformats['t+']->set_size(11);
     $xlsformats['t+']->set_color(0);
     $xlsformats['t+']->set_fg_color(42);
     $xlsformats['t+']->set_bold(0);
 
     // Error text format.
-    $xlsformats['t-'] =& $workbook->add_format();
+    $xlsformats['t-'] = $workbook->add_format();
     $xlsformats['t-']->set_size(11);
     $xlsformats['t-']->set_color(0);
     $xlsformats['t-']->set_fg_color(45);
     $xlsformats['t-']->set_bold(0);
 
     // Smalltext format.
-    $xlsformats['tt'] =& $workbook->add_format();
+    $xlsformats['tt'] = $workbook->add_format();
     $xlsformats['tt']->set_size(9);
     $xlsformats['tt']->set_color(1);
     $xlsformats['tt']->set_fg_color(21);
     $xlsformats['tt']->set_bold(0);
 
-    $xlsformats['ctr'] =& $workbook->add_format();
+    $xlsformats['ctr'] = $workbook->add_format();
     $xlsformats['ctr']->set_bold(1);
     $xlsformats['ctr']->set_align('right');
 
-    $xlsformats['ctl'] =& $workbook->add_format();
+    $xlsformats['ctl'] = $workbook->add_format();
     $xlsformats['ctl']->set_bold(1);
     $xlsformats['ctl']->set_align('left');
 
-    $xlsformats['p'] =& $workbook->add_format();
+    $xlsformats['p'] = $workbook->add_format();
     $xlsformats['p']->set_bold(0);
     $xlsformats['p']->set_align('center');
 
-    $xlsformats['pl'] =& $workbook->add_format();
+    $xlsformats['pl'] = $workbook->add_format();
     $xlsformats['pl']->set_bold(0);
     $xlsformats['pl']->set_align('left');
 
-    $xlsformats['z'] =& $workbook->add_format();
+    $xlsformats['z'] = $workbook->add_format();
     $xlsformats['z']->set_size(9);
 
-    $xlsformats['zt'] =& $workbook->add_format();
+    $xlsformats['zt'] = $workbook->add_format();
     $xlsformats['zt']->set_size(9);
     $xlsformats['zt']->set_num_format('[h]:mm:ss');
 
     // Duration format.
-    $xlsformats['ztl'] =& $workbook->add_format();
+    $xlsformats['ztl'] = $workbook->add_format();
     $xlsformats['ztl']->set_size(9);
     $xlsformats['ztl']->set_num_format('[h]:mm:ss');
     $xlsformats['ztl']->set_align('left');
 
     // Date format.
-    $xlsformats['zd'] =& $workbook->add_format();
+    $xlsformats['zd'] = $workbook->add_format();
     $xlsformats['zd']->set_size(9);
     $xlsformats['zd']->set_num_format('aaaa/mm/jj hh:mm');
 

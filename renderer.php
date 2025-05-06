@@ -40,8 +40,10 @@ class report_examtraining_renderer extends plugin_renderer_base {
         $template->canseeother = false;
         $template->nousers = $input->nousers;
 
-        $template->startdateselector = $this->date_selector('startday', 'startmonth', 'startyear', $input->from, false, 2014, 2020);
-        $template->enddateselector = $this->date_selector('endday', 'endmonth', 'endyear', $input->to, false, 2014, 2020);
+        $year = date('Y');
+        $startyear = date('Y', $course->startdate);
+        $template->startdateselector = $this->date_selector('startday', 'startmonth', 'startyear', $input->from, false, $startyear, $year + 1);
+        $template->enddateselector = $this->date_selector('endday', 'endmonth', 'endyear', $input->to, false, $startyear, $year + 1);
 
         $userid = optional_param('userid', $USER->id, PARAM_INT);
 
@@ -83,7 +85,7 @@ class report_examtraining_renderer extends plugin_renderer_base {
                 }
                 $template->userselect = html_writer::select($useroptions, 'userid', $userid, ['' => 'choosedots']);
             } else {
-                $urlroot = new moodle_url('/report/examtraining/index.php', ['view' => $view, 'id' => $course->id]);
+                $urlroot = new moodle_url('/report/examtraining/index.php');
                 $template->groupmenu = groups_print_course_menu($course, $urlroot, true);
             }
         }
@@ -100,21 +102,32 @@ class report_examtraining_renderer extends plugin_renderer_base {
      * @param int $currenttime A default timestamp in GMT
      * @param boolean $return
      */
-    public function date_selector($day, $month, $year, $currenttime = 0, $return = false, $from = 1970, $to = 2020) {
+    public function date_selector($day, $month, $year, $currenttime = 0, $return = false, $from = 1970, $to = 0) {
+
+        if ($to == 0) {
+            $to = date('Y') + 1;
+        }
 
         if (!$currenttime) {
             $currenttime = time();
         }
         $currentdate = usergetdate($currenttime);
 
+        $days = [];
         for ($i = 1; $i <= 31; $i++) {
             $days[$i] = $i;
         }
+        $months = [];
         for ($i = 1; $i <= 12; $i++) {
             $months[$i] = userdate(gmmktime(12, 0, 0, $i, 15, 2000), "%B");
         }
+        $years = [];
         for ($i = $from; $i <= $to; $i++) {
             $years[$i] = $i;
+        }
+
+        if (empty($years)) {
+            $years[date('Y')] = date('Y');
         }
 
         // Build or print result.
@@ -164,7 +177,10 @@ class report_examtraining_renderer extends plugin_renderer_base {
         return $str;
     }
 
-    public function tabs($view, $subview, $groupid) {
+    /**
+     * Print general navigation tabs.
+     */
+    public function tabs($view, $groupid) {
         global $COURSE;
 
         $context = context_course::instance($COURSE->id);
@@ -174,13 +190,21 @@ class report_examtraining_renderer extends plugin_renderer_base {
             $taburl = new moodle_url('/report/examtraining/index.php', array('id' => $COURSE->id, 'view' => 'user'));
             $rows[0][] = new tabobject('user', $taburl, get_string('user', 'report_examtraining'));
 
-            $params = array('id' => $COURSE->id, 'view' => 'course', 'groupid' => $groupid);
+            $params = ['id' => $COURSE->id, 'view' => 'group', 'group' => $groupid];
             $taburl = new moodle_url('/report/examtraining/index.php', $params);
-            $rows[0][] = new tabobject('course', $taburl, get_string('course', 'report_examtraining'));
+            $rows[0][] = new tabobject('group', $taburl, get_string('group', 'report_examtraining'));
 
-            $params = array('id' => $COURSE->id, 'view' => 'courseraw', 'groupid' => $groupid);
+            $params = ['id' => $COURSE->id, 'view' => 'courseglobal'];
             $taburl = new moodle_url('/report/examtraining/index.php', $params);
-            $rows[0][] = new tabobject('courseraw', $taburl, get_string('courseraw', 'report_examtraining'));
+            $rows[0][] = new tabobject('courseglobal', $taburl, get_string('courseglobal', 'report_examtraining'));
+
+            $params = ['id' => $COURSE->id, 'view' => 'categories'];
+            $taburl = new moodle_url('/report/examtraining/index.php', $params);
+            $rows[0][] = new tabobject('categories', $taburl, get_string('cats', 'report_examtraining'));
+
+            $params = ['id' => $COURSE->id, 'view' => 'courseraw', 'group' => $groupid];
+            $taburl = new moodle_url('/report/examtraining/index.php', $params);
+            $rows[0][] = new tabobject('courseraw', $taburl, get_string('raw', 'report_examtraining'));
 
             $taburl = new moodle_url('/report/examtraining/index.php', array('id' => $COURSE->id, 'view' => 'questionbank'));
             $rows[0][] = new tabobject('questionbank', $taburl, get_string('questionbank', 'report_examtraining'));
@@ -190,27 +214,19 @@ class report_examtraining_renderer extends plugin_renderer_base {
                 $rows[0][] = new tabobject('compilationtools', $taburl, get_string('compilationtools', 'report_examtraining'));
             }
 
-            if ($view == 'course') {
-                if (has_capability('report/examtraining:viewsensibleresults', $context)) {
-                    $params = array('id' => $COURSE->id, 'view' => 'course_map', 'groupid' => $groupid);
-                    $taburl = new moodle_url('/report/examtraining/index.php', $params);
-                    $rows[1][] = new tabobject('course_map', $taburl, get_string('coursemap', 'report_examtraining'));
-                }
-
-                $params = array('id' => $COURSE->id, 'view' => 'course_group', 'groupid' => $groupid);
+            if (has_capability('report/examtraining:viewsensibleresults', $context)) {
+                $params = ['id' => $COURSE->id, 'view' => 'map', 'group' => $groupid];
                 $taburl = new moodle_url('/report/examtraining/index.php', $params);
-                $rows[1][] = new tabobject('course_group', $taburl, get_string('coursegroup', 'report_examtraining'));
-
-                if (has_capability('report/examtraining:viewsensibleresults', $context)) {
-                    $params = array('id' => $COURSE->id, 'view' => 'course_tops', 'groupid' => $groupid);
-                    $taburl = new moodle_url('/report/examtraining/index.php', $params);
-                    $rows[1][] = new tabobject('course_tops', $taburl, get_string('coursetops', 'report_examtraining'));
-                }
-
-                return print_tabs($rows, 'course_'.$subview, 'course', array($view), true);
-            } else {
-                return print_tabs($rows, $view, '', null, true);
+                $rows[0][] = new tabobject('map', $taburl, get_string('map', 'report_examtraining'));
             }
+
+            if (has_capability('report/examtraining:viewsensibleresults', $context)) {
+                $params = ['id' => $COURSE->id, 'view' => 'tops', 'group' => $groupid];
+                $taburl = new moodle_url('/report/examtraining/index.php', $params);
+                $rows[0][] = new tabobject('tops', $taburl, get_string('tops', 'report_examtraining'));
+            }
+
+            return print_tabs($rows, $view, '', null, true);
         }
     }
 }

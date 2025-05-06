@@ -40,12 +40,15 @@ function report_examtraining_register_attempt($attempt) {
         }
 
         $rec = new StdClass;
+        $rec->stubtype = 'qattempts';
+        $rec->userid = $attempt->userid;
         $rec->uniqueid = $uniqueid;
+        $rec->qsize = $q;
         $rec->qcount = $q;
-        $rec->serieaanswered = 0;
-        $rec->seriecanswered = 0;
-        $rec->serieamatched = 0;
-        $rec->seriecmatched = 0;
+        $rec->acount = 0;
+        $rec->ccount = 0;
+        $rec->amatched = 0;
+        $rec->cmatched = 0;
         $rec->datecompiled = 0;
         $DB->insert_record('report_examtraining', $rec);
     }

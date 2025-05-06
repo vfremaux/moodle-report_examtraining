@@ -83,7 +83,7 @@ if (!empty($targetusers)) {
 
     $rawfile = mb_convert_encoding(implode(';', $resultset)."\n", 'ISO-8859-1', 'UTF-8');
 
-    $reportcontext = examtraining_get_context($course->id);
+    $reportcontext = block_userquiz_monitor_get_block($course->id)->config;
 
     global $COURSE;
     $COURSE->id = $course->id;

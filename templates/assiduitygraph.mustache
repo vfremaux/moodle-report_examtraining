@@ -11,31 +11,31 @@
     {{#hasattempts}}
     <div id="report-examtraining-assiduity">
 
-        {{#paged}}
         <div class="report-examtraining-assiduity-previous">
+            {{#paged}}
             {{#previousurl}}
-            <a href="{{{previousurl}}}"><img src="{{{previousiconurl}}}"></a>
+            <a href="{{{previousurl}}}">{{{previousicon}}}</a>
             {{/previousurl}}
             {{^previousurl}}
-            <img src="{{{previousiconurl}}}" class="shadow">
+            {{{previousiconshadow}}}
             {{/previousurl}}
+            {{/paged}}
         </div>
-        {{/paged}}
 
         <div class="examtraining-assiduity-plot">
             {{{plot}}}
         </div>
 
-        {{#paged}}
         <div class="examtraining-assiduity-next">
+            {{#paged}}
             {{#nexturl}}
-            <a href="{{{#nexturl}}}"><img src="{{{nexticonurl}}}"></a>
+            <a href="{{{nexturl}}}">{{{nexticon}}}</a>
             {{/nexturl}}
             {{^nexturl}}
-            <img src="{{{nexticonurl}}}" class="shadow">
+            {{{nexticonshadow}}}
             {{/nexturl}}
+            {{/paged}}
         </div>
-        {{/paged}}
 
     </div>
     {{/hasattempts}}

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains functions used by the examtraining report
+ * An independant cron target for producing raw report files independantly from moodle cron.
  *
  * @package    report
  * @subpackage examtraining
@@ -25,6 +25,7 @@
 
 require('../../../config.php');
 
+require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/reportasyncprecompilelib.php');
 
 $CFG->trace = $CFG->dataroot.'/report_cron_compile.log';

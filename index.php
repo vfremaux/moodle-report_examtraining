@@ -34,6 +34,8 @@ require_once($CFG->dirroot.'/report/examtraining/locallib.php');
 $id = required_param('id', PARAM_INT); // The course id.
 $view = optional_param('view', 'user', PARAM_TEXT); // The course id.
 $userid = optional_param('userid', '', PARAM_INT); // The course id.
+$output = optional_param('output', 'html', PARAM_ALPHA); // Values: html, xls or wkpdf.
+$groupid = optional_param('group', 0, PARAM_INT);
 
 $params = array('id' => $id, 'view' => $view);
 if (!empty($userid)) {
@@ -45,12 +47,16 @@ $PAGE->set_url($url);
 $context = context_course::instance($id);
 $PAGE->set_context($context);
 
-$output = optional_param('output', 'html', PARAM_ALPHA); // Values: html, xls or wkpdf.
-$view = optional_param('view', 'courseraw', PARAM_TEXT);
-$groupid = optional_param('groupid', 0, PARAM_INT);
+// Clear compile session data.
+if (isset($SESSION->examtrainingruns)) {
+    unset($SESSION->examtrainingruns);
+}
+if (isset($SESSION->examtrainingtime)) {
+    unset($SESSION->examtrainingtime);
+}
 
-if (!$course = $DB->get_record('course', array('id' => $id))) {
-    print_error('invalidcourse');
+if (!$course = $DB->get_record('course', ['id' => $id])) {
+    throw new moodle_exception('invalidcourse');
 }
 
 // Secure output by buffering everything before real output.
@@ -74,42 +80,31 @@ $renderer = $PAGE->get_renderer('report_examtraining');
 
 // Resolve view.
 if (has_capability('report/examtraining:viewall', $context)) {
-    if (!preg_match('/user|userattempt|course|course_map|course_group|courseraw|questionbank|compilationtools/', $view)) {
+    if (!preg_match('/user|userattempt|group|categories|course|map|tops|raw|questionbank|compilationtools/', $view)) {
         $view = 'courseraw';
-    }
-    if ($view == 'course') {
-        $subview = 'map'; // Set a default.
-    } else {
-        if (preg_match('/^course_/', $view)) {
-            $subview = str_replace('course_', '', $view);
-            $view = 'course';
-        } else {
-            $subview = $view;
-        }
     }
 } else {
     $view = 'user';
-    $subview = $view;
 }
 
 // Check availability of the view.
-if (file_exists($CFG->dirroot."/report/examtraining/{$subview}report.php")) {
-    $reportview = $CFG->dirroot."/report/examtraining/{$subview}report.php";
+if (file_exists($CFG->dirroot."/report/examtraining/report_{$view}.php")) {
+    $reportview = $CFG->dirroot."/report/examtraining/report_{$view}.php";
 } else {
-    print_error('non existing report view : '.$subview);
+    print_error('non existing report view : '.$view);
     die;
 }
 
 // If screen output, output HTML moodle header.
 if ($output == 'html') {
-    $PAGE->navbar->add(format_string($course->fullname), new moodle_url('/course/view.php', array('id' => $course->id)));
+    $PAGE->navbar->add(format_string($course->fullname), new moodle_url('/course/view.php', ['id' => $course->id]));
     $PAGE->navbar->add(get_string('pluginname', 'report_examtraining'));
     $PAGE->set_title(get_string('reports', 'report_examtraining'));
     $PAGE->set_heading(get_string('reports', 'report_examtraining'));
 
     echo $OUTPUT->header();
 
-    echo $renderer->tabs($view, $subview, $groupid);
+    echo $renderer->tabs($view, $groupid);
 
     $html = '';
     $tablewidth = "100%";
@@ -130,15 +125,15 @@ if ($output == 'html') {
     $tablewidth = "560";
 }
 
-@ini_set('max_execution_time', '600');
+@ini_set('max_execution_time', '1200');
 
-require($reportview);
+include($reportview);
 
 if ($output == 'html') {
     echo $OUTPUT->footer();
 } else if ($output == 'pdf') {
 
-    $title = get_string("$view-$subview", 'report_examtraining');
+    $title = get_string("$view", 'report_examtraining');
 
     $html = "<page backtop=\"50mm\" backbottom=\"10mm\" backleft=\"10mm\" backright=\"10mm\">
              <page_header>$pdfheader</page_header>

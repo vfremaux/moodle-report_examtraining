@@ -1,0 +1,19 @@
+
+<!-- report_examtraining:learningtime -->
+<table width="100%" style="border:1px solid #A0A0A0;padding:2px" cellspacing="2">
+<tr>
+    <td align="left"><b>{{#str}}firstaccess, report_examtraining{{/str}}</b></td>
+    <td align="left">{{{firstaccess}}}</td>
+    <td align="left"><b>{{#str}}lastaccess, report_examtraining{{/str}}</b></td>
+    <td align="left">{{{lastaccess}}}</td></tr>
+
+    <tr>
+        <td align="left"><b>{{#str}}connections, report_examtraining{{/str}}</b></td>
+        <td colspan="3" align="left">{{connectionscountstr}}</td>
+    </tr>
+    <tr>
+        <td align="left"><b>{{#str}}equlearningtime, report_examtraining{{/str}}</b></td>
+        <td colspan="3" align="left" data-source="elapsed">{{{elapsed}}}</td>
+    </tr>
+</table>
+<!-- /report_examtraining:learningtime -->

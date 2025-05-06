@@ -1,9 +1,9 @@
 
 
-<!-- globalheading -->
-{{{userpicture}}}
+<!-- report_examtraining/globalheading -->
+{{{userpicture}}} <b>{{lastname}} {{firstname}}</b>
 
-<div class="report-examtraining-userinfobox">
+<div class="report-examtraining-userinfobox" data-userid="{{userid}}">
 
 {{#hasgroups}}
     <b>{{usergroupsstr}}</b>: {{{usergroups}}}<br/>
@@ -12,7 +12,7 @@
 
     <a href="{{{examreporturl}}}">{{seedetailsstr}}</a><br/>
 
-    <b>{{equlearningtimestr}}</b>: {{elapsed}}
+    <b data-source="elapsed">{{equlearningtimestr}}</b> {{elapsed}}
 
 </div>
-<!-- /globalheading -->
+<!-- /report_examtraining/globalheading -->

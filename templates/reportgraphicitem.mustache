@@ -2,14 +2,23 @@
 
 
 <!-- reportgraphicitem -->
-<div class="container-fluid">
-    <div class="header">
-        <h2>{{title}}</h2>
+<div class="examtraining-coverage">
+    <div class="examtraining-report-item coverage d-flex justify-content-around">
+        <div class="header w-50">
+            <h2>{{#str}}questionbankcoverage, report_examtraining{{/str}}</h2>
+        </div>
+        <div class="header w-50">
+            <h2>{{#str}}questionbankmastering, report_examtraining{{/str}}</h2>
+        </div>
     </div>
 
-    <div class="examtraining-report-item coverage row-fluid">
-        <img src="{{{generatorurl}}}" width="{{width}}" height="{{height}}" /><br/>
-        {{legendstr}}
+    <div class="examtraining-report-item coverage d-flex justify-content-around">
+        <div class="text-center w-50">
+            <img src="{{{generatorurl}}}" width="{{width}}" height="{{height}}" /><br/>
+        </div>
+        <div class="text-center w-50">
+            <img src="{{{generatorurlmatched}}}" width="{{width}}" height="{{height}}" /><br/>
+        </div>
     </div>
 </div>
 <!-- /reportgraphicitem -->

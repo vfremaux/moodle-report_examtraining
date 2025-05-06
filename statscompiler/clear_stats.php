@@ -25,14 +25,16 @@
 require('../../../config.php');
 
 require_once($CFG->dirroot.'/report/examtraining/statscompilelib.php');
+require_once($CFG->dirroot.'/blocks/userquiz_monitor/xlib.php');
 
-$id = optional_param('id', 0, PARAM_INT);
+$courseid = optional_param('id', 0, PARAM_INT);
 
 $context = context_system::instance();
-$url = new moodle_url('/report/examtraining/statscompiler/precompile_userstats.php', array('id' => $id));
+$url = new moodle_url('/report/examtraining/statscompiler/precompile_userstats.php', array('id' => $courseid));
 
 // Security.
 
+require_login();
 require_capability('moodle/site:config', $context);
 
 $PAGE->set_url($url);
@@ -41,25 +43,12 @@ $PAGE->set_pagelayout('admin');
 
 echo $OUTPUT->header();
 
-$sql = "
-    UPDATE
-        {report_examtraining}
-    SET
-        qcount = 0,
-        serieaanswered = 0,
-        serieamatched = 0,
-        seriecanswered = 0,
-        seriecmatched = 0,
-        datecompiled = 0
-";
+echo $OUTPUT->heading(get_string('clearstatsdata', 'report_examtraining'));
 
-$result = $DB->execute($sql);
+$compiler = new \report_examtraining\stats\compiler();
+$compiler->clear_results($courseid);
 
-$result = $DB->delete_records('userquiz_monitor_cat_stats', array());
-
-if ($id) {
-    $returnurl = new moodle_url('/report/examtraining/index.php', array('view' => 'compilationtools', 'id' => $id));
-    echo $OUTPUT->continue_button($returnurl);
-}
+$returnurl = new moodle_url('/report/examtraining/index.php', array('view' => 'compilationtools', 'id' => $courseid));
+echo $OUTPUT->continue_button($returnurl);
 
 echo $OUTPUT->footer();

@@ -28,6 +28,7 @@ defined('MOODLE_INTERNAL') || die;
 
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
+require_once($CFG->dirroot.'/report/examtraining/statscompilelib.php');
 require_once($CFG->dirroot.'/report/examtraining/classes/output/htmlrenderer.php');
 require_once($CFG->dirroot.'/report/examtraining/classes/output/xlsrenderer.php');
 
@@ -36,7 +37,7 @@ $input->num = optional_param('num', 0, PARAM_INT);
 $input->orderby = optional_param('orderby', '', PARAM_TEXT);
 $input->subview = optional_param('subview', '', PARAM_TEXT);
 $input->offset = optional_param('offset', 0, PARAM_INT);
-$input->groupid = optional_param('groupid', 0, PARAM_INT);
+$input->groupid = optional_param('group', 0, PARAM_INT);
 $pagesize = 20;
 
 // TODO : secure groupid access depending on proper capabilities.
@@ -50,8 +51,8 @@ if ($output == 'html') {
 
 // Compute target group.
 
-if ($groupid) {
-    $targetusers = get_enrolled_users($context, '', $groupid, 'u.*', 'u.lastname, u.firstname', $input->offset, $pagesize, true);
+if ($input->groupid) {
+    $targetusers = get_enrolled_users($context, '', $input->groupid, 'u.*', 'u.lastname, u.firstname', $input->offset, $pagesize, true);
     $max = count($targetusers);
     $pagesize = count($targetusers);
 } else {
@@ -69,6 +70,8 @@ if (!empty($targetusers)) {
     }
 }
 
+$compiler = new \report_examtraining\stats\compiler();
+
 // Print result.
 
 if ($output == 'html') {
@@ -81,12 +84,12 @@ if ($output == 'html') {
                     'view' => 'course_group',
                     'from' => $input->from,
                     'to' => $input->to,
-                    'groupid' => $groupid,
+                    'groupid' => $input->groupid,
                     'output' => 'html');
     $url = new moodle_url('/report/examtraining/index.php', $params);
     echo $renderer->pager($max, $input->offset, $pagesize, $url);
 
-    $reportcontext = examtraining_get_context();
+    $reportcontext = block_userquiz_monitor_get_block($course->id)->config;
 
     if (!empty($targetusers)) {
 
@@ -96,12 +99,11 @@ if ($output == 'html') {
             $aggregate = use_stats_aggregate_logs($logs, $input->from, $input->to);
 
             $weeklogs = use_stats_extract_logs($input->to - 7 * DAYSECS, $input->to, $userid, $course->id);
-            $weekaggregate = use_stats_aggregate_logs($weeklogs, $input->to - 7 * DAYSECS, $input->to, '', true, true);
+            $weekaggregate = use_stats_aggregate_logs($weeklogs, $input->to - 7 * DAYSECS, $input->to, '', true);
 
-            $userglobals = userquiz_get_user_globals(array_keys($targetusers), $reportcontext->trainingquizzes,
-                                                     $input->from, $input->to);
+            $userglobals = $compiler->get_user_globals(array_keys($targetusers), $course->id, $input->from, $input->to);
 
-            $logusers = $auser->id;
+            $logusers = $userid;
 
             $globalresults = new StdClass();
             $globalresults->elapsed = 0;
@@ -109,22 +111,12 @@ if ($output == 'html') {
             $globalresults->weekelapsed = 0;
             $globalresults->weekevents = 0;
 
-            if (!empty($aggregate[$userid])) {
-                foreach ($aggregate[$userid] as $module => $classarray) {
-                    foreach ($classarray as $modulestat) {
-                        $globalresults->elapsed += $modulestat->elapsed;
-                        $globalresults->events += $modulestat->events;
-                    }
-                }
+            if (isset($aggregate)) {
+                $globalresults->elapsed = $aggregate['coursetotal'][$course->id]->elapsed ?? 0;
             }
 
-            if (!empty($weekaggregate[$userid])) {
-                foreach ($weekaggregate[$userid] as $classarray) {
-                    foreach ($classarray as $modulestat) {
-                        $globalresults->weekelapsed += $modulestat->elapsed;
-                        $globalresults->weekevents += $modulestat->events;
-                    }
-                }
+            if (isset($weekaggregate)) {
+                $globalresults->weekelapsed = $weekaggregate['coursetotal'][$course->id]->elapsed ?? 0;
             }
 
             $globalresults->linktousersheet = 1;
@@ -136,14 +128,18 @@ if ($output == 'html') {
 
     echo $renderer->pager($max, $input->offset, $pagesize, $url);
 
-    $options['id'] = $course->id;
-    $options['groupid'] = $groupid;
-    $options['from'] = $input->from; // Alternate way.
-    $options['output'] = 'xls'; // Ask for XLS.
-    $options['view'] = 'course_group'; // Force course view.
+    $params = [
+        'id' => $course->id,
+        'group' => $input->groupid,
+        'from' => $input->from,
+        'output' => 'xls',
+        'view' => 'group',
+        'sesskey' => sesskey(),
+    ];
+    echo '<br/>';
     echo '<center>';
-    $buttonurl = new moodle_url('/report/examtraining/index.php');
-    echo $OUTPUT->single_button($buttonurl, get_string('generatexls', 'report_examtraining'), 'post', $options);
+    $buttonurl = new moodle_url('/report/examtraining/index.php', $params);
+    echo $OUTPUT->single_button($buttonurl, get_string('generatexls', 'report_examtraining'));
     echo '</center>';
 
 } else {
@@ -151,8 +147,8 @@ if ($output == 'html') {
     // Generate XLS.
     $xlsrenderer = $PAGE->get_renderer('report_examtraining', 'xls');
 
-    if ($groupid) {
-        $filename = 'examtraining_group_'.$groupid.'_report_'.date('d-M-Y_h:m:s', time()).'.xls';
+    if ($input->groupid) {
+        $filename = 'examtraining_group_'.$input->groupid.'_report_'.date('d-M-Y_h:m:s', time()).'.xls';
     } else {
         $filename = 'examtraining_course_'.$id.'_report_'.date('d-M-Y_h:m:s', time()).'.xls';
     }
@@ -165,48 +161,44 @@ if ($output == 'html') {
     $xlsformats = examtraining_reports_xls_formats($workbook);
     $startrow = 0;
 
-    $reportcontext = examtraining_get_context();
+    $reportcontext = block_userquiz_monitor_get_block($course->id)->config;
 
     $row = $startrow;
-    $worksheet =& $workbook->add_worksheet('-');
+    $worksheet = &$workbook->add_worksheet('-');
 
-    $xlsrenderer->globalheader($worksheet, $xlsformats, $row);
+    $xlsrenderer->globalheader($worksheet, $xlsformats, $row, $reportcontext);
     $row++;
 
     if (!empty($targetusers)) {
-        foreach ($targetusers as $auser) {
+        foreach ($targetusers as $userid => $auser) {
 
-            if (has_capability('moodle/course:manageactivities', $context, $auser->id)) {
+            if (has_capability('moodle/course:manageactivities', $context, $userid)) {
                 continue;
             }
 
             // Get data.
 
-            $logs = use_stats_extract_logs($input->from, $input->to, $auser->id, $COURSE->id);
+            $logs = use_stats_extract_logs($input->from, $input->to, $userid, $course->id);
             $aggregate = use_stats_aggregate_logs($logs, $input->from, $input->to);
 
-            $weeklogs = use_stats_extract_logs(time() - (DAYSECS * 7), time(), $auser->id, $COURSE->id);
+            $weeklogs = use_stats_extract_logs(time() - (DAYSECS * 7), time(), $userid, $course->id);
             $weekaggregate = use_stats_aggregate_logs($weeklogs, $input->from, $input->to);
 
             // Print result.
 
-            $globalresults = userquiz_get_user_globals($auser->id, $reportcontext->trainingquizzes, $input->from, $input->to);
-            $globalresults[$auser->id]->elapsed = 0;
-            $globalresults[$auser->id]->weekelapsed = 0;
+            $userresults = $compiler->get_user_globals([$userid], $course->id, $input->from, $input->to);
+            $userresults[$userid]->elapsed = 0;
+            $userresults[$userid]->weekelapsed = 0;
 
-            foreach ($aggregate as $module => $classarray) {
-                foreach ($classarray as $modulestat) {
-                    $globalresults[$auser->id]->elapsed += $modulestat->elapsed;
-                }
+            if (isset($aggregate)) {
+                $userresults[$userid]->elapsed = $aggregate['coursetotal'][$course->id]->elapsed ?? 0;
             }
 
-            foreach ($weekaggregate as $classarray) {
-                foreach ($classarray as $modulestat) {
-                    $globalresults[$auser->id]->weekelapsed += $modulestat->elapsed;
-                }
+            if (isset($weekaggregate)) {
+                $userresults[$userid]->weekelapsed = $weekaggregate['coursetotal'][$course->id]->elapsed ?? 0;
             }
 
-            $xlsrenderer->globalrow($worksheet, $auser->id, $course->id, $globalresults[$auser->id], $xlsformats, $row);
+            $xlsrenderer->globalrow($worksheet, $auser->id, $course->id, $userresults[$userid], $input->from, $input->to, $row, $reportcontext);
         }
     }
     ob_end_clean();

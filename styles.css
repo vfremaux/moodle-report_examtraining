@@ -1,5 +1,18 @@
 
+.examresults .examresult {
+    margin: 0 10px;
+}
 
+#report-examtraining-assiduity {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.icon.xlarge {
+    width: 64px;
+    height: 64px;
+}
 
 .examtraining-assiduity .shadow {
     opacity: 0.5;
@@ -20,8 +33,6 @@
 #examtraining-selector .formitem div {
     display: inline-block;
     margin-right; 20px;
-    margin-top: 10px;
-    margin-bottom: 10p;
 }
 
 #examtraining-assiduity {
@@ -49,4 +60,62 @@
 
 .report-examtraining-panel33 {
     flex-basis: 32%;
+}
+
+.examtraining-values {
+    display:flex;
+    flex-direction:row;
+    justify-content:space-between;
+    align-items: center;
+}
+
+.examtraining-value {
+    padding:10px;
+    margin:20px;
+    font-family: "roboto", sans-serif;
+    font-weight: light;
+    color: white;
+    font-size: 25pt;
+}
+
+.examtraining-value.qcat,
+.examtraining-value.acat,
+.examtraining-value.ccat,
+.examtraining-value.qname,
+.examtraining-value.aname,
+.examtraining-value.cname {
+    color: initial;
+}
+
+.examtraining-value.acat,
+.examtraining-value.ccat,
+.examtraining-value.aname,
+.examtraining-value.cname {
+    font-size: 20pt;
+}
+
+.examtraining-value .value-name {
+    font-size: 80%;
+}
+
+.examtraining-value.q {
+    background-color: #66669F;
+}
+
+.examtraining-value.a {
+    background-color: #5BAA83;
+    font-size: 20pt;
+}
+
+.examtraining-value.c {
+    background-color: #AD586B;
+    font-size: 20pt;
+}
+
+[data-item="matched"] {
+    opacity: 0.7;
+}
+
+[data-item="ratio"] {
+    opacity: 0.4;
 }

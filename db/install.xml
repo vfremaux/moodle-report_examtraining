@@ -4,22 +4,41 @@
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    <TABLE NAME="report_examtraining" COMMENT="Registers the attempts as part of a userquiz_monitor set">
+    <TABLE NAME="report_examtraining" COMMENT="Compile multidimensional stats on training">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" ENUM="false"/>
-        <FIELD NAME="uniqueid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false"/>
-        <FIELD NAME="qcount" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false"/>
-        <FIELD NAME="serieaanswered" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false"/>
-        <FIELD NAME="seriecanswered" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false"/>
-        <FIELD NAME="serieamatched" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false"/>
-        <FIELD NAME="seriecmatched" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false"/>
-        <FIELD NAME="datecompiled" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
+        <FIELD NAME="stubtype" TYPE="char" LENGTH="48" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="blockid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="groupid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="categoryid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="questionid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="uniqueid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="isexam" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="attempts" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="qsize" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="qcount" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="qmatched" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="acount" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="ccount" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="amatched" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="cmatched" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="qdistinct" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="attemptdate" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="datecompiled" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="ix_uniqueid" UNIQUE="true" FIELDS="uniqueid" COMMENT="Unique attempt id" />
+        <INDEX NAME="ix_uniqueid" UNIQUE="false" FIELDS="uniqueid" COMMENT="Unique attempt id" />
+        <INDEX NAME="ix_stubtype" UNIQUE="false" FIELDS="stubtype" COMMENT="Stub type" />
+        <INDEX NAME="ix_course" UNIQUE="false" FIELDS="course,blockid" COMMENT="course subset" />
+        <INDEX NAME="ix_question" UNIQUE="false" FIELDS="questionid" COMMENT="Question axis (q)" />
+        <INDEX NAME="ix_questioncat" UNIQUE="false" FIELDS="categoryid" COMMENT="Question axis (cat)" />
+        <INDEX NAME="ix_user" UNIQUE="false" FIELDS="userid" COMMENT="User axis" />
+        <INDEX NAME="ix_exam" UNIQUE="false" FIELDS="isexam" COMMENT="Exam" />
       </INDEXES>
     </TABLE>
   </TABLES>

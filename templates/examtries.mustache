@@ -14,15 +14,15 @@
 
         <div class="examresults d-flex justify-content-between">
             {{#examtries}}
-            <div class="examresults">
+            <div class="examresult">
                 {{{finishdate}}}<br/>
                 {{#islink}}
                 <a href="{{{examurl}}}"><img src="{{{resulticonurl}}}" class="exam-icon" /><br/>
-                (A : {{ahitratio}}% {{#dualserie}}, C: {{chitratio}}%{{/dualserie}})</a>
+                (A : {{aratio}}%{{#dualserie}}, C: {{cratio}}%{{/dualserie}})</a>
                 {{/islink}}
                 {{^islink}}
                 <img src="{{{resulticonurl}}}" class="exam-icon" /><br/>
-                (A : {{ahitratio}}% {{#dualserie}}, C: {{chitratio}}%{{/dualserie}})
+                (A : {{aratio}}%{{#dualserie}}, C: {{cratio}}%{{/dualserie}})
                 {{/islink}}
             </div>
             {{/examtries}}
