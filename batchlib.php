@@ -27,7 +27,7 @@ defined('MOODLE_INTERNAL') || die();
  * performs a generic batch process using HTTP bounces
  * @uses $CFG->backgroundrunsenabled to control dumb loop
  */
-function batch($prework = '', $work = '', $postwork = '', $source, $where = ' 1 ', &$workcontext, $fromid = '') {
+function batch($prework = '', $work = '', $postwork = '', $source = '', $where = ' 1 ', &$workcontext = null, $fromid = '') {
     global $CFG, $SITE;
 
     $fromidclause = ($fromid) ? " AND id >= $fromid " : '';

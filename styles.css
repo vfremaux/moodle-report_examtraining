@@ -75,7 +75,8 @@
     font-family: "roboto", sans-serif;
     font-weight: light;
     color: white;
-    font-size: 25pt;
+    font-size: 18pt;
+    line-height: 28pt;
 }
 
 .examtraining-value.qcat,

@@ -27,70 +27,73 @@
     {{#cats}}
     <h3>{{name}}</h3>
 
-    <div class="examtraining-values">
-        <div class="examtraining-value qname" data-item="qname">
+    <div class="container">
+        <div class="row">
+            <div class="examtraining-value qname col" data-item="qname">
+            </div>
+            <div class="examtraining-value qcat col" data-item="catcount">
+                <span class="value-name">{{#str}}catcount, report_examtraining{{/str}}</span><br/>
+                <span class="value-value">{{qcount}}</span>
+            </div>
+            <div class="examtraining-value q col" data-item="count">
+                <span class="value-name">{{#str}}count, report_examtraining{{/str}}</span><br/>
+                <span class="value-value">{{stats.qcount}}</span>
+            </div>
+            <div class="examtraining-value q col" data-item="matched">
+                <span class="value-name">{{#str}}matched, report_examtraining{{/str}}</span><br/>
+                <span class="value-value">{{stats.qmatched}}</span>
+            </div>
+            <div class="examtraining-value q col" data-item="ratio">
+                <span class="value-name">{{#str}}hitratio, report_examtraining{{/str}}</span><br/>
+                <span class="value-value">{{stats.qratio}}%</span>
+            </div>
         </div>
-        <div class="examtraining-value qcat" data-item="catcount">
-            <span class="value-name">{{#str}}catcount, report_examtraining{{/str}}</span><br/>
-            <span class="value-value">{{qcount}}</span>
+
+        {{#dualserie}}
+        <div class="examtraining-values row">
+            <div class="examtraining-value aname col" data-item="aname">
+                <span class="value-name">{{serieAname}}</span>
+            </div>
+            <div class="examtraining-value acat col" data-item="catcount">
+                <span class="value-name">{{#str}}catcount, report_examtraining{{/str}}</span><br/>
+                <span class="value-value">{{acount}}</span>
+            </div>
+            <div class="examtraining-value a col" data-item="count">
+                <span class="value-name">{{#str}}count, report_examtraining{{/str}}</span><br/>
+                <span class="value-value">{{stats.acount}}</span>
+            </div>
+            <div class="examtraining-value a col" data-item="matched">
+                <span class="value-name">{{#str}}matched, report_examtraining{{/str}}</span><br/>
+                <span class="value-value">{{stats.amatched}}</span>
+            </div>
+            <div class="examtraining-value a col" data-item="ratio">
+                <span class="value-name">{{#str}}hitratio, report_examtraining{{/str}}</span><br/>
+                <span class="value-value">{{stats.aratio}}%</span>
+            </div>
         </div>
-        <div class="examtraining-value q" data-item="count">
-            <span class="value-name">{{#str}}count, report_examtraining{{/str}}</span><br/>
-            <span class="value-value">{{stats.qcount}}</span>
+        <div class="examtraining-values row">
+            <div class="examtraining-value cname col" data-item="cname"></span>
+                <span class="value-name">{{serieCname}}</span>
+            </div>
+            <div class="examtraining-value ccat col" data-item="catcount">
+                <span class="value-name">{{#str}}catcount, report_examtraining{{/str}}</span><br/>
+                <span class="value-value">{{ccount}}</span>
+            </div>
+            <div class="examtraining-value c col" data-item="count">
+                <span class="value-name">{{#str}}count, report_examtraining{{/str}}</span><br/>
+                <span class="value-value">{{stats.ccount}}</span>
+            </div>
+            <div class="examtraining-value c col" data-item="matched">
+                <span class="value-name">{{#str}}matched, report_examtraining{{/str}}</span><br/>
+                <span class="value-value">{{stats.cmatched}}</span>
+            </div>
+            <div class="examtraining-value c col" data-item="ratio">
+                <span class="value-name">{{#str}}hitratio, report_examtraining{{/str}}</span><br/>
+                <span class="value-value">{{stats.cratio}}%</span>
+            </div>
         </div>
-        <div class="examtraining-value q" data-item="matched">
-            <span class="value-name">{{#str}}matched, report_examtraining{{/str}}</span><br/>
-            <span class="value-value">{{stats.qmatched}}</span>
-        </div>
-        <div class="examtraining-value q" data-item="ratio">
-            <span class="value-name">{{#str}}hitratio, report_examtraining{{/str}}</span><br/>
-            <span class="value-value">{{stats.qratio}}%</span>
-        </div>
+        {{/dualserie}}
     </div>
-    {{#dualserie}}
-    <div class="examtraining-values">
-        <div class="examtraining-value aname" data-item="aname">
-            <span class="value-name">{{serieAname}}</span>
-        </div>
-        <div class="examtraining-value acat" data-item="catcount">
-            <span class="value-name">{{#str}}catcount, report_examtraining{{/str}}</span><br/>
-            <span class="value-value">{{acount}}</span>
-        </div>
-        <div class="examtraining-value a" data-item="count">
-            <span class="value-name">{{#str}}count, report_examtraining{{/str}}</span><br/>
-            <span class="value-value">{{stats.acount}}</span>
-        </div>
-        <div class="examtraining-value a" data-item="matched">
-            <span class="value-name">{{#str}}matched, report_examtraining{{/str}}</span><br/>
-            <span class="value-value">{{stats.amatched}}</span>
-        </div>
-        <div class="examtraining-value a" data-item="ratio">
-            <span class="value-name">{{#str}}hitratio, report_examtraining{{/str}}</span><br/>
-            <span class="value-value">{{stats.aratio}}%</span>
-        </div>
-    </div>
-    <div class="examtraining-values">
-        <div class="examtraining-value cname" data-item="cname"></span>
-            <span class="value-name">{{serieCname}}</span>
-        </div>
-        <div class="examtraining-value ccat" data-item="catcount">
-            <span class="value-name">{{#str}}catcount, report_examtraining{{/str}}</span><br/>
-            <span class="value-value">{{ccount}}</span>
-        </div>
-        <div class="examtraining-value c" data-item="count">
-            <span class="value-name">{{#str}}count, report_examtraining{{/str}}</span><br/>
-            <span class="value-value">{{stats.ccount}}</span>
-        </div>
-        <div class="examtraining-value c" data-item="matched">
-            <span class="value-name">{{#str}}matched, report_examtraining{{/str}}</span><br/>
-            <span class="value-value">{{stats.cmatched}}</span>
-        </div>
-        <div class="examtraining-value c" data-item="ratio">
-            <span class="value-name">{{#str}}hitratio, report_examtraining{{/str}}</span><br/>
-            <span class="value-value">{{stats.cratio}}%</span>
-        </div>
-    </div>
-    {{/dualserie}}
     {{/cats}}
 </div>
 
