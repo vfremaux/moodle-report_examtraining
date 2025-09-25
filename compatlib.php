@@ -15,32 +15,35 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Cross version compatibility functions.
  * @package report_examtraining
+ * @author Valery Fremaux
+ * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
-
 namespace report_examtraining;
 
 defined('MOODLE_INTERNAL') || die();
 
-use core\event\course_reset_ended;
+class compat {
 
-/**
- * Handles events.
- */
-class observers {
+    public static function get_user_fields($prefix = 'u') {
 
-    /**
-     * Handle user_deleted event - clean up calendar subscriptions.
-     *
-     * @param moogwai_user\event\user_deleted $event The triggered event.
-     * @return bool Success/Failure.
-     */
-    public static function handle_course_reset_ended(course_reset_ended $event) {
-        global $DB;
+        global $CFG;
 
-        $userid = $event->objectid;
-        $DB->delete_records('report_examtraining', ['course' => $event->objectid]);
+        if (!empty($prefix)) {
+            $prefix = $prefix.'.';
+        }
 
-        return true;
+        if ($CFG->branch < 400) {
+            return $prefix.'id,'.get_all_user_name_fields(true, $prefix);
+        } else {
+            $fields = $prefix.'id';
+            $morefields = \core_user\fields::for_name()->with_userpic()->excluding('id')->get_required_fields();
+            foreach ($morefields as &$f) {
+                $f = $prefix.$f;
+            }
+            $fields .= ','.implode(',', $morefields);
+            return $fields;
+        }
     }
 }

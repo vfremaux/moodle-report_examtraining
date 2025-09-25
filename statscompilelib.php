@@ -1130,6 +1130,7 @@ class compiler {
         global $DB;
 
         $courseclause = '';
+        $userclause = '';
         $sqlparams = [];
 
         if ($courseid) {
@@ -1300,13 +1301,13 @@ class compiler {
         $sql = "
             SELECT
                 groupid,
-                attempts,
-                qcount,
-                qmatched,
-                acount,
-                amatched,
-                ccount,
-                cmatched
+                SUM(attempts) as attempts,
+                SUM(qcount) as qcount,
+                SUM(qmatched) as qmatched,
+                SUM(acount) as acount,
+                SUM(amatched) as amatched,
+                SUM(ccount) as ccount,
+                SUM(cmatched) as cmatched
             FROM
                 {report_examtraining}
             WHERE
@@ -1314,8 +1315,11 @@ class compiler {
                 groupid IS NOT NULL AND
                 questionid IS NULL AND
                 categoryid IS NULL AND
+                stubtype = 'byinstancecoursegroup' AND
                 course = ? AND
                 qdistinct = 0
+             GROUP BY
+                groupid
         ";
         $stats = $DB->get_records_sql($sql, [$courseid]);
 
@@ -1410,7 +1414,7 @@ class compiler {
      * @param int $from start of timerange
      * @param int $to end of timerange
      */
-    public function get_attempts_subcats($userid, $courseid, $from = null, $to = null, $distinct = 0) {
+    public function get_attempts_subcats($userid, $courseid, $from = null, $to = null, $distinct = 0, $isexam = 0) {
         global $DB;
 
         $sqlparams = [];
@@ -1431,7 +1435,15 @@ class compiler {
         if (is_null($from)) {
             // Quicker way when getting all range.
             $sqlparams[] = $distinct;
-            $select = $userclause.' course = ? AND questionid IS NULL AND uniqueid IS NULL AND categoryid IS NOT NULL AND qdistinct = ?';
+            $sqlparams[] = $isexam;
+            $select = $userclause.'
+                course = ? AND
+                questionid IS NULL AND
+                uniqueid IS NULL AND
+                categoryid IS NOT NULL AND
+                qdistinct = ? AND
+                isexam = ?
+            ';
             $stats = $DB->get_records_select('report_examtraining', $select, $sqlparams, '', 'categoryid, qcount, qmatched, acount, amatched, ccount, cmatched');
 
             $this->post_calculate_hit_ratios($stats);
@@ -1540,10 +1552,6 @@ class compiler {
      protected function post_calculate_hit_ratios(&$stats) {
         if (!empty($stats)) {
             foreach ($stats as &$stat) {
-                if (!isset($stat->qmatched)) {
-                    print_object($stat);
-                    debugging("missing attribs");
-                }
                 $stat->qratio = ($stat->qcount != 0) ? floor($stat->qmatched / $stat->qcount * 100) : 0;
                 $stat->aratio = ($stat->acount != 0) ? floor($stat->amatched / $stat->acount * 100) : 0;
                 $stat->cratio = ($stat->ccount != 0) ? floor($stat->cmatched / $stat->ccount * 100) : 0;

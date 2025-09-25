@@ -4,57 +4,59 @@
 
 <h3>{{#str}}attempts, report_examtraining{{/str}}</h3>
 
-<div class="examtraining-values">
-    <div data-item="qname">
+<div class="container">
+    <div class="row">
+        <div data-item="qname" class="col"></div>
+        <div class="examtraining-value q col" data-item="count">
+            <span class="value-name">{{#str}}count, report_examtraining{{/str}}</span><br/>
+            <span class="value-value">{{course.qcount}}</span>
+        </div>
+        <div class="examtraining-value q col" data-item="matched">
+            <span class="value-name">{{#str}}matched, report_examtraining{{/str}}</span><br/>
+            <span class="value-value">{{course.qmatched}}</span>
+        </div>
+        <div class="examtraining-value q col" data-item="ratio">
+            <span class="value-name">{{#str}}hitratio, report_examtraining{{/str}}</span><br/>
+            <span class="value-value">{{course.qratio}}%</span>
+        </div>
     </div>
-    <div class="examtraining-value q" data-item="count">
-        <span class="value-name">{{#str}}count, report_examtraining{{/str}}</span><br/>
-        <span class="value-value">{{course.qcount}}</span>
-    </div>
-    <div class="examtraining-value q" data-item="matched">
-        <span class="value-name">{{#str}}matched, report_examtraining{{/str}}</span><br/>
-        <span class="value-value">{{course.qmatched}}</span>
-    </div>
-    <div class="examtraining-value q" data-item="ratio">
-        <span class="value-name">{{#str}}hitratio, report_examtraining{{/str}}</span><br/>
-        <span class="value-value">{{course.qratio}}%</span>
-    </div>
-</div>
+
     {{#dualserie}}
-<div class="examtraining-values">
-    <div data-item="aname">
-        {{serieAname}}
+    <div class="row">
+        <div data-item="aname" class="col">
+            {{serieAname}}
+        </div>
+        <div class="examtraining-value a col" data-item="count">
+            <span class="value-name">{{#str}}count, report_examtraining{{/str}}</span><br/>
+            <span class="value-value">{{course.acount}}</span>
+        </div>
+        <div class="examtraining-value a col" data-item="matched">
+            <span class="value-name">{{#str}}matched, report_examtraining{{/str}}</span><br/>
+            <span class="value-value">{{course.amatched}}</span>
+        </div>
+        <div class="examtraining-value a col" data-item="ratio">
+            <span class="value-name">{{#str}}hitratio, report_examtraining{{/str}}</span><br/>
+            <span class="value-value">{{course.aratio}}%</span>
+        </div>
     </div>
-    <div class="examtraining-value a" data-item="count">
-        <span class="value-name">{{#str}}count, report_examtraining{{/str}}</span><br/>
-        <span class="value-value">{{course.acount}}</span>
+
+    <div class="row">
+        <div data-item="cname" class="col">
+            {{serieCname}}
+        </div>
+        <div class="examtraining-value c col" data-item="count">
+            <span class="value-name">{{#str}}count, report_examtraining{{/str}}</span><br/>
+            <span class="value-value">{{course.ccount}}</span>
+        </div>
+        <div class="examtraining-value c col" data-item="matched">
+            <span class="value-name">{{#str}}matched, report_examtraining{{/str}}</span><br/>
+            <span class="value-value">{{course.cmatched}}</span>
+        </div>
+        <div class="examtraining-value c col" data-item="ratio">
+            <span class="value-name">{{#str}}hitratio, report_examtraining{{/str}}</span><br/>
+            <span class="value-value">{{course.cratio}}%</span>
+        </div>
     </div>
-    <div class="examtraining-value a" data-item="matched">
-        <span class="value-name">{{#str}}matched, report_examtraining{{/str}}</span><br/>
-        <span class="value-value">{{course.amatched}}</span>
-    </div>
-    <div class="examtraining-value a" data-item="ratio">
-        <span class="value-name">{{#str}}hitratio, report_examtraining{{/str}}</span><br/>
-        <span class="value-value">{{course.aratio}}%</span>
-    </div>
-</div>
-<div class="examtraining-values">
-    <div data-item="cname">
-        {{serieCname}}
-    </div>
-    <div class="examtraining-value c" data-item="count">
-        <span class="value-name">{{#str}}count, report_examtraining{{/str}}</span><br/>
-        <span class="value-value">{{course.ccount}}</span>
-    </div>
-    <div class="examtraining-value c" data-item="matched">
-        <span class="value-name">{{#str}}matched, report_examtraining{{/str}}</span><br/>
-        <span class="value-value">{{course.cmatched}}</span>
-    </div>
-    <div class="examtraining-value c" data-item="ratio">
-        <span class="value-name">{{#str}}hitratio, report_examtraining{{/str}}</span><br/>
-        <span class="value-value">{{course.cratio}}%</span>
-    </div>
-</div>
     {{/dualserie}}
 </div>
 
@@ -89,7 +91,7 @@
     </tr>
 {{/group}}
     <tr>
-        <td colspan="2" id="q-coverage">
+        <td id="q-coverage">
             {{{qgraph}}}
         </td>
     </tr>

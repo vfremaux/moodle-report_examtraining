@@ -31,6 +31,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 require_once($CFG->dirroot.'/blocks/use_stats/locallib.php');
 require_once($CFG->dirroot.'/report/examtraining/locallib.php');
+require_once($CFG->dirroot.'/report/examtraining/compatlib.php');
 require_once($CFG->dirroot.'/report/examtraining/reportasyncprecompilelib.php');
 require_once($CFG->dirroot.'/report/examtraining/classes/output/rawrenderer.php');
 
@@ -56,7 +57,7 @@ $rawrenderer = $PAGE->get_renderer('report_examtraining', 'raw');
 if ($groupid) {
     $targetusers = groups_get_members($groupid);
 } else {
-    $fields = 'u.id, '.get_all_user_name_fields(true, 'u').', email, institution';
+    $fields = 'u.id, '.\report_examtraining\compat::get_user_fields().', email, institution';
     $targetusers = get_users_by_capability($context, 'moodle/course:view', $fields, 'lastname');
 
     if (count($targetusers) > 100) {

@@ -61,6 +61,7 @@ imagefill($im, 0, 0, $colors['white']);
 
 $curvefactor = 0.8;
 
+$c = new Stdclass;
 $c->x = $width / 2 - 100;
 $c->y = $height / 2;
 $maxx = floor($c->x * $curvefactor);
@@ -69,11 +70,13 @@ $font = $CFG->dirroot.'/report/examtraining/gdgenerators/arial.ttf';
 
 for ($j = 20; $j <= $maxx;) {
     for ($i = 0; $i < $branches; $i++) {
+        $r1 = new Stdclass;
         $r1->x = $c->x + $j * cos($i * 2 * pi() / $branches);
         $r1->y = $c->y + $j * sin($i * 2 * pi() / $branches);
+        $r2 = new Stdclass;
         $r2->x = $c->x + $j * cos(($i + 1) * 2 * pi() / $branches);
         $r2->y = $c->y + $j * sin(($i + 1) * 2 * pi() / $branches);
-        imageline($im, $r1->x, $r1->y, $r2->x, $r2->y, $colors['lightgray']);
+        imageline($im, (int) $r1->x, (int) $r1->y, (int) $r2->x, (int) $r2->y, $colors['lightgray']);
     }
     $j = $j + 20;
 }
@@ -101,6 +104,7 @@ imagesetthickness($im, 1);
 
 // Draw percent boxes.
 for ($i = 0; $i < $branches; $i++) {
+    $b = new Stdclass;
     $b->x = $boxes[2 * $i];
     $b->y = $boxes[2 * $i + 1];
     imagefilledrectangle($im, $b->x, $b->y, $b->x + 40, $b->y + 18, $colors['fill']);
@@ -109,11 +113,13 @@ for ($i = 0; $i < $branches; $i++) {
 }
 
 for ($i = 0; $i < $branches; $i++) {
+    $r = new Stdclass;
     $r->x = $c->x + $maxx * cos($i * 2 * pi() / $branches);
     $r->y = $c->y + $maxx * sin($i * 2 * pi() / $branches);
+    $t = new Stdclass;
     $t->x = $c->x + ($maxx + 10) * cos($i * 2 * pi() / $branches) - 10;
     $t->y = $c->y + ($maxx + 10) * sin($i * 2 * pi() / $branches);
-    imageline($im, $c->x, $c->y, $r->x, $r->y, $colors['lightgray']);
+    imageline($im, (int) $c->x, (int) $c->y, (int) $r->x, (int) $r->y, $colors['lightgray']);
     $catnum = ((($i + 4) % 12));
 
     if (!$catnum) {

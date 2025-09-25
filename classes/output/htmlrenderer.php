@@ -24,12 +24,13 @@
  */
 namespace report_examtraining\output;
 
-use \moodle_url;
-use \StdClass;
-use \html_writer;
-use \jqplot_renderer;
-use \html_table;
-use \context_course;
+use moodle_url;
+use StdClass;
+use html_writer;
+use jqplot_renderer;
+use html_table;
+use context_course;
+use core_date;
 
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/report/examtraining/classes/jqplotter.php');
@@ -43,7 +44,7 @@ class html_renderer extends \plugin_renderer_base {
      * @param string ref $str a buffer for accumulating output
      * @param object $structure a course structure object.
      */
-    public function assiduity2($userid, $from = NULL, $to = NULL, $view) {
+    public function assiduity2($userid, $from = null, $to = null, $view = null) {
         global $DB, $COURSE, $OUTPUT;
 
         $pagesize = 31;
@@ -117,7 +118,7 @@ class html_renderer extends \plugin_renderer_base {
         $i = 0;
         $attemptstable = [];
         while ($i < $pagesize) {
-            $date = strftime('%Y/%m/%d', (int)$stamp);
+            $date = core_date::strftime('%Y/%m/%d', (int)$stamp);
             if (array_key_exists($stamp, $assiduity)) {
                 $attemptstable[$date] = $assiduity[$stamp]->acount;
             } else {
@@ -275,7 +276,7 @@ class html_renderer extends \plugin_renderer_base {
      * @param object $height graph height
      * @param arrayref $stats the overal stats calcualted internally and provided for further use.
      */
-    public function trainings_globals($userid, $from = null, $to = null, $height = 'large', &$stats) {
+    public function trainings_globals($userid, $from = null, $to = null, $height = 'large', &$stats = null) {
         global $CFG, $COURSE;
 
         $compiler = new \report_examtraining\stats\compiler();
@@ -493,7 +494,7 @@ class html_renderer extends \plugin_renderer_base {
         $statsrawarr = array_values($stats);
         foreach ($statsrawarr as $stat) {
             $firstdayinyear = mktime(0, 0, 0, 1, 1, $statsrawarr[0]->year);
-            $statdate = strftime('%Y/%m/%d %H:%M', ($firstdayinyear + $stat->week * 7 * DAYSECS));
+            $statdate = core_date::strftime('%Y/%m/%d %H:%M', ($firstdayinyear + $stat->week * 7 * DAYSECS));
             $data[0][] = $statdate;
             if (!empty($examcontext->dualserie)) {
                 // Two curves

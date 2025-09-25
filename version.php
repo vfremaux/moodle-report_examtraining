@@ -25,10 +25,10 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version  = 2025043000;
+$plugin->version  = 2025030500;
 $plugin->requires = 2022112801;
 $plugin->component = 'report_examtraining';
-$plugin->release = '4.5.0 (Build 2025043000)';
+$plugin->release = '4.5.0 (Build 2025030500)';
 $plugin->maturity = MATURITY_STABLE;
 $plugin->supported = [403, 405];
 
